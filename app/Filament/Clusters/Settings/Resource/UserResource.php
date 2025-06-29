@@ -1,7 +1,7 @@
 <?php
 
 // Namespace diubah untuk mencerminkan lokasi baru
-namespace App\Filament\Clusters\Settings\Resources; 
+namespace App\Filament\Clusters\Settings\Resources;
 
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\UserResource\Pages;
@@ -19,7 +19,6 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    // Beritahu resource ini bahwa dia adalah bagian dari Settings Cluster
     protected static ?string $cluster = Settings::class; 
 
     public static function form(Form $form): Form
@@ -83,6 +82,7 @@ class UserResource extends Resource
         return [
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
+            'view' => Pages\ViewUser::route('/{record}'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }    

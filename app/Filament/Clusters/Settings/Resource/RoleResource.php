@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Clusters\Settings\Resources; 
+namespace App\Filament\Clusters\Settings\Resources;
 
-use App\Filament\Resources\RoleResource\Pages;
 use App\Filament\Clusters\Settings;
+use App\Filament\Clusters\Settings\Resources\RoleResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
