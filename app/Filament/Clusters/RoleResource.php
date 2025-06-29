@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Clusters\Settings\Resources; 
 
 use App\Filament\Resources\RoleResource\Pages;
+use App\Filament\Clusters\Settings;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,8 @@ class RoleResource extends Resource
     protected static ?string $model = Role::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+
+    protected static ?string $cluster = Settings::class;
 
     public static function form(Form $form): Form
     {

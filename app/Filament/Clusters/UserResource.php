@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Filament\Resources;
+// Namespace diubah untuk mencerminkan lokasi baru
+namespace App\Filament\Clusters\Settings\Resources; 
 
-use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Clusters\Settings;
+use App\Filament\Clusters\Settings\Resources\UserResource\Pages;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,7 +18,10 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    
+
+    // Beritahu resource ini bahwa dia adalah bagian dari Settings Cluster
+    protected static ?string $cluster = Settings::class; 
+
     public static function form(Form $form): Form
     {
         return $form
@@ -42,6 +47,7 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // (Tidak ada perubahan di sini, biarkan seperti sebelumnya)
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable(),
@@ -64,14 +70,14 @@ class UserResource extends Resource
                 ]),
             ]);
     }
-
+    
     public static function getRelations(): array
     {
         return [
             //
         ];
     }
-
+    
     public static function getPages(): array
     {
         return [
@@ -79,5 +85,5 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
-    }
+    }    
 }

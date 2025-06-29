@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\UserResource\Pages;
+namespace App\Filament\Clusters\Settings\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use Filament\Navigation\NavigationItem; // <-- Impor kelas ini
-use Filament\Resources\Pages\Page; // <-- Impor kelas ini
+use Filament\Resources\Pages\Page;
+use Filament\Navigation\NavigationItem;
 
 class EditUser extends EditRecord
 {
@@ -15,24 +15,25 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\ViewAction::make(),
             Actions\DeleteAction::make(),
         ];
     }
 
     /**
      * Mendefinisikan sub-navigasi untuk halaman record.
-     *
-     * @param Page $page
-     * @return array<NavigationItem>
      */
     public static function getRecordSubNavigation(Page $page): array
     {
         return [
-            NavigationItem::make('Edit User')
-                ->label('Informasi Pengguna') // Label yang akan ditampilkan di menu
-                ->url(static::getUrl(['record' => $page->getRecord()]))
-                ->isActiveWhen(fn () => $page instanceof EditUser) // Aktif jika halaman saat ini adalah EditUser
+            NavigationItem::make('Detail Pengguna')
+                ->url(UserResource::getUrl('view', ['record' => $page->getRecord()]))
                 ->icon('heroicon-o-user-circle'),
+
+            NavigationItem::make('Edit Pengguna')
+                ->url(static::getUrl(['record' => $page->getRecord()]))
+                ->isActiveWhen(fn () => $page instanceof EditUser)
+                ->icon('heroicon-o-pencil-square'),
         ];
     }
 }
