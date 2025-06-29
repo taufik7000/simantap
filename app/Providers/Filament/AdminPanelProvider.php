@@ -18,6 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Livewire\UnifiedLoginPage;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -27,7 +28,6 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->loginUrl('/login')
             ->colors([
                 'primary' => Color::Emerald,
             ])
@@ -49,9 +49,12 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                'role:Admin',
             ])
             ->authMiddleware([
                 Authenticate::class,
             ]);
     }
+
+
 }

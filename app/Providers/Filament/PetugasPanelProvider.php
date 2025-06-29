@@ -25,7 +25,6 @@ class PetugasPanelProvider extends PanelProvider
         return $panel
             ->id('petugas')
             ->path('petugas')
-            ->loginUrl('/login')
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -46,6 +45,7 @@ class PetugasPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                'role:warga',
             ])
             ->authMiddleware([
                 Authenticate::class,

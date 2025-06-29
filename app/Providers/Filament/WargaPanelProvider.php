@@ -25,7 +25,6 @@ class WargaPanelProvider extends PanelProvider
         return $panel
             ->id('warga')
             ->path('warga')
-            ->loginUrl('/login')
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -46,6 +45,7 @@ class WargaPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                'role:petugas',
             ])
             ->authMiddleware([
                 Authenticate::class,
