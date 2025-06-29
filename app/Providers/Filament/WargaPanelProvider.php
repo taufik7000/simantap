@@ -25,14 +25,12 @@ class WargaPanelProvider extends PanelProvider
         return $panel
             ->id('warga')
             ->path('warga')
+            ->loginUrl('/login')
             ->colors([
                 'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/Warga/Resources'), for: 'App\\Filament\\Warga\\Resources')
             ->discoverPages(in: app_path('Filament/Warga/Pages'), for: 'App\\Filament\\Warga\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
             ->discoverWidgets(in: app_path('Filament/Warga/Widgets'), for: 'App\\Filament\\Warga\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
