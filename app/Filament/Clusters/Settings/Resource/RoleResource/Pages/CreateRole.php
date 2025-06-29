@@ -2,7 +2,7 @@
 
 namespace App\Filament\Clusters\Settings\Resources\RoleResource\Pages;
 
-use App\Filament\Resources\RoleResource;
+use App\Filament\Clusters\Settings\Resources\RoleResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 

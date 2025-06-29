@@ -1,6 +1,5 @@
 <?php
 
-// Namespace diubah untuk mencerminkan lokasi baru
 namespace App\Filament\Clusters\Settings\Resources;
 
 use App\Filament\Clusters\Settings;
@@ -19,7 +18,7 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $cluster = Settings::class; 
+    protected static ?string $cluster = Settings::class;
 
     public static function form(Form $form): Form
     {
@@ -31,7 +30,8 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
@@ -40,28 +40,22 @@ class UserResource extends Resource
                 Forms\Components\Select::make('roles')
                     ->multiple()
                     ->relationship('roles', 'name')
-                    ->preload()
+                    ->preload(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        // (Tidak ada perubahan di sini, biarkan seperti sebelumnya)
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable(),
                 Tables\Columns\TextColumn::make('email')->searchable(),
-                Tables\Columns\TextColumn::make('roles.name')->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->filters([
-                //
+                Tables\Columns\TextColumn::make('roles.name')->badge()->searchable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -69,14 +63,7 @@ class UserResource extends Resource
                 ]),
             ]);
     }
-    
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-    
+
     public static function getPages(): array
     {
         return [
@@ -85,5 +72,5 @@ class UserResource extends Resource
             'view' => Pages\ViewUser::route('/{record}'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
-    }    
+    }
 }

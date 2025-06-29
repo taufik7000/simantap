@@ -2,7 +2,7 @@
 
 namespace App\Filament\Clusters\Settings\Resources\UserResource\Pages;
 
-use App\Filament\Resources\UserResource;
+use App\Filament\Clusters\Settings\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Pages\Page;
@@ -19,10 +19,7 @@ class EditUser extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
-
-    /**
-     * Mendefinisikan sub-navigasi untuk halaman record.
-     */
+    
     public static function getRecordSubNavigation(Page $page): array
     {
         return [
