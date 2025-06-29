@@ -45,7 +45,7 @@ class WargaPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                'role:petugas',
+                'role:Warga',
             ])
             ->authMiddleware([
                 Authenticate::class,

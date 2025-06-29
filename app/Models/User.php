@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Facades\Filament;
 
 class User extends Authenticatable
 {
@@ -45,5 +46,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function getDashboardUrl(): string
+    {
+        if ($this->hasRole('Admin')) {
+            return Filament::getPanel('admin')->getPageUrl('dashboard');
+        }
+
+        if ($this->hasRole('Petugas')) {
+            return Filament::getPanel('petugas')->getPageUrl('dashboard');
+        }
+
+        // Jika tidak ada peran di atas, default-nya adalah panel warga
+        if ($this->hasRole('Warga')) {
+            return Filament::getPanel('warga')->getPageUrl('dashboard');
+        }
+
+        // Fallback jika pengguna tidak memiliki peran apa pun
+        return '/';
     }
 }

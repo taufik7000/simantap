@@ -45,7 +45,7 @@ class PetugasPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                'role:warga',
+                'role:petugas',
             ])
             ->authMiddleware([
                 Authenticate::class,
