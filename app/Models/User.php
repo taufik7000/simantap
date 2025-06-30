@@ -6,6 +6,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Str;
@@ -105,6 +106,12 @@ class User extends Authenticatable implements FilamentUser
         if ($roles->contains('petugas')) { return route('filament.petugas.pages.dashboard'); }
         if ($roles->contains('warga')) { return route('filament.warga.pages.dashboard'); }
         return '/';
+    }
+
+    public function anggotaKeluarga(): HasMany
+    {
+        // Kode ini sudah benar, yang salah hanya return type hint-nya
+        return $this->hasMany(User::class, 'nomor_kk', 'nomor_kk');
     }
 
     public function getFilamentName(): string

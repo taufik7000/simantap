@@ -20,9 +20,9 @@ use Filament\Tables\Columns\ViewColumn;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-    protected static ?string $navigationGroup = 'Manajemen Warga';
-    protected static ?string $navigationLabel = 'Verifikasi Warga';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?string $navigationGroup = 'Kependudukan';
+    protected static ?string $navigationLabel = 'Verifikasi Data Warga';
     protected static ?string $modelLabel = 'Warga';
     protected static ?string $pluralModelLabel = 'Verifikasi Warga';
 
