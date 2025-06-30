@@ -15,6 +15,7 @@ class RegisterController extends Controller
      */
     public function create()
     {
+        // Controller ini hanya menampilkan view Blade biasa.
         return view('auth.register');
     }
 
@@ -27,9 +28,9 @@ class RegisterController extends Controller
             'nik' => ['required', 'string', 'digits:16', 'unique:users,nik'],
             'nomor_kk' => ['required', 'string', 'digits:16'],
             'nama_lengkap' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'nomor_whatsapp' => ['required', 'string', 'max:15'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            // Validasi untuk file gambar
             'foto_ktp' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'foto_kk' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'foto_tanda_tangan' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
@@ -41,7 +42,6 @@ class RegisterController extends Controller
         $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                // Simpan file ke storage/app/public/dokumen_warga/{nik}_{field}.ext
                 $paths[$field] = $request->file($field)->storeAs(
                     'dokumen_warga',
                     $validated['nik'] . '_' . $field . '.' . $request->file($field)->extension(),
@@ -54,9 +54,9 @@ class RegisterController extends Controller
             'nik' => $validated['nik'],
             'nomor_kk' => $validated['nomor_kk'],
             'nama_lengkap' => $validated['nama_lengkap'],
+            'email' => $validated['email'],
             'nomor_whatsapp' => $validated['nomor_whatsapp'],
             'password' => Hash::make($validated['password']),
-            // Simpan path file ke database
             'foto_ktp' => $paths['foto_ktp'] ?? null,
             'foto_kk' => $paths['foto_kk'] ?? null,
             'foto_tanda_tangan' => $paths['foto_tanda_tangan'] ?? null,
