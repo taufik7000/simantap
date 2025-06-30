@@ -26,6 +26,7 @@ class User extends Authenticatable implements FilamentUser
         'nik',
         'nomor_kk',
         'nomor_whatsapp',
+        'alamat',
         'foto_ktp',
         'foto_kk',
         'foto_tanda_tangan',
