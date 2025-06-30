@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\UnifiedLoginPage;
-use Illuminate\Support\Facades\Redirect;
+use App\Http\Controllers\Auth\LoginController;
 
 
 Route::get('/', function () {

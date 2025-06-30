@@ -54,17 +54,24 @@ class User extends Authenticatable implements FilamentUser
     {
         $roles = $this->getRoleNames()->map(fn ($role) => Str::lower($role));
 
+        // Periksa peran dengan urutan prioritas
         if ($roles->contains('admin')) {
-            return Filament::getPanel('admin')->getUrl();
-        }
-        if ($roles->contains('petugas')) {
-            return Filament::getPanel('petugas')->getUrl();
-        }
-        if ($roles->contains('warga')) {
-            return Filament::getPanel('warga')->getUrl();
+            // GANTI ->getUrl() MENJADI route(...)
+            return route('filament.admin.pages.dashboard');
         }
 
-        return '/'; // Fallback
+        if ($roles->contains('petugas')) {
+            // GANTI ->getUrl() MENJADI route(...)
+            return route('filament.petugas.pages.dashboard');
+        }
+
+        if ($roles->contains('warga')) {
+            // GANTI ->getUrl() MENJADI route(...)
+            return route('filament.warga.pages.dashboard');
+        }
+
+        // Fallback jika tidak punya peran
+        return '/';
     }
 
     public function canAccessPanel(Panel $panel): bool

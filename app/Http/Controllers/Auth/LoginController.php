@@ -14,6 +14,7 @@ class LoginController extends Controller
      */
     public function create()
     {
+        // Pastikan view yang dipanggil sudah benar
         return view('auth.login');
     }
 
@@ -22,23 +23,26 @@ class LoginController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Validasi input dari form
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
+        // 2. Coba untuk melakukan otentikasi
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             /** @var User $user */
             $user = Auth::user();
             
-            // Panggil metode untuk mendapatkan URL dasbor yang benar
+            // 3. Panggil metode yang benar untuk mendapatkan URL dan redirect
             return redirect()->to($user->getDashboardUrl());
         }
 
+        // 4. Jika gagal, kembalikan ke halaman login dengan pesan error
         return back()->withErrors([
-            'email' => 'Kombinasi email dan password tidak cocok.',
+            'email' => 'Kombinasi email dan password yang Anda masukkan tidak cocok.',
         ])->onlyInput('email');
     }
 
