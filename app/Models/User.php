@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Facades\Filament;
+use Illuminate\Support\Str;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -48,22 +50,33 @@ class User extends Authenticatable
         ];
     }
 
-    public function getDashboardUrl(): string
+    public function getFilamentUrl(Panel $panel): string
     {
-        if ($this->hasRole('Admin')) {
-            return Filament::getPanel('admin')->getPageUrl('dashboard');
+        if ($this->hasRole('admin')) {
+            return Filament::getPanel('admin')->getUrl();
         }
 
-        if ($this->hasRole('Petugas')) {
-            return Filament::getPanel('petugas')->getPageUrl('dashboard');
+        if ($this->hasRole('petugas')) {
+            return Filament::getPanel('petugas')->getUrl();
         }
 
-        // Jika tidak ada peran di atas, default-nya adalah panel warga
-        if ($this->hasRole('Warga')) {
-            return Filament::getPanel('warga')->getPageUrl('dashboard');
-        }
+        return Filament::getPanel('warga')->getUrl();
+    }
 
-        // Fallback jika pengguna tidak memiliki peran apa pun
-        return '/';
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($panel->getId() === 'admin') {
+            return $this->hasRole('admin');
+        }
+        
+        if ($panel->getId() === 'petugas') {
+            return $this->hasRole(['admin', 'petugas']);
+        }
+        
+        if ($panel->getId() === 'warga') {
+            return $this->hasRole('warga');
+        }
+        
+        return false;
     }
 }
