@@ -15,7 +15,6 @@ class RegisterController extends Controller
      */
     public function create()
     {
-        // Controller ini hanya menampilkan view Blade biasa.
         return view('auth.register');
     }
 
@@ -24,39 +23,37 @@ class RegisterController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Sesuaikan validasi: 'name' dan 'email' wajib, lainnya opsional.
         $validated = $request->validate([
-            'nik' => ['required', 'string', 'digits:16', 'unique:users,nik'],
-            'nomor_kk' => ['required', 'string', 'digits:16'],
-            'nama_lengkap' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'nomor_whatsapp' => ['required', 'string', 'max:15'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            'foto_ktp' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'foto_kk' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'foto_tanda_tangan' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'foto_selfie_ktp' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'nik' => ['nullable', 'string', 'digits:16', 'unique:users,nik'],
+            'nomor_kk' => ['nullable', 'string', 'digits:16'],
+            'nomor_whatsapp' => ['nullable', 'string', 'max:15'],
+            'foto_ktp' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto_kk' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto_tanda_tangan' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto_selfie_ktp' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
 
-        // Proses penyimpanan file
+        // 2. Proses penyimpanan file hanya jika file diunggah
         $paths = [];
         $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                $paths[$field] = $request->file($field)->storeAs(
-                    'dokumen_warga',
-                    $validated['nik'] . '_' . $field . '.' . $request->file($field)->extension(),
-                    'public'
-                );
+                $paths[$field] = $request->file($field)->store('dokumen_warga', 'public');
             }
         }
 
+        // 3. Buat pengguna baru dengan data yang benar
         $user = User::create([
-            'nik' => $validated['nik'],
-            'nomor_kk' => $validated['nomor_kk'],
-            'nama_lengkap' => $validated['nama_lengkap'],
+            'name' => $validated['name'],
             'email' => $validated['email'],
-            'nomor_whatsapp' => $validated['nomor_whatsapp'],
             'password' => Hash::make($validated['password']),
+            'nik' => $validated['nik'] ?? null,
+            'nomor_kk' => $validated['nomor_kk'] ?? null,
+            'nomor_whatsapp' => $validated['nomor_whatsapp'] ?? null,
             'foto_ktp' => $paths['foto_ktp'] ?? null,
             'foto_kk' => $paths['foto_kk'] ?? null,
             'foto_tanda_tangan' => $paths['foto_tanda_tangan'] ?? null,

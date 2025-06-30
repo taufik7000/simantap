@@ -23,6 +23,7 @@ class PetugasPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->default()
             ->id('petugas')
             ->path('petugas')
             ->colors([
