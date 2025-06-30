@@ -31,6 +31,7 @@ class Profile extends Page implements HasForms
 
     public function form(Form $form): Form
     {
+        // Skema form Anda sudah benar, tidak perlu diubah
         return $form
             ->schema([
                 Tabs::make('Tabs')
@@ -46,7 +47,7 @@ class Profile extends Page implements HasForms
                                 Textarea::make('alamat')->label('Alamat Lengkap')->rows(3)->columnSpanFull(),
                             ])->columns(2),
                         
-                        Tabs\Tab::make('Verifikasi Diri')
+                        Tabs\Tab::make('Dokumen')
                             ->icon('heroicon-o-document-arrow-up')
                             ->schema([
                                 FileUpload::make('foto_ktp')->label('Foto KTP')->image()->directory('dokumen_warga')->visibility('private'),
@@ -72,31 +73,35 @@ class Profile extends Page implements HasForms
         $data = $this->form->getState();
         $user = auth()->user();
 
-        // Siapkan data untuk diupdate
+        // 1. Siapkan data non-file untuk diupdate
         $updateData = [
             'name' => $data['name'],
             'email' => $data['email'],
             'nomor_kk' => $data['nomor_kk'],
             'nomor_whatsapp' => $data['nomor_whatsapp'],
             'alamat' => $data['alamat'],
-            'foto_ktp' => head($data['foto_ktp']), // Filament v3 mengembalikan array
-            'foto_kk' => head($data['foto_kk']),
-            'foto_tanda_tangan' => head($data['foto_tanda_tangan']),
-            'foto_selfie_ktp' => head($data['foto_selfie_ktp']),
         ];
 
-        // Hapus file lama jika ada file baru yang diunggah
+        // 2. Logika cerdas untuk menangani file
         $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
-        foreach($fileFields as $field) {
-            if ($user->{$field} && $updateData[$field] && $user->{$field} !== $updateData[$field]) {
-                Storage::disk('public')->delete($user->{$field});
+        foreach ($fileFields as $field) {
+            // Periksa apakah ada file baru yang diunggah (bukan null dan merupakan array)
+            if (isset($data[$field]) && is_array($data[$field]) && !empty($data[$field])) {
+                // Hapus file lama jika ada
+                if ($user->{$field}) {
+                    Storage::disk('public')->delete($user->{$field});
+                }
+                // Tambahkan path file baru ke data update
+                $updateData[$field] = head($data[$field]);
             }
         }
         
+        // 3. Logika untuk password (tetap sama)
         if (!empty($data['password'])) {
             $updateData['password'] = Hash::make($data['password']);
         }
 
+        // 4. Update pengguna dengan data yang sudah disiapkan
         $user->update($updateData);
 
         Notification::make()->title('Profil berhasil diperbarui')->success()->send();

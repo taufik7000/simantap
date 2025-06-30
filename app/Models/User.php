@@ -22,6 +22,7 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'verified_at',
         'nik',
         'nomor_kk',
         'nomor_whatsapp',
@@ -30,6 +31,8 @@ class User extends Authenticatable implements FilamentUser
         'foto_kk',
         'foto_tanda_tangan',
         'foto_selfie_ktp',
+        'last_login_at',
+        'last_login_ip',
     ];
 
     /**
@@ -46,6 +49,8 @@ class User extends Authenticatable implements FilamentUser
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
 
     /**

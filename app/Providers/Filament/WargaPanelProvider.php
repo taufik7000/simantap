@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Vite;
 
 class WargaPanelProvider extends PanelProvider
 {
@@ -26,6 +27,10 @@ class WargaPanelProvider extends PanelProvider
             ->default()
             ->id('warga')
             ->path('warga')
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => view('filament.hooks.custom-assets')->render(),
+            )
             ->colors([
                 'primary' => Color::Emerald,
             ])
