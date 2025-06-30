@@ -10,102 +10,105 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Str;
 
-// Pastikan kelas Anda mengimplementasikan FilamentUser
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'verified_at',
-        'nik',
-        'nomor_kk',
-        'nomor_whatsapp',
-        'alamat',
-        'foto_ktp',
-        'foto_kk',
-        'foto_tanda_tangan',
-        'foto_selfie_ktp',
-        'last_login_at',
-        'last_login_ip',
+        'name', 'email', 'password', 'verified_at', 'last_login_at', 'last_login_ip',
+        'nik', 'nomor_kk', 'nomor_whatsapp', 'alamat',
+        'jenis_kelamin', 'agama', 'tempat_lahir', 'tanggal_lahir', 'gol_darah',
+        'rt_rw', 'desa_kelurahan', 'kecamatan', 'kabupaten',
+        'status_keluarga', 'status_perkawinan', 'pekerjaan', 'pendidikan',
+        'foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'tanggal_lahir' => 'date',
     ];
 
     /**
-     * Metode ini mengontrol akses ke seluruh panel.
+     * Metode terpusat untuk memeriksa kelengkapan profil.
+     * Mengembalikan array berisi status dan daftar field yang kosong.
+     * @return array{status: string, missing: array}
      */
+   public function getProfileCompletenessStatus(): array
+    {
+        if ($this->verified_at) {
+            return ['status' => 'Terverifikasi', 'missing' => []];
+        }
+
+        $requiredFields = [
+            'nik' => 'NIK',
+            'nomor_kk' => 'Nomor Kartu Keluarga',
+            'jenis_kelamin' => 'Jenis Kelamin',
+            'agama' => 'Agama',
+            'nomor_whatsapp' => 'Nomor Whatsapp',
+            
+            // Data Kelahiran
+            'tempat_lahir' => 'Tempat Lahir',
+            'tanggal_lahir' => 'Tanggal Lahir',
+            'gol_darah' => 'Golongan Darah',
+
+            // Alamat
+            'alamat' => 'Alamat Lengkap',
+            'rt_rw' => 'RT/RW',
+            'desa_kelurahan' => 'Desa/Kelurahan',
+            'kecamatan' => 'Kecamatan',
+            'kabupaten' => 'Kabupaten',
+            
+            // Informasi Tambahan
+            'status_keluarga' => 'Status dalam Keluarga',
+            'status_perkawinan' => 'Status Perkawinan',
+            'pekerjaan' => 'Pekerjaan',
+            'pendidikan' => 'Pendidikan Terakhir',
+            
+            // Dokumen
+            'foto_ktp' => 'Foto KTP',
+            'foto_kk' => 'Foto Kartu Keluarga',
+            'foto_tanda_tangan' => 'Foto Tanda Tangan',
+            'foto_selfie_ktp' => 'Foto Selfie dengan KTP',
+        ];
+
+        $missing = [];
+        foreach ($requiredFields as $field => $label) {
+            if (empty($this->{$field})) {
+                $missing[] = $label;
+            }
+        }
+
+        if (empty($missing)) {
+            return ['status' => 'Data Lengkap', 'missing' => []];
+        }
+
+        return ['status' => 'Belum Lengkap', 'missing' => $missing];
+    }
+    
     public function canAccessPanel(Panel $panel): bool
     {
-        if ($panel->getId() === 'admin') {
-            return $this->hasRole('admin');
-        }
-        
-        if ($panel->getId() === 'kadis') {
-            return $this->hasRole('kadis');
-        }
-
-        if ($panel->getId() === 'petugas') {
-            return $this->hasRole(['admin', 'petugas']);
-        }
-        
-        if ($panel->getId() === 'warga') {
-            return $this->hasRole('warga');
-        }
-        
+        if ($panel->getId() === 'admin') { return $this->hasRole('admin'); }
+        if ($panel->getId() === 'kadis') { return $this->hasRole('kadis'); }
+        if ($panel->getId() === 'petugas') { return $this->hasRole(['admin', 'petugas']); }
+        if ($panel->getId() === 'warga') { return $this->hasRole('warga'); }
         return false;
-    } // <-- Pastikan kurung kurawal penutup ini ada
+    }
 
-    /**
-     * Metode ini mengarahkan pengguna setelah login.
-     */
     public function getDashboardUrl(): string
     {
         $roles = $this->getRoleNames()->map(fn ($role) => Str::lower($role));
-
-        if ($roles->contains('admin')) {
-            return route('filament.admin.pages.dashboard');
-        }
-        if ($roles->contains('kadis')) {
-            return route('filament.kadis.pages.dashboard');
-        }
-        if ($roles->contains('petugas')) {
-            return route('filament.petugas.pages.dashboard');
-        }
-        if ($roles->contains('warga')) {
-            return route('filament.warga.pages.dashboard');
-        }
-
+        if ($roles->contains('admin')) { return route('filament.admin.pages.dashboard'); }
+        if ($roles->contains('kadis')) { return route('filament.kadis.pages.dashboard'); }
+        if ($roles->contains('petugas')) { return route('filament.petugas.pages.dashboard'); }
+        if ($roles->contains('warga')) { return route('filament.warga.pages.dashboard'); }
         return '/';
-    } // <-- Pastikan kurung kurawal penutup ini ada
+    }
 
-    /**
-     * Metode ini memberitahu Filament nama tampilan pengguna.
-     */
     public function getFilamentName(): string
     {
         return $this->name ?? $this->email;
-    } // <-- Pastikan kurung kurawal penutup ini ada
-
-} // <-- Pastikan kurung kurawal penutup untuk kelas juga ada
+    }
+}
