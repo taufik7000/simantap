@@ -26,6 +26,7 @@ class WargaPanelProvider extends PanelProvider
         return $panel
             ->id('warga')
             ->path('warga')
+            ->login(LoginPage::class)
             ->colors([
                 'primary' => Color::Amber,
             ])

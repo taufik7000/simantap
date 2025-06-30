@@ -50,17 +50,21 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    public function getFilamentUrl(Panel $panel): string
+    public function getDashboardUrl(): string
     {
-        if ($this->hasRole('admin')) {
+        $roles = $this->getRoleNames()->map(fn ($role) => Str::lower($role));
+
+        if ($roles->contains('admin')) {
             return Filament::getPanel('admin')->getUrl();
         }
-
-        if ($this->hasRole('petugas')) {
+        if ($roles->contains('petugas')) {
             return Filament::getPanel('petugas')->getUrl();
         }
+        if ($roles->contains('warga')) {
+            return Filament::getPanel('warga')->getUrl();
+        }
 
-        return Filament::getPanel('warga')->getUrl();
+        return '/'; // Fallback
     }
 
     public function canAccessPanel(Panel $panel): bool

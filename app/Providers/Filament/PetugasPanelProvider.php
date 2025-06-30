@@ -26,6 +26,7 @@ class PetugasPanelProvider extends PanelProvider
         return $panel
             ->id('petugas')
             ->path('petugas')
+            ->login(LoginPage::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
