@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// 1. PASTIKAN SEMUA IMPORT INI ADA
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Str;
 
-// 2. PASTIKAN KELAS ANDA MENGIMPLEMENTASIKAN FilamentUser
+// Pastikan kelas Anda mengimplementasikan FilamentUser
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, HasRoles;
@@ -49,36 +48,42 @@ class User extends Authenticatable implements FilamentUser
         'password' => 'hashed',
     ];
 
-    // 3. INI ADALAH METODE YANG AKAN DIPANGGIL FILAMENT
-    // Ini menggantikan logika default yang mencari kolom 'name'.
-
-
-    // 4. METODE INI JUGA DIBUTUHKAN OLEH FilamentUser
-    // Ini adalah satu-satunya tempat untuk mengatur hak akses panel.
+    /**
+     * Metode ini mengontrol akses ke seluruh panel.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
             return $this->hasRole('admin');
         }
+        
+        if ($panel->getId() === 'kadis') {
+            return $this->hasRole('kadis');
+        }
 
         if ($panel->getId() === 'petugas') {
             return $this->hasRole(['admin', 'petugas']);
         }
-
+        
         if ($panel->getId() === 'warga') {
             return $this->hasRole('warga');
         }
-
+        
         return false;
-    }
-    
-    // 5. METODE INI ADALAH "OTAK" PENGALIHAN SETELAH LOGIN
+    } // <-- Pastikan kurung kurawal penutup ini ada
+
+    /**
+     * Metode ini mengarahkan pengguna setelah login.
+     */
     public function getDashboardUrl(): string
     {
         $roles = $this->getRoleNames()->map(fn ($role) => Str::lower($role));
 
         if ($roles->contains('admin')) {
             return route('filament.admin.pages.dashboard');
+        }
+        if ($roles->contains('kadis')) {
+            return route('filament.kadis.pages.dashboard');
         }
         if ($roles->contains('petugas')) {
             return route('filament.petugas.pages.dashboard');
@@ -88,5 +93,14 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return '/';
-    }
-}
+    } // <-- Pastikan kurung kurawal penutup ini ada
+
+    /**
+     * Metode ini memberitahu Filament nama tampilan pengguna.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->name ?? $this->email;
+    } // <-- Pastikan kurung kurawal penutup ini ada
+
+} // <-- Pastikan kurung kurawal penutup untuk kelas juga ada

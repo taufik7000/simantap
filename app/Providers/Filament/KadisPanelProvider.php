@@ -18,20 +18,22 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-class WargaPanelProvider extends PanelProvider
+class KadisPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
-            ->id('warga')
-            ->path('warga')
+            ->id('kadis')
+            ->path('kadis')
             ->colors([
                 'primary' => Color::Emerald,
             ])
-            ->discoverResources(in: app_path('Filament/Warga/Resources'), for: 'App\\Filament\\Warga\\Resources')
-            ->discoverPages(in: app_path('Filament/Warga/Pages'), for: 'App\\Filament\\Warga\\Pages')
-            ->discoverWidgets(in: app_path('Filament/Warga/Widgets'), for: 'App\\Filament\\Warga\\Widgets')
+            ->discoverResources(in: app_path('Filament/Kadis/Resources'), for: 'App\\Filament\\Kadis\\Resources')
+            ->discoverPages(in: app_path('Filament/Kadis/Pages'), for: 'App\\Filament\\Kadis\\Pages')
+            ->pages([
+                Pages\Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Kadis/Widgets'), for: 'App\\Filament\\Kadis\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
