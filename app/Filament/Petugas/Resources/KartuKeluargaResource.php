@@ -5,6 +5,9 @@ namespace App\Filament\Petugas\Resources;
 use App\Filament\Petugas\Resources\KartuKeluargaResource\Pages;
 use App\Models\User;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Actions;
+use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -19,23 +22,16 @@ use Illuminate\Database\Eloquent\Model;
 class KartuKeluargaResource extends Resource
 {
     protected static ?string $model = User::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationGroup = 'Kependudukan';
     protected static ?string $modelLabel = 'Kartu Keluarga';
     protected static ?string $pluralModelLabel = 'Kartu Keluarga';
     protected static ?string $slug = 'kartu-keluarga';
-
     protected static ?string $recordRouteKeyName = 'nomor_kk';
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('status_keluarga', 'Kepala Keluarga');
-    }
-
-    public static function form(Form $form): Form
-    {
-        return $form->schema([]);
     }
 
     public static function table(Table $table): Table
@@ -82,12 +78,26 @@ class KartuKeluargaResource extends Resource
                         RepeatableEntry::make('anggotaKeluarga')
                             ->label('')
                             ->schema([
-                                TextEntry::make('name')->label('Nama Anggota'),
-                                TextEntry::make('nik')->label('NIK'),
-                                TextEntry::make('status_keluarga')->label('Status')->badge(),
+                                Grid::make(2)->schema([
+                                    // Kolom untuk informasi
+                                    Section::make()->schema([
+                                        TextEntry::make('name')->label('Nama Anggota'),
+                                        TextEntry::make('nik')->label('NIK'),
+                                        TextEntry::make('status_keluarga')->label('Status')->badge(),
+                                    ])->columns(3),
+                                    
+                                    // Kolom untuk tombol aksi
+                                    Actions::make([
+                                        Action::make('lihatDetail')
+                                            ->label('Lihat Detail')
+                                            ->icon('heroicon-s-eye')
+                                            // Arahkan ke halaman view di UserResource
+                                            ->url(fn (User $record) => UserResource::getUrl('view', ['record' => $record]))
+                                            ->color('gray'),
+                                    ])->alignCenter(),
+                                ]),
                             ])
-                            ->columns(3)
-                            ->emptyLabel('Belum ada anggota keluarga'),
+                            ->contained(false),
                     ]),
             ]);
     }

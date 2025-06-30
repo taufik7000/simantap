@@ -22,9 +22,9 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationGroup = 'Kependudukan';
-    protected static ?string $navigationLabel = 'Verifikasi Data Warga';
+    protected static ?string $navigationLabel = 'Data Penduduk';
     protected static ?string $modelLabel = 'Warga';
-    protected static ?string $pluralModelLabel = 'Verifikasi Warga';
+    protected static ?string $pluralModelLabel = 'Data Penduduk';
 
     public static function form(Form $form): Form
     {
