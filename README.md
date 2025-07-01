@@ -15,6 +15,12 @@ SIMANTAP adalah Sistem Informasi Manajemen Pelayanan Terpadu yang dibangun mengg
 * **Manajemen Pengguna:** Kelola pengguna dan hak akses mereka.
 * **Responsif:** Tampilan yang optimal di berbagai perangkat.
 
+## Role Pengguna
+
+* Admin
+* Petugas
+* Warga
+
 ## Persyaratan Sistem
 
 * PHP >= 8.2
