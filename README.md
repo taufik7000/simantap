@@ -2,7 +2,7 @@
 [![Filament](https://img.shields.io/badge/Filament-^3.0-blue?style=for-the-badge&logo=filament)](https://filamentphp.com/)
 [![PHP](https://img.shields.io/badge/PHP-^8.2-8892BF?style=for-the-badge&logo=php)](https://www.php.net/)
 
-SIMANTAP adalah Sistem Informasi Manajemen Pelayanan Terpadu yang dibangun menggunakan **Laravel** dan **Filament PHP**. Aplikasi ini dirancang untuk mempermudah pengelolaan berbagai jenis layanan dengan fitur-fitur yang intuitif dan terintegrasi.
+SIMANTAP adalah Sistem Informasi Manajemen Pelayanan Terpadu yang dibangun menggunakan **Laravel**. Aplikasi ini dirancang untuk mempermudah pengelolaan berbagai jenis layanan pemerintahan dengan fitur-fitur yang intuitif dan terintegrasi.
 
 ---
 
