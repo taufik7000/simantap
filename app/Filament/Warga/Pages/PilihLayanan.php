@@ -2,7 +2,7 @@
 
 namespace App\Filament\Warga\Pages;
 
-use App\Models\Layanan;
+use App\Models\KategoriLayanan; // UBAH: Gunakan model KategoriLayanan
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -15,14 +15,17 @@ class PilihLayanan extends Page
 
     protected static ?string $title = '';
 
-    public Collection $layanans;
+    public Collection $kategoriLayanans;
 
     public function mount(): void
     {
-      $this->layanans = Layanan::with(['subLayanans' => function ($query) {
-                // Filter hanya sub-layanan yang aktif
+        $this->kategoriLayanans = KategoriLayanan::with(['layanans' => function ($query) {
+                // Filter hanya layanan (yang dulunya sub-layanan) yang aktif
                 $query->where('is_active', true);
             }])
+            // OPSIONAL: Jika Anda hanya ingin kategori yang memiliki layanan aktif
+            // Jika Anda menambahkan ini, pastikan tanpa semicolon di akhir baris sebelumnya
+            ->has('layanans') // <-- Pastikan ini menempel ke KategoriLayanan::with(...)
             ->get();
     }
 }

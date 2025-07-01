@@ -4,7 +4,7 @@ namespace App\Filament\Warga\Resources\PermohonanResource\Pages;
 
 use App\Filament\Warga\Resources\PermohonanResource;
 use App\Models\FormulirMaster;
-use App\Models\SubLayanan;
+use App\Models\Layanan;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
@@ -17,19 +17,20 @@ class CreatePermohonan extends CreateRecord
     protected static string $view = 'filament.warga.pages.create-permohonan';
 
     // Properti ini akan kita kirim ke view
-    public SubLayanan $subLayanan;
+    public Layanan $layanan; // UBAH: Dari SubLayanan menjadi Layanan
     public array $jenisPermohonanData = [];
 
     public function mount(): void
     {
-        $subLayananId = request()->query('sub_layanan_id');
-        abort_if(!$subLayananId, 404);
+        $layananId = request()->query('layanan_id'); // UBAH: 'sub_layanan_id' menjadi 'layanan_id'
+        abort_if(!$layananId, 404);
         
-        $this->subLayanan = SubLayanan::findOrFail($subLayananId);
+        $this->layanan = Layanan::findOrFail($layananId); // UBAH: Dari SubLayanan menjadi Layanan
 
         // Siapkan data untuk dikirim ke view Blade
-       if ($this->subLayanan->description && is_array($this->subLayanan->description)) {
-            foreach ($this->subLayanan->description as $syarat) {
+        // Menggunakan properti 'description' dari model Layanan
+       if ($this->layanan->description && is_array($this->layanan->description)) { // UBAH: $this->subLayanan menjadi $this->layanan
+            foreach ($this->layanan->description as $syarat) { // UBAH: $this->subLayanan menjadi $this->layanan
                 $formulirId = $syarat['formulir_master_id'] ?? null;
                 // Cari formulir berdasarkan ID untuk mendapatkan namanya
                 $formulir = $formulirId ? FormulirMaster::find($formulirId) : null;
@@ -47,11 +48,11 @@ class CreatePermohonan extends CreateRecord
         $this->form->fill();
     }
 
-    // Metode ini tetap diperlukan untuk menambahkan user_id & sub_layanan_id
+    // Metode ini tetap diperlukan untuk menambahkan user_id & layanan_id
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = Auth::id();
-        $data['sub_layanan_id'] = $this->subLayanan->id;
+        $data['layanan_id'] = $this->layanan->id; // UBAH: 'sub_layanan_id' menjadi 'layanan_id' dan $this->subLayanan menjadi $this->layanan
         return $data;
     }
     

@@ -6,8 +6,6 @@ use App\Filament\Kadis\Resources\LayananResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-
-
 class ListLayanans extends ListRecords
 {
     protected static string $resource = LayananResource::class;

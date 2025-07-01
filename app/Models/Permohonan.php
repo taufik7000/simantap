@@ -80,8 +80,9 @@ class Permohonan extends Model
     /**
      * Mendapatkan data sub layanan yang dipilih.
      */
-    public function subLayanan(): BelongsTo
+    public function layanan(): BelongsTo
     {
-        return $this->belongsTo(SubLayanan::class);
+        // Target model dan foreign key sudah benar setelah migrasi
+        return $this->belongsTo(Layanan::class);
     }
 }

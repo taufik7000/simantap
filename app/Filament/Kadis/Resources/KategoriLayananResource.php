@@ -1,56 +1,38 @@
 <?php
-
 namespace App\Filament\Kadis\Resources;
-
-use App\Filament\Kadis\Resources\SubLayananResource\Pages;
-use App\Models\SubLayanan;
-use App\Models\FormulirMaster;
+use App\Filament\Kadis\Resources\KategoriLayananResource\Pages;
+use App\Models\KategoriLayanan;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Str;
-use Filament\Forms\Set;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\ToggleColumn;
-use Filament\Forms\Components\RichEditor; 
 use Illuminate\Support\HtmlString;
 
 
-class SubLayananResource extends Resource
+class KategoriLayananResource extends Resource 
 {
-    protected static ?string $model = SubLayanan::class;
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static ?string $navigationLabel = 'Semua Layanan';
-    protected static ?int $navigationSort = 1;
-    protected static ?string $navigationGroup = 'Manajemen Layanan';
-    protected static ?string $pluralModelLabel = 'Layanan Tersedia';
+    protected static ?string $model = KategoriLayanan::class;
+        protected static ?string $navigationIcon = 'heroicon-o-check-badge';
+        protected static ?string $navigationLabel = 'Kategori Layanan';
+        protected static ?int $navigationSort = 2;
+        protected static ?string $navigationGroup = 'Manajemen Layanan';
+        protected static ?string $pluralModelLabel = 'Kategori Layanan';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Dasar')
-                    ->schema([
-                        Forms\Components\Select::make('layanan_id')
-                            ->relationship('layanan', 'name')
-                            ->label('Pilih Kategori Layanan Induk')
-                            ->required(),
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama Sub Layanan')
-                            ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
-                        Forms\Components\Select::make('icon')
-                          ->label('Pilih Ikon')
-                         ->options([
+                Forms\Components\TextInput::make('name')
+                    ->label('Nama Kategori Layanan')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Select::make('icon')
+                    ->label('Pilih Ikon')
+                    ->options([
 
-           // Business & Office
-            'heroicon-o-identification' => '<div class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z"></path></svg><span>Identification</span></div>',
-            'heroicon-o-credit-card' => '<div class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg><span>Card</span></div>',
+            // Business & Office
             'heroicon-o-briefcase' => '<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4a2 2 0 00-2-2H8a2 2 0 00-2 2v2M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6"></path></svg><span>Briefcase</span></div>',
             'heroicon-o-building-office' => '<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg><span>Building Office</span></div>',
             'heroicon-o-building-office-2' => '<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4 18h16M4 18V6a2 2 0 012-2h12a2 2 0 012 2v12M8 10h.01M8 14h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01"></path></svg><span>Office Building</span></div>',
@@ -84,50 +66,13 @@ class SubLayananResource extends Resource
             // Communication
             'heroicon-o-phone' => '<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg><span>Phone</span></div>',
             'heroicon-o-envelope' => '<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span>Email</span></div>',
-                ])
-                ->searchable()
-                ->allowHtml(),                        
-                        Forms\Components\TextInput::make('slug')
-                            ->required()
-                            ->unique(ignoreRecord: true),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Layanan ini Aktif?')
-                            ->default(true),
-                    ])->columns(2),
 
-                Repeater::make('description')
-                    ->label('Persyaratan Layanan')
-                    ->helperText('Tambahkan semua persyaratan yang harus diunggah atau dipenuhi oleh pengguna. 
-                    <br/>Setiap persyaratan akan ditampilkan sebagai satu item terpisah.')
-                    ->schema([
-                        TextInput::make('nama_syarat')
-                            ->label('Jenis Permohonan')
-                            ->required(),
-                        RichEditor::make('deskripsi_syarat')
-                            ->label('Deskripsi & Syarat Lengkap')
-                            ->required(),
-                        Forms\Components\Select::make('formulir_master_id')
-                                    ->label('Pilih Formulir Master (Jika Ada)')
-                                    // Hapus ->relationship() dan ganti dengan ->options()
-                                    ->options(FormulirMaster::all()->pluck('nama_formulir', 'id'))
-                                    ->searchable()
-                                    ->preload()
-                                    ->placeholder('Tidak ada formulir master'),   
-                              ])
-                    ->addActionLabel('Tambah Jenis Permohonan')
-                    ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? null)
-                    ->columnSpanFull()
-                    ->collapsible()
-                    ->collapseAllAction(
-                        fn (Action $action) => $action
-                            ->label('Ciutkan Semua')
-                            ->icon('heroicon-m-minus-circle')
-                    )
-                    ->expandAllAction(
-                        fn (Action $action) => $action
-                            ->label('Buka Semua')
-                            ->icon('heroicon-m-plus-circle')
-                    ),
+            ])
+                    ->searchable()
+                    ->allowHtml(),
+                Forms\Components\Textarea::make('description')
+                    ->label('Deskripsi Singkat')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -139,39 +84,30 @@ class SubLayananResource extends Resource
                     ->label('Ikon')
                     ->icon(fn ($record) => $record->icon)
                     ->size(IconColumn\IconColumnSize::Large),
-                Tables\Columns\TextColumn::make('name')->label('Nama Sub Layanan')->searchable(),
-                Tables\Columns\TextColumn::make('layanan.name')->label('Kategori Induk')->searchable()->sortable(),
-                Tables\Columns\ToggleColumn::make('is_active')
-                ->label('Status') // Beri label yang jelas
-                ->onColor('success')    // Opsional: warna hijau saat aktif
-                ->offColor('danger'), 
-            ])
-            ->filters([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nama Kategori')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('layanans_count')
+                    ->counts('Layanans')
+                    ->label('Jumlah Layanan '),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\DeleteAction::make(),
             ]);
     }
-    
+
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
-    
+
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSubLayanans::route('/'),
-            'create' => Pages\CreateSubLayanan::route('/create'),
-            'edit' => Pages\EditSubLayanan::route('/{record}/edit'),
+            'index' => Pages\ListKategoriLayanans::route('/'),
+            'create' => Pages\CreateKategoriLayanan::route('/create'),
+            'edit' => Pages\EditKategoriLayanan::route('/{record}/edit'),
         ];
-    }    
+    }
 }

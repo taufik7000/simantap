@@ -20,8 +20,9 @@ use Illuminate\Support\Facades\Storage;
 class PermohonanResource extends Resource
 {
     protected static ?string $model = Permohonan::class;
+    protected static ?string $navigationGroup = 'Menu Utama';
     protected static ?string $navigationLabel = 'Permohonan Saya';
-    protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
 
     public static function form(Form $form): Form
     {
@@ -60,7 +61,7 @@ class PermohonanResource extends Resource
                     ->columns(3)
                     ->schema([
                         TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
-                        TextEntry::make('subLayanan.name')->label('Kategori Layanan'),
+                        TextEntry::make('Layanan.name')->label('Kategori Layanan'),
                         TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
                         TextEntry::make('status')
                             ->badge()
@@ -99,7 +100,7 @@ class PermohonanResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode_permohonan')->label('Kode')->searchable(),
-                Tables\Columns\TextColumn::make('subLayanan.name')->label('Nama Layanan'),
+                Tables\Columns\TextColumn::make('Layanan.name')->label('Nama Layanan'),
                 Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $state): string => match ($state) {
                     'baru' => 'gray',
                     'diproses' => 'warning',

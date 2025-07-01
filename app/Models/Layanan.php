@@ -2,17 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Layanan extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'description', 'icon'];
+    protected $table = 'layanan';
+    protected $fillable = ['kategori_layanan_id', 'name', 'slug', 'description', 'is_active', 'icon'];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'description' => 'array',
+    ];
 
-    public function subLayanans(): HasMany
+    public function kategoriLayanan(): BelongsTo
     {
-        return $this->hasMany(SubLayanan::class);
+        return $this->belongsTo(KategoriLayanan::class);
+    }
+
+    public function formulirMaster(): BelongsTo
+    {
+        return $this->belongsTo(FormulirMaster::class);
     }
 }
