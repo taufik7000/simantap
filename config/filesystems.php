@@ -46,6 +46,12 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        // Memastikan dokumen warga aman dalam folder private.
+        // Controller ada di Http/Controllers/BerkasController.php
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+        ],
 
         's3' => [
             'driver' => 's3',

@@ -88,7 +88,7 @@ class PermohonanResource extends Resource
                                     ->required(),
                                 FileUpload::make('path_dokumen')
                                     ->label('Pilih File')
-                                    ->disk('public')
+                                    ->disk('private') 
                                     ->directory('berkas-permohonan')
                                     ->required(),
                             ])
@@ -131,7 +131,10 @@ class PermohonanResource extends Resource
                                 if (empty($berkas['path_dokumen'])) continue;
                                 $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen")
                                     ->label('Nama Dokumen')
-                                    ->url(fn() => Storage::disk('public')->url($berkas['path_dokumen']), true)
+                                     ->url(fn() => route('secure.download', [
+                                        'permohonan_id' => $record->id,
+                                        'path' => $berkas['path_dokumen']
+                                    ]), true)
                                     ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)')
                                     ->icon('heroicon-m-arrow-down-tray');
                             }
@@ -174,7 +177,7 @@ class PermohonanResource extends Resource
         return [
             'index' => Pages\ListPermohonans::route('/'),
             'create' => Pages\CreatePermohonan::route('/create'),
-            'view' => Pages\ViewPermohonan::route('/{record}'),
+            'view' => Pages\ViewPermohonan::route('/{record:kode_permohonan}'),
         ];
     }
 }

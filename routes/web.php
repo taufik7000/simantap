@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Livewire\UnifiedLoginPage;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BerkasController;
 
 
 Route::get('/', function () {
@@ -27,3 +28,7 @@ Route::post('/logout', [LoginController::class, 'destroy'])
 
 Route::get('/register', [RegisterController::class, 'create'])->middleware('guest')->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->middleware('guest')->name('register.store');
+
+Route::get('/secure-download', [BerkasController::class, 'download'])
+    ->middleware('auth')
+    ->name('secure.download');

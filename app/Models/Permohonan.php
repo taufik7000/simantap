@@ -64,6 +64,11 @@ class Permohonan extends Model
         });
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'kode_permohonan';
+    }
+
     /**
      * Mendapatkan data user (warga) yang mengajukan permohonan.
      */
