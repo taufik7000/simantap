@@ -24,6 +24,7 @@ class Profile extends Page implements HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-user-circle';
     protected static string $view = 'filament.warga.pages.profile';
+    protected static ?string $navigationGroup = 'Akun Saya';
     protected static ?string $title = 'Profil Saya';
 
     public ?array $data = [];
