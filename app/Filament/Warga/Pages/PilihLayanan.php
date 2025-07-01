@@ -13,7 +13,7 @@ class PilihLayanan extends Page
     protected static ?int $navigationSort = 2;
     protected static string $view = 'filament.warga.pages.pilih-layanan';
 
-    protected static ?string $title = 'Pilih Layanan Permohonan';
+    protected static ?string $title = '';
 
     public Collection $layanans;
 
