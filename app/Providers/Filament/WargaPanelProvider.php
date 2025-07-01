@@ -38,9 +38,9 @@ class WargaPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Warga/Pages'), for: 'App\\Filament\\Warga\\Pages')
             ->discoverWidgets(in: app_path('Filament/Warga/Widgets'), for: 'App\\Filament\\Warga\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

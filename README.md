@@ -28,3 +28,8 @@ SIMANTAP adalah Sistem Informasi Manajemen Pelayanan Terpadu yang dibangun mengg
 * Composer
 * MySQL >= 5.7 atau PostgreSQL >= 9.4
 * Ekstensi PHP: Ctype, cURL, DOM, FileInfo, JSON, Mbstring, OpenSSL, PCRE, PDO, Tokenizer, XML
+
+
+## Service Worker
+
+* Notification (php artisan queue:work)

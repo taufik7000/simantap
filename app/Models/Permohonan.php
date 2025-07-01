@@ -46,7 +46,7 @@ class Permohonan extends Model
             // Jika kode permohonan belum di-set, buat yang baru
             if (empty($permohonan->kode_permohonan)) {
                 // Format: P-YYYYMMDD-XXXX (4 digit angka urut)
-                $prefix = 'P-' . now()->format('Ymd');
+                $prefix = 'SP-' . now()->format('Ymd');
                 
                 // Cari permohonan terakhir hari ini untuk mendapatkan nomor urut berikutnya
                 $lastPermohonan = self::where('kode_permohonan', 'like', $prefix . '%')->latest('id')->first();

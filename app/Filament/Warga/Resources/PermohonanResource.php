@@ -6,87 +6,100 @@ use App\Filament\Warga\Resources\PermohonanResource\Pages;
 use App\Models\Permohonan;
 use App\Models\SubLayanan;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater as FormRepeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class PermohonanResource extends Resource
 {
     protected static ?string $model = Permohonan::class;
-    protected static ?string $navigationGroup = 'Menu Utama';
-    protected static ?string $navigationLabel = 'Permohonan Saya';
+    protected static ?string $navigationLabel = 'Status Permohonan';
     protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
 
     public static function form(Form $form): Form
     {
-        // Dapatkan instance dari halaman CreatePermohonan
-        /** @var \App\Filament\Warga\Resources\PermohonanResource\Pages\CreatePermohonan $livewire */
-        $livewire = $form->getLivewire();
-
-        // Ambil SubLayanan yang sudah kita muat di halaman Create
-        $subLayanan = $livewire->subLayanan;
-
-        // Siapkan array kosong untuk menampung field-field dinamis
-        $formulirFields = [];
-        $berkasFields = [];
-
-        // --- Membangun Field untuk Isian Data ---
-        if ($subLayanan->formulirMaster && !empty($subLayanan->formulirMaster->fields)) {
-            foreach ($subLayanan->formulirMaster->fields as $field) {
-                $fieldName = 'data_pemohon.' . $field['name']; // Simpan di dalam JSON 'data_pemohon'
-                
-                // Buat field berdasarkan tipenya
-                $formulirFields[] = match ($field['type']) {
-                    'select' => Select::make($fieldName)
-                                    ->label($field['label'])
-                                    ->options($field['options'] ?? [])
-                                    ->required($field['is_required'] ?? false),
-                    default => TextInput::make($fieldName)
-                                    ->label($field['label'])
-                                    ->required($field['is_required'] ?? false),
-                };
+        
+        $subLayanan = null;
+        
+        if ($form->getLivewire() instanceof Pages\CreatePermohonan) {
+            $subLayanan = $form->getLivewire()->subLayanan;
+        } else {
+            $record = $form->getRecord();
+            if ($record) {
+                $subLayanan = $record->subLayanan;
             }
         }
+        
+        if (!$subLayanan) {
+            return $form->schema([]);
+        }
+        $jenisPermohonanOptions = [];
+        $deskripsiLengkap = [];
 
-        // --- Membangun Field untuk Unggah Berkas ---
         if ($subLayanan->description && is_array($subLayanan->description)) {
-            foreach ($subLayanan->description as $syarat) {
-                $fieldName = 'berkas_pemohon.' . \Illuminate\Support\Str::slug($syarat['nama_syarat']);
-                
-                $berkasFields[] = FileUpload::make($fieldName)
-                                    ->label($syarat['nama_syarat'])
-                                    ->helperText($syarat['deskripsi_syarat'])
-                                    ->required()
-                                    ->disk('public') // Simpan ke storage/app/public
-                                    ->directory('berkas-permohonan'); // Di dalam subfolder
+            foreach ($subLayanan->description as $index => $syarat) {
+                $jenisPermohonanOptions[$syarat['nama_syarat']] = $syarat['nama_syarat'];
+                $deskripsiLengkap[$syarat['nama_syarat']] = $syarat['deskripsi_syarat'];
             }
         }
 
-        return $form->schema([
-            Wizard::make([
-                Wizard\Step::make('Isi Formulir')
-                    ->icon('heroicon-o-pencil')
-                    ->schema($formulirFields),
-
-                Wizard\Step::make('Unggah Berkas')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->schema($berkasFields),
-            ])->columnSpanFull()
-        ]);
+        return $form
+            ->schema([
+                Section::make('Pilih Jenis Permohonan')
+                    ->schema([
+                        Select::make('data_pemohon.jenis_permohonan')
+                            ->label('Pilih Jenis Permohonan yang Diajukan')
+                            ->options($jenisPermohonanOptions)
+                            ->required()
+                            ->searchable()
+                            ->reactive(),
+                        Placeholder::make('deskripsi_placeholder')
+                            ->label('Deskripsi dan Persyaratan')
+                            ->content(function ($get) use ($deskripsiLengkap) {
+                                $selected = $get('data_pemohon.jenis_permohonan');
+                                if (!$selected) {
+                                    return 'Pilih jenis permohonan terlebih dahulu untuk melihat deskripsi.';
+                                }
+                                return new HtmlString($deskripsiLengkap[$selected] ?? 'Deskripsi tidak ditemukan.');
+                            })
+                            ->hidden(fn ($get) => !$get('data_pemohon.jenis_permohonan')),
+                    ]),
+                Section::make('Unggah Dokumen Pendukung')
+                    ->description('Unggah semua dokumen yang diperlukan berdasarkan deskripsi di atas.')
+                    ->schema([
+                        FormRepeater::make('berkas_pemohon')
+                            ->label('Dokumen yang Diunggah')
+                            ->addActionLabel('Tambah Dokumen')
+                            ->schema([
+                                TextInput::make('nama_dokumen')
+                                    ->label('Nama atau Keterangan Dokumen')
+                                    ->placeholder('Contoh: Scan Kartu Keluarga Asli')
+                                    ->required(),
+                                FileUpload::make('path_dokumen')
+                                    ->label('Pilih File')
+                                    ->disk('public')
+                                    ->directory('berkas-permohonan')
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->required(),
+                    ])
+                    ->hidden(fn ($get) => !$get('data_pemohon.jenis_permohonan')),
+            ]);
     }
 
-      public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
@@ -94,7 +107,9 @@ class PermohonanResource extends Resource
                     ->columns(3)
                     ->schema([
                         TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
-                        TextEntry::make('subLayanan.name')->label('Jenis Layanan'),
+                        TextEntry::make('subLayanan.name')->label('Kategori Layanan'),
+                        TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
+                        
                         TextEntry::make('status')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
@@ -104,31 +119,20 @@ class PermohonanResource extends Resource
                                 'ditolak' => 'danger',
                                 default => 'gray',
                             }),
+                        
                         TextEntry::make('created_at')->label('Tanggal Diajukan')->dateTime(),
-                        TextEntry::make('updated_at')->label('Terakhir Diperbarui')->since(),
                     ]),
                 
-                InfolistSection::make('Data Pemohon')
-                    ->schema(function (Permohonan $record) {
-                        $dataPemohonFields = [];
-                        if (is_array($record->data_pemohon)) {
-                            foreach ($record->data_pemohon as $key => $value) {
-                                $dataPemohonFields[] = TextEntry::make('data_pemohon.' . $key)
-                                    ->label(ucwords(str_replace('_', ' ', $key)));
-                            }
-                        }
-                        return $dataPemohonFields;
-                    })->columns(2),
-
                 InfolistSection::make('Berkas Terlampir')
                     ->schema(function (Permohonan $record) {
                         $berkasFields = [];
                         if (is_array($record->berkas_pemohon)) {
-                            foreach ($record->berkas_pemohon as $key => $value) {
-                                $berkasFields[] = TextEntry::make('berkas_pemohon.' . $key)
-                                    ->label(ucwords(str_replace('_', ' ', $key)))
-                                    ->url(fn() => Storage::disk('public')->url($value), true) // Buat link unduh
-                                    ->formatStateUsing(fn() => 'Unduh Berkas')
+                            foreach ($record->berkas_pemohon as $index => $berkas) {
+                                if (empty($berkas['path_dokumen'])) continue;
+                                $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen")
+                                    ->label('Nama Dokumen')
+                                    ->url(fn() => Storage::disk('public')->url($berkas['path_dokumen']), true)
+                                    ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)')
                                     ->icon('heroicon-m-arrow-down-tray');
                             }
                         }
@@ -170,6 +174,7 @@ class PermohonanResource extends Resource
         return [
             'index' => Pages\ListPermohonans::route('/'),
             'create' => Pages\CreatePermohonan::route('/create'),
+            'view' => Pages\ViewPermohonan::route('/{record}'),
         ];
     }
 }

@@ -106,7 +106,7 @@ class SubLayananResource extends Resource
                             ->label('Deskripsi & Syarat Lengkap')
                             ->required(),           
                               ])
-                    ->addActionLabel('Tambah Persyaratan')
+                    ->addActionLabel('Tambah Jenis Permohonan')
                     ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? null)
                     ->columnSpanFull()
                     ->collapsible()
