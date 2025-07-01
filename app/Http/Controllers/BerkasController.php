@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permohonan;
+use App\Models\FormulirMaster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -42,5 +43,19 @@ class BerkasController extends Controller
 
         // Jika semua aman, kirim file untuk diunduh
         return Storage::disk('private')->download($filePath);
+    }
+
+    ## Cek Keamanan Download Formulir
+    public function downloadMaster(FormulirMaster $formulirMaster): StreamedResponse
+    {
+        if (!$formulirMaster->file_path) {
+            abort(404, 'File formulir tidak ditemukan.');
+        }
+
+        if (!Storage::disk('private')->exists($formulirMaster->file_path)) {
+            abort(404, 'File tidak ditemukan di server.');
+        }
+
+        return Storage::disk('private')->download($formulirMaster->file_path);
     }
 }

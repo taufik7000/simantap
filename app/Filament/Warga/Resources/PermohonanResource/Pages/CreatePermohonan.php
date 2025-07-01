@@ -3,6 +3,7 @@
 namespace App\Filament\Warga\Resources\PermohonanResource\Pages;
 
 use App\Filament\Warga\Resources\PermohonanResource;
+use App\Models\FormulirMaster;
 use App\Models\SubLayanan;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -27,11 +28,18 @@ class CreatePermohonan extends CreateRecord
         $this->subLayanan = SubLayanan::findOrFail($subLayananId);
 
         // Siapkan data untuk dikirim ke view Blade
-        if ($this->subLayanan->description && is_array($this->subLayanan->description)) {
+       if ($this->subLayanan->description && is_array($this->subLayanan->description)) {
             foreach ($this->subLayanan->description as $syarat) {
+                $formulirId = $syarat['formulir_master_id'] ?? null;
+                // Cari formulir berdasarkan ID untuk mendapatkan namanya
+                $formulir = $formulirId ? FormulirMaster::find($formulirId) : null;
+
                 $this->jenisPermohonanData[] = [
                     'nama' => $syarat['nama_syarat'],
                     'deskripsi' => $syarat['deskripsi_syarat'],
+                    'formulir_master_id' => $formulirId,
+                    // Kirim juga nama formulir ke view
+                    'nama_formulir' => $formulir ? $formulir->nama_formulir : null,
                 ];
             }
         }

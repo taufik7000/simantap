@@ -11,7 +11,7 @@ class SubLayanan extends Model
     use HasFactory;
     
     // Perbarui fillable
-    protected $fillable = ['layanan_id', 'name', 'slug', 'description', 'formulir_master_id', 'is_active', 'icon'];
+    protected $fillable = ['layanan_id', 'name', 'slug', 'description', 'is_active', 'icon'];
 
     // Perbarui casts
     protected $casts = [

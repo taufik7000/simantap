@@ -4,6 +4,7 @@ namespace App\Filament\Kadis\Resources;
 
 use App\Filament\Kadis\Resources\SubLayananResource\Pages;
 use App\Models\SubLayanan;
+use App\Models\FormulirMaster;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -104,7 +105,14 @@ class SubLayananResource extends Resource
                             ->required(),
                         RichEditor::make('deskripsi_syarat')
                             ->label('Deskripsi & Syarat Lengkap')
-                            ->required(),           
+                            ->required(),
+                        Forms\Components\Select::make('formulir_master_id')
+                                    ->label('Pilih Formulir Master (Jika Ada)')
+                                    // Hapus ->relationship() dan ganti dengan ->options()
+                                    ->options(FormulirMaster::all()->pluck('nama_formulir', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Tidak ada formulir master'),   
                               ])
                     ->addActionLabel('Tambah Jenis Permohonan')
                     ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? null)
@@ -120,18 +128,6 @@ class SubLayananResource extends Resource
                             ->label('Buka Semua')
                             ->icon('heroicon-m-plus-circle')
                     ),
-
-                Forms\Components\Section::make('Lampiran')
-                    ->schema([
-                        Forms\Components\Select::make('formulir_master_id')
-                            ->label('Lampirkan Formulir Master (Opsional)')
-                            ->relationship('formulirMaster', 'nama_formulir')
-                            ->searchable()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('nama_formulir')->required(),
-                                Forms\Components\FileUpload::make('file_path')->directory('formulir-master')->required(),
-                            ]),
-                    ]),
             ]);
     }
 

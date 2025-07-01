@@ -30,6 +30,7 @@ class FormulirMasterResource extends Resource
                     ->label('File Formulir (PDF)')
                     ->directory('formulir-master')
                     ->acceptedFileTypes(['application/pdf'])
+                    ->disk('private')
                     ->required(),
             ]);
     }

@@ -29,6 +29,12 @@ Route::post('/logout', [LoginController::class, 'destroy'])
 Route::get('/register', [RegisterController::class, 'create'])->middleware('guest')->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->middleware('guest')->name('register.store');
 
+//Route Download Berkas
 Route::get('/secure-download', [BerkasController::class, 'download'])
     ->middleware('auth')
     ->name('secure.download');
+
+// Route Download Formulir
+Route::get('/download-formulir-master/{formulirMaster}', [BerkasController::class, 'downloadMaster'])
+    ->middleware('auth') // Hanya untuk pengguna yang sudah login
+    ->name('formulir-master.download');
