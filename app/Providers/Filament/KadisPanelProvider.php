@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\NavigationGroup;
 
 class KadisPanelProvider extends PanelProvider
 {
@@ -32,6 +33,11 @@ class KadisPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Kadis/Pages'), for: 'App\\Filament\\Kadis\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+            ])
+            ->navigationGroups([
+                NavigationGroup::make()
+                 ->label('Manajemen Layanan')
+                 ->collapsible(false),
             ])
             ->discoverWidgets(in: app_path('Filament/Kadis/Widgets'), for: 'App\\Filament\\Kadis\\Widgets')
             ->widgets([

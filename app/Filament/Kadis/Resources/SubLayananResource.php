@@ -20,8 +20,8 @@ use Illuminate\Support\HtmlString;
 class SubLayananResource extends Resource
 {
     protected static ?string $model = SubLayanan::class;
-    protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
-    protected static ?string $navigationLabel = 'Layanan';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static ?string $navigationLabel = 'Semua Layanan';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Manajemen Layanan';
     protected static ?string $pluralModelLabel = 'Layanan Tersedia';

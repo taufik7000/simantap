@@ -14,10 +14,11 @@ use Illuminate\Support\HtmlString;
 class LayananResource extends Resource 
 {
     protected static ?string $model = Layanan::class;
-    protected static ?string $navigationLabel = 'Kategori';
-    protected static ?string $navigationGroup = 'Manajemen Layanan';
-    protected static ?string $navigationParentItem = 'Layanan';
-    protected static ?string $pluralModelLabel = 'Kategori Layanan';
+        protected static ?string $navigationIcon = 'heroicon-o-check-badge';
+        protected static ?string $navigationLabel = 'Kategori Layanan';
+        protected static ?int $navigationSort = 2;
+        protected static ?string $navigationGroup = 'Manajemen Layanan';
+        protected static ?string $pluralModelLabel = 'Kategori Layanan';
 
     public static function form(Form $form): Form
     {
