@@ -14,6 +14,7 @@ use Filament\Forms\Set;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Illuminate\Support\HtmlString;
 
 class SubLayananResource extends Resource
@@ -91,7 +92,7 @@ class SubLayananResource extends Resource
                     ])->columns(2),
 
                 Forms\Components\RichEditor::make('description')
-                    ->label('Deskripsi Lengkap dan Persyaratan (yang tidak perlu diunggah)')
+                    ->label('Deskripsi Lengkap dan Persyaratan (yang perlu diunggah)')
                     ->helperText('Jelaskan alur dan syarat seperti "Membawa KTP Asli" di sini.')
                     ->columnSpanFull(),
 
@@ -119,7 +120,10 @@ class SubLayananResource extends Resource
                     ->size(IconColumn\IconColumnSize::Large),
                 Tables\Columns\TextColumn::make('name')->label('Nama Sub Layanan')->searchable(),
                 Tables\Columns\TextColumn::make('layanan.name')->label('Kategori Induk')->searchable()->sortable(),
-                Tables\Columns\IconColumn::make('is_active')->label('Status')->boolean(),
+                Tables\Columns\ToggleColumn::make('is_active')
+                ->label('Status') // Beri label yang jelas
+                ->onColor('success')    // Opsional: warna hijau saat aktif
+                ->offColor('danger'), 
             ])
             ->filters([
                 //
