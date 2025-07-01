@@ -18,6 +18,7 @@ class LayananResource extends Resource
     protected static ?string $navigationLabel = 'Kategori Layanan';
     protected static ?string $navigationGroup = 'Manajemen Layanan';
     protected static ?string $pluralModelLabel = 'Kategori Layanan';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

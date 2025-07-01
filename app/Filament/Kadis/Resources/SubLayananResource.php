@@ -18,7 +18,8 @@ class SubLayananResource extends Resource
 {
     protected static ?string $model = SubLayanan::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
-    protected static ?string $navigationLabel = 'Detail Layanan';
+    protected static ?string $navigationLabel = 'Layanan';
+    protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Manajemen Layanan'; // Grupkan di bawah menu yang sama
 
     public static function form(Form $form): Form
