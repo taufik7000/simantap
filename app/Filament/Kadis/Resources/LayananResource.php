@@ -10,14 +10,14 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\IconColumn;
 use Illuminate\Support\HtmlString;
 
-class LayananResource extends Resource
+
+class LayananResource extends Resource 
 {
     protected static ?string $model = Layanan::class;
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationLabel = 'Kategori Layanan';
+    protected static ?string $navigationLabel = 'Kategori';
     protected static ?string $navigationGroup = 'Manajemen Layanan';
+    protected static ?string $navigationParentItem = 'Layanan';
     protected static ?string $pluralModelLabel = 'Kategori Layanan';
-    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -88,7 +88,7 @@ class LayananResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('sub_layanans_count')
                     ->counts('subLayanans')
-                    ->label('Jumlah Sub Layanan'),
+                    ->label('Jumlah Layanan '),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

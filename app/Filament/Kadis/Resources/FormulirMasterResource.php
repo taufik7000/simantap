@@ -15,7 +15,8 @@ class FormulirMasterResource extends Resource
     protected static ?string $model = FormulirMaster::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Manajemen Layanan';
-    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationParentItem = 'Layanan';
+    protected static ?int $navigationSort = 2;
     protected static ?string $modelLabel = 'Template Form';
 
     public static function form(Form $form): Form

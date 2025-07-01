@@ -23,6 +23,7 @@ class SubLayananResource extends Resource
     protected static ?string $navigationLabel = 'Layanan';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Manajemen Layanan';
+    protected static ?string $pluralModelLabel = 'Layanan Tersedia';
     public static function form(Form $form): Form
     {
         return $form
