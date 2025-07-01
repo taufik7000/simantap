@@ -18,6 +18,7 @@ SIMANTAP adalah Sistem Informasi Manajemen Pelayanan Terpadu yang dibangun mengg
 ## Role Pengguna
 
 * Admin
+* Kadis
 * Petugas
 * Warga
 
