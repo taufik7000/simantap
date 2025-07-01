@@ -16,6 +16,7 @@ class SubLayanan extends Model
     // Perbarui casts
     protected $casts = [
         'is_active' => 'boolean',
+        'description' => 'array',
     ];
 
     public function layanan(): BelongsTo

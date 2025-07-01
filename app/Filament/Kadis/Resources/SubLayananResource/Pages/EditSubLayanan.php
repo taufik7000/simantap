@@ -9,6 +9,7 @@ use Filament\Resources\Pages\EditRecord;
 class EditSubLayanan extends EditRecord
 {
     protected static string $resource = SubLayananResource::class;
+    protected static ?string $title = 'Edit Layanan';
 
     protected function getHeaderActions(): array
     {

@@ -11,11 +11,14 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Filament\Forms\Set;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Forms\Components\RichEditor; 
 use Illuminate\Support\HtmlString;
+
 
 class SubLayananResource extends Resource
 {
@@ -91,10 +94,32 @@ class SubLayananResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
-                Forms\Components\RichEditor::make('description')
-                    ->label('Deskripsi Lengkap dan Persyaratan (yang perlu diunggah)')
-                    ->helperText('Jelaskan alur dan syarat seperti "Membawa KTP Asli" di sini.')
-                    ->columnSpanFull(),
+                Repeater::make('description')
+                    ->label('Persyaratan Layanan')
+                    ->helperText('Tambahkan semua persyaratan yang harus diunggah atau dipenuhi oleh pengguna. 
+                    <br/>Setiap persyaratan akan ditampilkan sebagai satu item terpisah.')
+                    ->schema([
+                        TextInput::make('nama_syarat')
+                            ->label('Jenis Permohonan')
+                            ->required(),
+                        RichEditor::make('deskripsi_syarat')
+                            ->label('Deskripsi & Syarat Lengkap')
+                            ->required(),           
+                              ])
+                    ->addActionLabel('Tambah Persyaratan')
+                    ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? null)
+                    ->columnSpanFull()
+                    ->collapsible()
+                    ->collapseAllAction(
+                        fn (Action $action) => $action
+                            ->label('Ciutkan Semua')
+                            ->icon('heroicon-m-minus-circle')
+                    )
+                    ->expandAllAction(
+                        fn (Action $action) => $action
+                            ->label('Buka Semua')
+                            ->icon('heroicon-m-plus-circle')
+                    ),
 
                 Forms\Components\Section::make('Lampiran')
                     ->schema([
