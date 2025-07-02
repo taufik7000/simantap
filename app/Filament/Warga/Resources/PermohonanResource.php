@@ -100,7 +100,7 @@ class PermohonanResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode_permohonan')->label('Kode')->searchable(),
-                Tables\Columns\TextColumn::make('Layanan.name')->label('Nama Layanan'),
+                Tables\Columns\TextColumn::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
                 Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $state): string => match ($state) {
                     'baru' => 'gray',
                     'diproses' => 'warning',
