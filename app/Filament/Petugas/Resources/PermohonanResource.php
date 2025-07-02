@@ -98,10 +98,11 @@ class PermohonanResource extends Resource
                                         TextInput::make('name')
                                             ->label('Nama Berkas')
                                             ->readOnly(),
-                                        FileUpload::make('path')
+                                        FileUpload::make('path_dokumen') // Menggunakan path_dokumen
                                             ->label('File')
                                             ->disabled()
-                                            ->disk('private') 
+                                            ->disk('private')
+                                            ->directory('berkas-permohonan') // PERBAIKAN: Tambahkan ini untuk konsistensi
                                             ->visibility('private')
                                             ->downloadable()
                                             ->openable()
@@ -211,57 +212,58 @@ class PermohonanResource extends Resource
         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')
+                    ->columns(3) // Tambahkan columns(3) seperti di resource warga
                     ->schema([
                         TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
-                        TextEntry::make('user.name')->label('Diajukan Oleh (Warga)'),
+                        // Menggunakan Layanan.name karena ada relasi ke Layanan
                         TextEntry::make('layanan.name')->label('Jenis Layanan'),
+                        // Asumsi data_pemohon memiliki 'jenis_permohonan'
+                        TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
                         TextEntry::make('status')
-                            ->label('Status Permohonan')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
-                                'baru' => 'info',
+                                'baru' => 'gray', // Atau info jika ingin warna biru/cyan
                                 'verifikasi_berkas' => 'warning',
-                                'diproses' => 'info',
+                                'diproses' => 'warning',
                                 'membutuhkan_revisi' => 'danger',
                                 'disetujui' => 'success',
                                 'ditolak' => 'danger',
                                 'selesai' => 'primary',
-                                default => 'secondary',
+                                default => 'gray',
                             }),
-                        TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull(),
+                        TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull(), // Pastikan ini tetap ada jika diperlukan
                         TextEntry::make('created_at')->label('Tanggal Pengajuan')->dateTime(),
                         TextEntry::make('updated_at')->label('Terakhir Diperbarui')->dateTime(),
-                    ])->columns(2),
+                    ]),
 
                 InfolistSection::make('Data Detail Pemohon')
                     ->schema([
-                        KeyValueEntry::make('data_pemohon')
+                        KeyValueEntry::make('data_pemohon') // Kembali ke KeyValueEntry
                             ->keyLabel('Field Data')
                             ->valueLabel('Nilai Data')
                             ->columnSpanFull(),
                     ]),
 
-                InfolistSection::make('Berkas Permohonan')
-                    ->schema([
-                        RepeatableEntry::make('berkas_pemohon')
-                            ->label('Daftar Berkas Terlampir')
-                            ->schema([
-                                TextEntry::make('name')
-                                    ->label('Nama Berkas'),
-                                TextEntry::make('path')
-                                    ->label('File')
-                                    ->formatStateUsing(function (string $state): HtmlString {
-                                        $url = Storage::disk('private')->temporaryUrl($state, now()->addMinutes(5));
-                                        $filename = basename($state);
-                                        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+                InfolistSection::make('Berkas Terlampir') // Sesuaikan label
+                    ->schema(function (Permohonan $record) { // Gunakan skema dinamis dari resource warga
+                        $berkasFields = [];
+                        if (is_array($record->berkas_pemohon)) {
+                            foreach ($record->berkas_pemohon as $index => $berkas) {
+                                // Pastikan 'path_dokumen' dan 'nama_dokumen' ada di array berkas
+                                if (empty($berkas['path_dokumen'])) continue;
 
-                                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])) {
-                                            return new HtmlString("<a href='{$url}' target='_blank'><img src='{$url}' class='w-20 h-auto rounded' alt='{$filename}'></a>");
-                                        }
-                                        return new HtmlString("<a href='{$url}' target='_blank' class='text-primary-600 hover:underline'>{$filename}</a>");
-                                    }),
-                            ])->columnSpanFull()
-                    ]),
+                                $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen") // Menggunakan nama_dokumen
+                                    ->label('Nama Dokumen')
+                                    ->url(fn() => route('secure.download', [
+                                        'permohonan_id' => $record->id,
+                                        'path' => $berkas['path_dokumen']
+                                    ]), true) // true untuk membuka di tab baru
+                                    ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)') // Tampilkan nama dan teks unduh
+                                    ->icon('heroicon-m-arrow-down-tray'); // Ikon unduh
+                            }
+                        }
+                        return $berkasFields;
+                    })->columns(2), // Sesuaikan columns seperti di resource warga
             ]);
     }
 
