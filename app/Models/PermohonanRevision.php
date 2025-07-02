@@ -38,7 +38,6 @@ class PermohonanRevision extends Model
     {
         static::creating(function (PermohonanRevision $revision) {
             if (empty($revision->revision_number)) {
-                // Auto-increment revision number per permohonan
                 $lastRevision = static::where('permohonan_id', $revision->permohonan_id)
                     ->max('revision_number');
                 $revision->revision_number = ($lastRevision ?? 0) + 1;
