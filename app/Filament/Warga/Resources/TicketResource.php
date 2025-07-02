@@ -5,6 +5,7 @@ namespace App\Filament\Warga\Resources;
 use App\Filament\Warga\Resources\TicketResource\Pages;
 use App\Models\Ticket;
 use App\Models\Permohonan;
+use App\Models\Layanan;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -29,38 +30,93 @@ class TicketResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('permohonan_id')
-                    ->label('Permohonan Terkait')
-                    ->options(function () {
-                        return Permohonan::where('user_id', Auth::id())
-                            ->with('layanan')
-                            ->get()
-                            ->mapWithKeys(function ($permohonan) {
-                                return [$permohonan->id => $permohonan->kode_permohonan . ' - ' . $permohonan->layanan->name];
-                            });
-                    })
-                    ->searchable()
-                    ->preload()
-                    ->default(fn () => request()->query('permohonan_id')),
+                // Pilihan: Buat tiket berdasarkan permohonan yang sudah ada ATAU berdasarkan jenis layanan saja
+                Forms\Components\Tabs::make('ticket_type')
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('permohonan_existing')
+                            ->label('Terkait Permohonan Saya')
+                            ->icon('heroicon-o-bookmark')
+                            ->schema([
+                                Forms\Components\Select::make('permohonan_id')
+                                    ->label('Pilih Permohonan')
+                                    ->options(function () {
+                                        return Permohonan::where('user_id', Auth::id())
+                                            ->with('layanan')
+                                            ->get()
+                                            ->mapWithKeys(function ($permohonan) {
+                            // Ambil jenis permohonan dari data_pemohon
+                                            $jenisPermohonan = $permohonan->data_pemohon['jenis_permohonan'] ?? 'Tidak ada jenis permohonan';
+                            
+                                            return [
+                                                $permohonan->id => $permohonan->kode_permohonan . ' - ' . $jenisPermohonan
+                                            ];
+                                            });
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->default(fn () => request()->query('permohonan_id'))
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        if ($state) {
+                                            $permohonan = Permohonan::find($state);
+                                            if ($permohonan && $permohonan->layanan) {
+                                                $set('layanan_id', $permohonan->layanan->id);
+                                            }
+                                        }
+                                    })
+                                    ->helperText('Pilih permohonan yang sudah Anda ajukan sebelumnya'),
+                            ]),
+                        
+                        Forms\Components\Tabs\Tab::make('layanan_general')
+                            ->label('Pertanyaan Umum Layanan')
+                            ->icon('heroicon-s-question-mark-circle')
+                            ->schema([
+                                Forms\Components\Select::make('layanan_id')
+                                    ->label('Jenis Layanan')
+                                    ->options(function () {
+                                        return Layanan::where('is_active', true)
+                                            ->with('kategoriLayanan')
+                                            ->get()
+                                            ->mapWithKeys(function ($layanan) {
+                                                return [$layanan->id => $layanan->kategoriLayanan->name . ' - ' . $layanan->name];
+                                            });
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        // Reset permohonan_id jika user memilih layanan langsung
+                                        $set('permohonan_id', null);
+                                    })
+                                    ->helperText('Pilih jenis layanan yang ingin Anda tanyakan'),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+
+                // Hidden field untuk layanan_id (akan terisi otomatis)
+                Forms\Components\Hidden::make('layanan_id'),
 
                 Forms\Components\TextInput::make('subject')
                     ->label('Judul Tiket')
                     ->required()
                     ->maxLength(255)
-                    ->placeholder('Ringkas masalah Anda dalam satu kalimat'),
+                    ->placeholder('Ringkas masalah atau pertanyaan Anda')
+                    ->helperText('Contoh: "Kesulitan upload dokumen KTP" atau "Status permohonan tidak berubah"'),
 
                 Forms\Components\Textarea::make('description')
                     ->label('Deskripsi Masalah')
                     ->required()
                     ->rows(5)
-                    ->placeholder('Jelaskan masalah atau pertanyaan Anda secara detail...'),
+                    ->placeholder('Jelaskan masalah atau pertanyaan Anda secara detail...')
+                    ->helperText('Semakin detail penjelasan Anda, semakin cepat kami dapat membantu'),
 
                 Forms\Components\Select::make('priority')
                     ->label('Prioritas')
                     ->options(Ticket::PRIORITY_OPTIONS)
                     ->default('medium')
                     ->required()
-                    ->native(false),
+                    ->native(false)
+                    ->helperText('Pilih tingkat urgensi masalah Anda'),
             ]);
     }
 
@@ -77,7 +133,13 @@ class TicketResource extends Resource
                 Tables\Columns\TextColumn::make('permohonan.kode_permohonan')
                     ->label('Kode Permohonan')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->default('Pertanyaan Umum')
+                    ->description(fn (Ticket $record): string => 
+                        $record->permohonan 
+                            ? 'Terkait permohonan spesifik' 
+                            : ($record->layanan ? 'Tentang: ' . $record->layanan->name : 'Umum')
+                    ),
 
                 Tables\Columns\TextColumn::make('subject')
                     ->label('Judul')
@@ -134,6 +196,17 @@ class TicketResource extends Resource
                 Tables\Filters\SelectFilter::make('priority')
                     ->options(Ticket::PRIORITY_OPTIONS)
                     ->native(false),
+                Tables\Filters\SelectFilter::make('layanan_id')
+                    ->label('Jenis Layanan')
+                    ->options(function () {
+                        return Layanan::where('is_active', true)
+                            ->with('kategoriLayanan')
+                            ->get()
+                            ->mapWithKeys(function ($layanan) {
+                                return [$layanan->id => $layanan->kategoriLayanan->name . ' - ' . $layanan->name];
+                            });
+                    })
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -149,7 +222,12 @@ class TicketResource extends Resource
                     ->columns(3)
                     ->schema([
                         TextEntry::make('kode_tiket')->label('Kode Tiket'),
-                        TextEntry::make('permohonan.kode_permohonan')->label('Kode Permohonan'),
+                        TextEntry::make('permohonan.kode_permohonan')
+                            ->label('Kode Permohonan')
+                            ->default('Pertanyaan Umum'),
+                        TextEntry::make('layanan.name')
+                            ->label('Jenis Layanan')
+                            ->default('Umum'),
                         TextEntry::make('subject')->label('Judul'),
                         TextEntry::make('status')
                             ->label('Status')

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIMANTAP - Layanan Administrasi Digital Terpadu Simalungun</title>
 
-    <link rel="stylesheet" href="/css/app.css">
+    @vite('resources/css/app.css')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,15 +81,13 @@
                     </div>
                     
                     <h1 class="text-5xl lg:text-7xl font-bold mb-8 leading-tight">
-                        <span class="text-gray-900">Transformasi</span>
+                        <span class="gradient-text">Simalungun</span>
                         <br>
-                        <span class="gradient-text">Layanan Administrasi</span>
-                        <br>
-                        <span class="text-gray-700">Terpadu Simalungun</span>
+                        <span class="text-gray-800">Administrasi Terpadu</span>
                     </h1>
                     
                     <p class="text-xl lg:text-2xl text-gray-600 mb-12 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                        Revolusi layanan administrasi dengan teknologi AI dan cloud computing untuk pengalaman yang seamless dan efisien.
+                        Layanan administrasi digital yang mudah dan cepat untuk masyarakat Kabupaten Simalungun.
                     </p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 mb-12">
@@ -102,12 +100,12 @@
                                 Mulai Sekarang
                             </span>
                         </a>
-                        <a href="#demo" class="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-gray-200/50 hover:bg-white hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">
+                        <a href="/service" class="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-gray-200/50 hover:bg-white hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">
                             <span class="flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4V8a3 3 0 013-3h6a3 3 0 013 3v2M7 21h10a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
-                                Lihat Demo
+                                Lihat Layanan
                             </span>
                         </a>
                     </div>
@@ -329,7 +327,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-1a4 4 0 11-8 0 4 4 0 018 0z"/>
                             </svg>
                         </div>
-                        <div class="text-4xl lg:text-5xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">15.000+</div>
+                        <div class="text-4xl lg:text-5xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">10.000+</div>
                         <div class="text-emerald-200 font-medium">Pengguna Terdaftar</div>
                     </div>
                 </div>
@@ -362,7 +360,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
-                        <div class="text-4xl lg:text-5xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">24 Jam</div>
+                        <div class="text-4xl lg:text-5xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">24 jam</div>
                         <div class="text-emerald-200 font-medium">Waktu Proses Rata-rata</div>
                     </div>
                 </div>
@@ -489,14 +487,6 @@
                         Daftar Gratis Sekarang
                     </span>
                 </a>
-                <a href="#demo" class="group px-10 py-5 border-2 border-white/30 text-white font-bold rounded-2xl backdrop-blur-sm hover:bg-white/10 hover:border-white/50 transform hover:-translate-y-2 transition-all duration-300">
-                    <span class="flex items-center justify-center text-lg">
-                        <svg class="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4V8a3 3 0 013-3h6a3 3 0 013 3v2M7 21h10a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        Lihat Demo Interaktif
-                    </span>
-                </a>
             </div>
             
             <div class="flex flex-wrap justify-center items-center gap-12 text-white/80">
@@ -506,7 +496,7 @@
                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                         </svg>
                     </div>
-                    <span class="font-medium">Gratis Selamanya</span>
+                    <span class="font-medium">Gratis</span>
                 </div>
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-emerald-400 rounded-full flex items-center justify-center mr-3">
@@ -514,7 +504,7 @@
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
                     </div>
-                    <span class="font-medium">Setup 2 Menit</span>
+                    <span class="font-medium">Aman</span>
                 </div>
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-emerald-400 rounded-full flex items-center justify-center mr-3">

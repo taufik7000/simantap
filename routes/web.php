@@ -38,3 +38,10 @@ Route::get('/secure-download', [BerkasController::class, 'download'])
 Route::get('/download-formulir-master/{formulirMaster}', [BerkasController::class, 'downloadMaster'])
     ->middleware('auth') // Hanya untuk pengguna yang sudah login
     ->name('formulir-master.download');
+
+// Berkas Revisi
+Route::middleware(['auth'])->group(function () {
+    // Route download berkas revisi
+    Route::get('/download/revision', [BerkasController::class, 'downloadRevision'])
+        ->name('secure.download.revision');
+});

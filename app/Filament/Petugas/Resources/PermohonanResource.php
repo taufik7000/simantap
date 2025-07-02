@@ -375,10 +375,11 @@ class PermohonanResource extends Resource
                     })->columns(2),
             ]);
     }
-
-    public static function getRelations(): array
+    public static function getRelationManagers(): array
     {
-        return [];
+        return [
+            RelationManagers\RevisionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

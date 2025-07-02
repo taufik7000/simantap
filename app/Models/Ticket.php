@@ -14,6 +14,7 @@ class Ticket extends Model
     protected $fillable = [
         'kode_tiket',
         'permohonan_id',
+        'layanan_id',
         'user_id',
         'subject',
         'description',
@@ -21,6 +22,7 @@ class Ticket extends Model
         'priority',
         'assigned_to',
         'resolved_at',
+        'internal_notes',
     ];
 
     protected $casts = [
@@ -69,6 +71,14 @@ class Ticket extends Model
 
                 $ticket->kode_tiket = $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
             }
+
+            // Auto-set layanan_id dari permohonan jika permohonan_id ada
+            if ($ticket->permohonan_id && !$ticket->layanan_id) {
+                $permohonan = \App\Models\Permohonan::find($ticket->permohonan_id);
+                if ($permohonan) {
+                    $ticket->layanan_id = $permohonan->layanan_id;
+                }
+            }
         });
 
         // Log perubahan status untuk audit trail
@@ -95,6 +105,14 @@ class Ticket extends Model
     public function permohonan(): BelongsTo
     {
         return $this->belongsTo(Permohonan::class);
+    }
+
+    /**
+     * Relasi ke layanan (jenis layanan)
+     */
+    public function layanan(): BelongsTo
+    {
+        return $this->belongsTo(Layanan::class, 'layanan_id');
     }
 
     /**
@@ -182,6 +200,22 @@ class Ticket extends Model
     }
 
     /**
+     * Scope untuk tiket berdasarkan layanan
+     */
+    public function scopeByLayanan($query, $layananId)
+    {
+        return $query->where('layanan_id', $layananId);
+    }
+
+    /**
+     * Scope untuk tiket berdasarkan prioritas
+     */
+    public function scopeByPriority($query, $priority)
+    {
+        return $query->where('priority', $priority);
+    }
+
+    /**
      * Cek apakah tiket masih aktif
      */
     public function isActive(): bool
@@ -206,5 +240,58 @@ class Ticket extends Model
             ->where('user_id', '!=', $userId)
             ->whereNull('read_at')
             ->count();
+    }
+
+    /**
+     * Mendapatkan kategori tiket untuk display
+     */
+    public function getCategoryDisplayAttribute(): string
+    {
+        if ($this->permohonan) {
+            return 'Permohonan: ' . $this->permohonan->kode_permohonan;
+        } elseif ($this->layanan) {
+            return 'Layanan: ' . $this->layanan->name;
+        }
+        return 'Pertanyaan Umum';
+    }
+
+    /**
+     * Mendapatkan deskripsi lengkap kategori
+     */
+    public function getCategoryDescriptionAttribute(): string
+    {
+        if ($this->permohonan) {
+            return "Terkait permohonan {$this->permohonan->kode_permohonan} - {$this->permohonan->layanan->name}";
+        } elseif ($this->layanan) {
+            return "Pertanyaan umum tentang {$this->layanan->kategoriLayanan->name} - {$this->layanan->name}";
+        }
+        return 'Pertanyaan umum';
+    }
+
+    /**
+     * Cek apakah tiket dapat ditutup
+     */
+    public function canBeClosed(): bool
+    {
+        return in_array($this->status, ['resolved']);
+    }
+
+    /**
+     * Cek apakah tiket dapat dibuka kembali
+     */
+    public function canBeReopened(): bool
+    {
+        return in_array($this->status, ['resolved', 'closed']);
+    }
+
+    /**
+     * Mendapatkan durasi resolusi tiket
+     */
+    public function getResolutionTimeAttribute(): ?int
+    {
+        if ($this->resolved_at && $this->created_at) {
+            return $this->created_at->diffInHours($this->resolved_at);
+        }
+        return null;
     }
 }

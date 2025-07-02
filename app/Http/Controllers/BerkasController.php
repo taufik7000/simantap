@@ -58,4 +58,32 @@ class BerkasController extends Controller
 
         return Storage::disk('private')->download($formulirMaster->file_path);
     }
+
+    public function downloadRevision(Request $request): StreamedResponse|\Illuminate\Http\Response
+    {
+    $revisionId = $request->query('revision_id');
+    $filePath = $request->query('path');
+
+    if (!$revisionId || !$filePath) {
+        abort(404, 'Permintaan tidak valid.');
+    }
+
+    $revision = PermohonanRevision::findOrFail($revisionId);
+    $user = Auth::user();
+
+    // Cek akses: pemilik revisi atau petugas
+    if ($user->id !== $revision->user_id && !$user->hasRole(['petugas', 'kadis', 'admin'])) {
+        abort(403, 'Anda tidak memiliki hak akses untuk berkas ini.');
+    }
+
+    // Pastikan path file ada di record revisi
+    $berkasRevisi = collect($revision->berkas_revisi);
+    $berkasValid = $berkasRevisi->firstWhere('path_dokumen', $filePath);
+
+    if (!$berkasValid) {
+        abort(404, 'Berkas tidak ditemukan pada revisi ini.');
+    }
+
+    return Storage::disk('private')->download($filePath);
+    }
 }

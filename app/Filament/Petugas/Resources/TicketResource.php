@@ -5,6 +5,7 @@ namespace App\Filament\Petugas\Resources;
 use App\Filament\Petugas\Resources\TicketResource\Pages;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Layanan;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -41,6 +42,11 @@ class TicketResource extends Resource
 
                                 Forms\Components\TextInput::make('permohonan.kode_permohonan')
                                     ->label('Kode Permohonan')
+                                    ->disabled()
+                                    ->placeholder('Tiket Umum'),
+
+                                Forms\Components\TextInput::make('layanan.name')
+                                    ->label('Jenis Layanan')
                                     ->disabled(),
 
                                 Forms\Components\TextInput::make('subject')
@@ -117,10 +123,19 @@ class TicketResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('permohonan.kode_permohonan')
-                    ->label('Kode Permohonan')
+                Tables\Columns\TextColumn::make('category_display')
+                    ->label('Kategori')
+                    ->getStateUsing(function (Ticket $record): string {
+                        if ($record->permohonan) {
+                            return $record->permohonan->kode_permohonan;
+                        } elseif ($record->layanan) {
+                            return $record->layanan->kategoriLayanan->name . ' - ' . $record->layanan->name;
+                        }
+                        return 'Pertanyaan Umum';
+                    })
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('subject')
                     ->label('Judul')
@@ -182,6 +197,17 @@ class TicketResource extends Resource
                             ->pluck('name', 'id');
                     })
                     ->label('Ditugaskan Ke')
+                    ->searchable(),
+                Tables\Filters\SelectFilter::make('layanan_id')
+                    ->label('Jenis Layanan')
+                    ->options(function () {
+                        return Layanan::where('is_active', true)
+                            ->with('kategoriLayanan')
+                            ->get()
+                            ->mapWithKeys(function ($layanan) {
+                                return [$layanan->id => $layanan->kategoriLayanan->name . ' - ' . $layanan->name];
+                            });
+                    })
                     ->searchable(),
             ])
             ->actions([
@@ -253,7 +279,12 @@ class TicketResource extends Resource
                     ->schema([
                         TextEntry::make('kode_tiket')->label('Kode Tiket'),
                         TextEntry::make('user.name')->label('Pemohon'),
-                        TextEntry::make('permohonan.kode_permohonan')->label('Kode Permohonan'),
+                        TextEntry::make('permohonan.kode_permohonan')
+                            ->label('Kode Permohonan')
+                            ->default('Tiket Umum'),
+                        TextEntry::make('layanan.name')
+                            ->label('Jenis Layanan')
+                            ->default('Umum'),
                         TextEntry::make('subject')->label('Judul')->columnSpanFull(),
                         TextEntry::make('status')
                             ->label('Status')
