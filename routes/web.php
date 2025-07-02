@@ -5,15 +5,10 @@ use App\Livewire\UnifiedLoginPage;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BerkasController;
-use App\Http\Controllers\WebsiteController;
 
 
-Route::get('/', [WebsiteController::class, 'home'])->name('website.home');
-Route::get('/page/{slug}', [WebsiteController::class, 'showPage'])->name('website.page');
-
-
-Route::prefix('api/website')->group(function () {
-    Route::get('/content/{pageKey}', [WebsiteController::class, 'getContent'])->name('api.website.content');
+Route::get('/', function () {
+    return view('home');
 });
 
 // Route untuk menampilkan form login
