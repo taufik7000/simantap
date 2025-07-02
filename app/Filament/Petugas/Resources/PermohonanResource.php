@@ -30,7 +30,9 @@ use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Infolist;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Storage;
-
+use Filament\Tables\Actions\Action;
+use Filament\Forms\Components\Markdown;
+use Filament\Notifications\Notification;
 
 class PermohonanResource extends Resource
 {
@@ -44,9 +46,8 @@ class PermohonanResource extends Resource
     protected static ?string $modelLabel = 'Permohonan';
     protected static ?string $pluralModelLabel = 'Permohonan-Permohonan';
 
-
     public static function form(Form $form): Form
-    {
+    { 
         return $form
             ->schema([
                 Forms\Components\Group::make()
@@ -98,11 +99,11 @@ class PermohonanResource extends Resource
                                         TextInput::make('name')
                                             ->label('Nama Berkas')
                                             ->readOnly(),
-                                        FileUpload::make('path_dokumen') // Menggunakan path_dokumen
+                                        FileUpload::make('path_dokumen')
                                             ->label('File')
                                             ->disabled()
                                             ->disk('private')
-                                            ->directory('berkas-permohonan') // PERBAIKAN: Tambahkan ini untuk konsistensi
+                                            ->directory('berkas-permohonan')
                                             ->visibility('private')
                                             ->downloadable()
                                             ->openable()
@@ -123,21 +124,44 @@ class PermohonanResource extends Resource
                                     ->label('Status Permohonan')
                                     ->options([
                                         'baru' => 'Baru Diajukan',
+                                        'sedang_ditinjau' => 'Sedang Ditinjau',
                                         'verifikasi_berkas' => 'Verifikasi Berkas',
                                         'diproses' => 'Sedang Diproses',
                                         'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                                        'butuh_perbaikan' => 'Butuh Perbaikan',
                                         'disetujui' => 'Disetujui',
                                         'ditolak' => 'Ditolak',
                                         'selesai' => 'Selesai',
                                     ])
                                     ->required()
                                     ->native(false)
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->live() // Membuat field reactive
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        // Auto-fill catatan berdasarkan status
+                                        match($state) {
+                                            'sedang_ditinjau' => $set('catatan_petugas', 'Permohonan sedang dalam tahap peninjauan oleh petugas.'),
+                                            'verifikasi_berkas' => $set('catatan_petugas', 'Sedang melakukan verifikasi kelengkapan berkas.'),
+                                            'membutuhkan_revisi' => $set('catatan_petugas', 'Permohonan membutuhkan revisi. Silakan periksa keterangan lebih lanjut.'),
+                                            'butuh_perbaikan' => $set('catatan_petugas', 'Dokumen atau data perlu diperbaiki sebelum dapat diproses lebih lanjut.'),
+                                            'ditolak' => $set('catatan_petugas', 'Permohonan tidak dapat disetujui. Alasan: '),
+                                            default => null
+                                        };
+                                    }),
+                                
                                 Textarea::make('catatan_petugas')
                                     ->label('Catatan Petugas')
                                     ->placeholder('Tambahkan catatan internal mengenai permohonan ini...')
                                     ->rows(5)
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->required(fn (Forms\Get $get) => 
+                                        in_array($get('status'), ['membutuhkan_revisi', 'butuh_perbaikan', 'ditolak'])
+                                    )
+                                    ->helperText(fn (Forms\Get $get) => 
+                                        in_array($get('status'), ['membutuhkan_revisi', 'butuh_perbaikan', 'ditolak']) 
+                                            ? 'Catatan wajib diisi untuk status ini.' 
+                                            : 'Catatan opsional untuk dokumentasi internal.'
+                                    ),
                             ]),
                     ])->columnSpan(1),
             ])->columns(3);
@@ -150,7 +174,8 @@ class PermohonanResource extends Resource
                 TextColumn::make('kode_permohonan')
                     ->label('Kode Permohonan')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->copyable(),
                 TextColumn::make('user.name')
                     ->label('Warga')
                     ->searchable()
@@ -158,19 +183,34 @@ class PermohonanResource extends Resource
                 TextColumn::make('layanan.name')
                     ->label('Jenis Layanan')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->wrap(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'baru' => 'info',
+                        'baru' => 'gray',
+                        'sedang_ditinjau' => 'info',
                         'verifikasi_berkas' => 'warning',
                         'diproses' => 'info',
                         'membutuhkan_revisi' => 'danger',
+                        'butuh_perbaikan' => 'danger',
                         'disetujui' => 'success',
                         'ditolak' => 'danger',
                         'selesai' => 'primary',
                         default => 'secondary',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'baru' => 'Baru Diajukan',
+                        'sedang_ditinjau' => 'Sedang Ditinjau',
+                        'verifikasi_berkas' => 'Verifikasi Berkas',
+                        'diproses' => 'Sedang Diproses',
+                        'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                        'butuh_perbaikan' => 'Butuh Perbaikan',
+                        'disetujui' => 'Disetujui',
+                        'ditolak' => 'Ditolak',
+                        'selesai' => 'Selesai',
+                        default => $state,
                     })
                     ->sortable(),
                 TextColumn::make('created_at')
@@ -178,14 +218,21 @@ class PermohonanResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('updated_at')
+                    ->label('Terakhir Diupdate')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')
                     ->options([
                         'baru' => 'Baru Diajukan',
+                        'sedang_ditinjau' => 'Sedang Ditinjau',
                         'verifikasi_berkas' => 'Verifikasi Berkas',
                         'diproses' => 'Sedang Diproses',
                         'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                        'butuh_perbaikan' => 'Butuh Perbaikan',
                         'disetujui' => 'Disetujui',
                         'ditolak' => 'Ditolak',
                         'selesai' => 'Selesai',
@@ -199,12 +246,101 @@ class PermohonanResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                
+                // Action khusus untuk update status cepat
+                Action::make('updateStatus')
+                    ->label('Update Status')
+                    ->icon('heroicon-m-pencil-square')
+                    ->color('warning')
+                    ->form([
+                        Select::make('status')
+                            ->label('Status Baru')
+                            ->options([
+                                'baru' => 'Baru Diajukan',
+                                'sedang_ditinjau' => 'Sedang Ditinjau',
+                                'verifikasi_berkas' => 'Verifikasi Berkas',
+                                'diproses' => 'Sedang Diproses',
+                                'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                                'butuh_perbaikan' => 'Butuh Perbaikan',
+                                'disetujui' => 'Disetujui',
+                                'ditolak' => 'Ditolak',
+                                'selesai' => 'Selesai',
+                            ])
+                            ->required()
+                            ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                // Auto-fill catatan berdasarkan status
+                                match($state) {
+                                    'sedang_ditinjau' => $set('catatan_petugas', 'Permohonan sedang dalam tahap peninjauan oleh petugas.'),
+                                    'verifikasi_berkas' => $set('catatan_petugas', 'Sedang melakukan verifikasi kelengkapan berkas.'),
+                                    'membutuhkan_revisi' => $set('catatan_petugas', 'Permohonan membutuhkan revisi. Silakan periksa keterangan lebih lanjut.'),
+                                    'butuh_perbaikan' => $set('catatan_petugas', 'Dokumen atau data perlu diperbaiki sebelum dapat diproses lebih lanjut.'),
+                                    'ditolak' => $set('catatan_petugas', 'Permohonan tidak dapat disetujui. Alasan: '),
+                                    default => null
+                                };
+                            }),
+                        Textarea::make('catatan_petugas')
+                            ->label('Catatan Petugas')
+                            ->required(fn (Forms\Get $get) => 
+                                in_array($get('status'), ['membutuhkan_revisi', 'butuh_perbaikan', 'ditolak'])
+                            )
+                            ->rows(3),
+                    ])
+                    ->action(function (Permohonan $record, array $data): void {
+                        $record->update([
+                            'status' => $data['status'],
+                            'catatan_petugas' => $data['catatan_petugas'],
+                        ]);
+
+                        Notification::make()
+                            ->title('Status berhasil diupdate')
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Update Status Permohonan')
+                    ->modalSubmitActionLabel('Update Status'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    
+                    // Bulk action untuk update status multiple permohonan
+                    Tables\Actions\BulkAction::make('bulkUpdateStatus')
+                        ->label('Update Status')
+                        ->icon('heroicon-m-pencil-square')
+                        ->color('warning')
+                        ->form([
+                            Select::make('status')
+                                ->label('Status Baru')
+                                ->options([
+                                    'sedang_ditinjau' => 'Sedang Ditinjau',
+                                    'verifikasi_berkas' => 'Verifikasi Berkas',
+                                    'diproses' => 'Sedang Diproses',
+                                ])
+                                ->required()
+                                ->native(false),
+                            Textarea::make('catatan_petugas')
+                                ->label('Catatan Petugas')
+                                ->rows(3),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
+                            $records->each(function (Permohonan $record) use ($data) {
+                                $record->update([
+                                    'status' => $data['status'],
+                                    'catatan_petugas' => $data['catatan_petugas'],
+                                ]);
+                            });
+
+                            Notification::make()
+                                ->title('Status berhasil diupdate untuk ' . $records->count() . ' permohonan')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -212,67 +348,92 @@ class PermohonanResource extends Resource
         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')
-                    ->columns(3) // Tambahkan columns(3) seperti di resource warga
+                    ->columns(3)
                     ->schema([
                         TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
-                        // Menggunakan Layanan.name karena ada relasi ke Layanan
+                        TextEntry::make('user.name')->label('Nama Warga'),
                         TextEntry::make('layanan.name')->label('Jenis Layanan'),
-                        // Asumsi data_pemohon memiliki 'jenis_permohonan'
                         TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
                         TextEntry::make('status')
+                            ->label('Status Permohonan')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
-                                'baru' => 'gray', // Atau info jika ingin warna biru/cyan
+                                'baru' => 'gray',
+                                'sedang_ditinjau' => 'info',
                                 'verifikasi_berkas' => 'warning',
-                                'diproses' => 'warning',
+                                'diproses' => 'info',
                                 'membutuhkan_revisi' => 'danger',
+                                'butuh_perbaikan' => 'danger',
                                 'disetujui' => 'success',
                                 'ditolak' => 'danger',
                                 'selesai' => 'primary',
-                                default => 'gray',
+                                default => 'secondary',
+                            })
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'baru' => 'Baru Diajukan',
+                                'sedang_ditinjau' => 'Sedang Ditinjau',
+                                'verifikasi_berkas' => 'Verifikasi Berkas',
+                                'diproses' => 'Sedang Diproses',
+                                'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                                'butuh_perbaikan' => 'Butuh Perbaikan',
+                                'disetujui' => 'Disetujui',
+                                'ditolak' => 'Ditolak',
+                                'selesai' => 'Selesai',
+                                default => $state,
                             }),
-                        TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull(), // Pastikan ini tetap ada jika diperlukan
+                        TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull(),
                         TextEntry::make('created_at')->label('Tanggal Pengajuan')->dateTime(),
                         TextEntry::make('updated_at')->label('Terakhir Diperbarui')->dateTime(),
                     ]),
 
-                InfolistSection::make('Data Detail Pemohon')
+                // Detail Data Diri Pemohon
+                InfolistSection::make('Detail Data Diri Pemohon')
+                    ->columns(3)
                     ->schema([
-                        KeyValueEntry::make('data_pemohon') // Kembali ke KeyValueEntry
-                            ->keyLabel('Field Data')
-                            ->valueLabel('Nilai Data')
-                            ->columnSpanFull(),
+                        TextEntry::make('user.nik')->label('NIK'),
+                        TextEntry::make('user.nomor_kk')->label('Nomor KK'),
+                        TextEntry::make('user.nomor_whatsapp')->label('Nomor WhatsApp'),
+                        TextEntry::make('user.jenis_kelamin')->label('Jenis Kelamin'),
+                        TextEntry::make('user.agama')->label('Agama'),
+                        TextEntry::make('user.tempat_lahir')->label('Tempat Lahir'),
+                        TextEntry::make('user.tanggal_lahir')->label('Tanggal Lahir')->date(),
+                        TextEntry::make('user.gol_darah')->label('Golongan Darah'),
+                        TextEntry::make('user.alamat')->label('Alamat Lengkap')->columnSpanFull(),
+                        TextEntry::make('user.rt_rw')->label('RT/RW'),
+                        TextEntry::make('user.desa_kelurahan')->label('Desa/Kelurahan'),
+                        TextEntry::make('user.kecamatan')->label('Kecamatan'),
+                        TextEntry::make('user.kabupaten')->label('Kabupaten'),
+                        TextEntry::make('user.status_keluarga')->label('Status dalam Keluarga'),
+                        TextEntry::make('user.status_perkawinan')->label('Status Perkawinan'),
+                        TextEntry::make('user.pekerjaan')->label('Pekerjaan'),
+                        TextEntry::make('user.pendidikan')->label('Pendidikan Terakhir'),
                     ]),
 
-                InfolistSection::make('Berkas Terlampir') // Sesuaikan label
-                    ->schema(function (Permohonan $record) { // Gunakan skema dinamis dari resource warga
+                InfolistSection::make('Berkas Permohonan')
+                    ->schema(function (Permohonan $record) {
                         $berkasFields = [];
                         if (is_array($record->berkas_pemohon)) {
                             foreach ($record->berkas_pemohon as $index => $berkas) {
-                                // Pastikan 'path_dokumen' dan 'nama_dokumen' ada di array berkas
                                 if (empty($berkas['path_dokumen'])) continue;
 
-                                $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen") // Menggunakan nama_dokumen
+                                $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen")
                                     ->label('Nama Dokumen')
                                     ->url(fn() => route('secure.download', [
                                         'permohonan_id' => $record->id,
                                         'path' => $berkas['path_dokumen']
-                                    ]), true) // true untuk membuka di tab baru
-                                    ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)') // Tampilkan nama dan teks unduh
-                                    ->icon('heroicon-m-arrow-down-tray'); // Ikon unduh
+                                    ]), true)
+                                    ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)')
+                                    ->icon('heroicon-m-arrow-down-tray');
                             }
                         }
                         return $berkasFields;
-                    })->columns(2), // Sesuaikan columns seperti di resource warga
+                    })->columns(2),
             ]);
     }
 
-
     public static function getRelations(): array
     {
-        return [
-
-        ];
+        return [];
     }
 
     public static function getPages(): array
