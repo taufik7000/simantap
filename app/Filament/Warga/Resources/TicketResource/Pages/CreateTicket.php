@@ -30,12 +30,6 @@ class CreateTicket extends CreateRecord
             ->body("Tiket Anda dengan kode {$ticket->kode_tiket} telah berhasil dibuat. Tim support kami akan segera merespon.")
             ->success()
             ->sendToDatabase(Auth::user());
-
-        // Log aktivitas
-        activity()
-            ->performedOn($ticket)
-            ->causedBy(Auth::user())
-            ->log('Tiket baru dibuat dengan kode: ' . $ticket->kode_tiket);
     }
 
     protected function getRedirectUrl(): string
