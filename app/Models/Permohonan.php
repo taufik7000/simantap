@@ -173,4 +173,24 @@ class Permohonan extends Model
     {
         return $query->whereIn('status', ['ditolak', 'membutuhkan_revisi', 'butuh_perbaikan']);
     }
+
+    // Relasi ke tiket yang terkait dengan permohonan
+    public function tickets(): HasMany
+    {
+    return $this->hasMany(Ticket::class);
+    }
+
+    // Mendapatkan tiket aktif untuk permohonan
+    public function activeTickets(): HasMany
+    {
+    return $this->hasMany(Ticket::class)->whereIn('status', ['open', 'in_progress']);
+    }
+
+    // Cek apakah permohonan memiliki tiket aktif
+    public function hasActiveTickets(): bool
+    {
+    return $this->activeTickets()->exists();
+    }
+
+
 }

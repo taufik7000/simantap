@@ -118,4 +118,24 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->name ?? $this->email;
     }
+
+    //Relasi baru terkait tiket atau chat
+    // tiket yang dibuat user
+    public function tickets(): HasMany
+    {
+    return $this->hasMany(Ticket::class);
+    }
+
+    // Relasi ke tiket yang ditugaskan ke user
+    public function assignedTickets(): HasMany
+    {
+    return $this->hasMany(Ticket::class, 'assigned_to');
+    }
+
+    // tiket yang dikirim kepada user
+    public function ticketMessages(): HasMany
+    {
+    return $this->hasMany(TicketMessage::class);
+    }
+    
 }
