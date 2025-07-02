@@ -29,6 +29,7 @@ class LayananResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Manajemen Layanan';
     protected static ?string $pluralModelLabel = 'Layanan Tersedia';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -47,7 +48,6 @@ class LayananResource extends Resource
                         Forms\Components\Select::make('icon')
                           ->label('Pilih Ikon')
                          ->options([
-
            // Business & Office
             'heroicon-o-identification' => '<div class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z"></path></svg><span>Identification</span></div>',
             'heroicon-o-credit-card' => '<div class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg><span>Card</span></div>',
@@ -112,22 +112,15 @@ class LayananResource extends Resource
                                     ->options(FormulirMaster::all()->pluck('nama_formulir', 'id'))
                                     ->searchable()
                                     ->preload()
+                                    ->multiple() 
                                     ->placeholder('Tidak ada formulir master'),   
                               ])
                     ->addActionLabel('Tambah Jenis Permohonan')
                     ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? null)
                     ->columnSpanFull()
                     ->collapsible()
-                    ->collapseAllAction(
-                        fn (Action $action) => $action
-                            ->label('Ciutkan Semua')
-                            ->icon('heroicon-m-minus-circle')
-                    )
-                    ->expandAllAction(
-                        fn (Action $action) => $action
-                            ->label('Buka Semua')
-                            ->icon('heroicon-m-plus-circle')
-                    ),
+                    ->collapsed()
+
             ]);
     }
 

@@ -17,7 +17,7 @@ class Permohonan extends Model
      */
     protected $fillable = [
         'user_id',
-        'sub_layanan_id',
+        'layanan_id',
         'data_pemohon',
         'berkas_pemohon',
         'status',

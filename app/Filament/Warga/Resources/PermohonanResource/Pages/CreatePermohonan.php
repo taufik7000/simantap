@@ -8,6 +8,7 @@ use App\Models\Layanan;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection; // Mengimpor Collection untuk kejelasan
 
 class CreatePermohonan extends CreateRecord
 {
@@ -17,30 +18,44 @@ class CreatePermohonan extends CreateRecord
     protected static string $view = 'filament.warga.pages.create-permohonan';
 
     // Properti ini akan kita kirim ke view
-    public Layanan $layanan; // UBAH: Dari SubLayanan menjadi Layanan
+    public Layanan $layanan;
     public array $jenisPermohonanData = [];
 
     public function mount(): void
     {
-        $layananId = request()->query('layanan_id'); // UBAH: 'sub_layanan_id' menjadi 'layanan_id'
+        $layananId = request()->query('layanan_id');
         abort_if(!$layananId, 404);
         
-        $this->layanan = Layanan::findOrFail($layananId); // UBAH: Dari SubLayanan menjadi Layanan
+        $this->layanan = Layanan::findOrFail($layananId);
 
         // Siapkan data untuk dikirim ke view Blade
-        // Menggunakan properti 'description' dari model Layanan
-       if ($this->layanan->description && is_array($this->layanan->description)) { // UBAH: $this->subLayanan menjadi $this->layanan
-            foreach ($this->layanan->description as $syarat) { // UBAH: $this->subLayanan menjadi $this->layanan
-                $formulirId = $syarat['formulir_master_id'] ?? null;
-                // Cari formulir berdasarkan ID untuk mendapatkan namanya
-                $formulir = $formulirId ? FormulirMaster::find($formulirId) : null;
+        if ($this->layanan->description && is_array($this->layanan->description)) {
+            foreach ($this->layanan->description as $syarat) {
+                // 'formulir_master_id' sekarang bisa berupa array ID atau ID tunggal
+                $formulirIds = $syarat['formulir_master_id'] ?? null; 
+
+                $namaFormulirList = [];
+                // PERBAIKAN UTAMA: Periksa apakah ada ID formulir dan proses sebagai array
+                if (!empty($formulirIds)) {
+                    // Pastikan $formulirIds adalah array untuk whereIn(), bahkan jika hanya 1 ID
+                    $formulirIds = (array) $formulirIds; 
+                    
+                    // Ambil semua formulir master yang terkait dalam satu query efisien
+                    $formulirs = FormulirMaster::whereIn('id', $formulirIds)->get();
+
+                    // Kumpulkan nama-nama formulir yang ditemukan
+                    foreach ($formulirs as $formulir) {
+                        $namaFormulirList[] = $formulir->nama_formulir;
+                    }
+                }
 
                 $this->jenisPermohonanData[] = [
                     'nama' => $syarat['nama_syarat'],
                     'deskripsi' => $syarat['deskripsi_syarat'],
-                    'formulir_master_id' => $formulirId,
-                    // Kirim juga nama formulir ke view
-                    'nama_formulir' => $formulir ? $formulir->nama_formulir : null,
+                    // Simpan ID formulir yang dipilih (bisa array atau null)
+                    'formulir_master_id' => $formulirIds, 
+                    // Kirim juga array nama formulir ke view (jika ada)
+                    'nama_formulir' => !empty($namaFormulirList) ? $namaFormulirList : null,
                 ];
             }
         }
@@ -52,7 +67,7 @@ class CreatePermohonan extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = Auth::id();
-        $data['layanan_id'] = $this->layanan->id; // UBAH: 'sub_layanan_id' menjadi 'layanan_id' dan $this->subLayanan menjadi $this->layanan
+        $data['layanan_id'] = $this->layanan->id;
         return $data;
     }
     
