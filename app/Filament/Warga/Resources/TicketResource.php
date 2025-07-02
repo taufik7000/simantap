@@ -39,7 +39,6 @@ class TicketResource extends Resource
                                 return [$permohonan->id => $permohonan->kode_permohonan . ' - ' . $permohonan->layanan->name];
                             });
                     })
-                    ->required()
                     ->searchable()
                     ->preload()
                     ->default(fn () => request()->query('permohonan_id')),
