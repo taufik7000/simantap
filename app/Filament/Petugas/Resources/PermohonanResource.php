@@ -16,10 +16,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\KeyValue; // Untuk menampilkan data_pemohon
-use Filament\Forms\Components\Repeater; // Untuk menampilkan berkas_pemohon
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\FileUpload; // Untuk menampilkan berkas_pemohon
+use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Infolists\Components\TextEntry;
@@ -40,10 +40,7 @@ class PermohonanResource extends Resource
 
     protected static ?string $navigationGroup = 'Manajemen Pelayanan';
 
-    // Label navigasi
     protected static ?string $navigationLabel = 'Permohonan Warga';
-
-    // Label untuk model (singular/plural)
     protected static ?string $modelLabel = 'Permohonan';
     protected static ?string $pluralModelLabel = 'Permohonan-Permohonan';
 
@@ -63,12 +60,12 @@ class PermohonanResource extends Resource
                                 Forms\Components\Select::make('user_id')
                                     ->relationship('user', 'name')
                                     ->label('Diajukan Oleh (Warga)')
-                                    ->readOnly()
+                                    ->disabled()
                                     ->columnSpanFull(),
                                 Forms\Components\Select::make('layanan_id')
                                     ->relationship('layanan', 'name')
                                     ->label('Jenis Layanan')
-                                    ->readOnly()
+                                    ->disabled()
                                     ->columnSpanFull(),
                                 Forms\Components\DateTimePicker::make('created_at')
                                     ->label('Tanggal Pengajuan')
@@ -78,45 +75,38 @@ class PermohonanResource extends Resource
 
                         Section::make('Data Pemohon')
                             ->schema([
-                                // Menggunakan KeyValue untuk menampilkan data_pemohon (JSON)
-                                // Akan lebih baik jika Anda membuat Infolist di ViewPage daripada di sini
-                                // Tapi untuk form Edit, kita hanya ingin data_pemohon ditampilkan readonly
                                 Forms\Components\KeyValue::make('data_pemohon')
                                     ->keyLabel('Field')
                                     ->valueLabel('Nilai')
                                     ->label('Detail Data Pemohon')
-                                    ->disabled() // Tidak bisa diedit di sini
+                                    ->disabled()
                                     ->keyPlaceholder('Nama Field')
                                     ->valuePlaceholder('Nilai Field')
                                     ->columnSpanFull()
-                                    ->hiddenOn('create'), // Hidden di halaman create karena petugas tidak membuat
+                                    ->hiddenOn('create'),
                             ]),
 
                         Section::make('Berkas Pemohon')
                             ->schema([
-                                // Menampilkan berkas_pemohon (JSON array of paths)
-                                // Gunakan Repeater untuk menampilkan setiap berkas
                                 Repeater::make('berkas_pemohon')
                                     ->label('Daftar Berkas')
                                     ->addable(false)
                                     ->deletable(false)
                                     ->collapsible()
-                                    ->itemLabel(fn (array $state): ?string => $state['name'] ?? null) // Menampilkan nama file jika ada
+                                    ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                                     ->schema([
                                         TextInput::make('name')
                                             ->label('Nama Berkas')
                                             ->readOnly(),
-                                        // Asumsi path tersimpan di key 'path'
-                                        // Tampilkan sebagai link download atau preview
                                         FileUpload::make('path')
                                             ->label('File')
-                                            ->readOnly()
-                                            ->disk('public') // Sesuaikan dengan disk penyimpanan Anda
-                                            ->visibility('private') // Atau 'public' jika berkas bisa diakses langsung
+                                            ->disabled()
+                                            ->disk('private') 
+                                            ->visibility('private')
                                             ->downloadable()
                                             ->openable()
                                             ->getUploadedFileNameForStorageUsing(
-                                                fn (string $file): string => $file, // Jangan ubah nama file asli saat menampilkan
+                                                fn (string $file): string => $file,
                                             ),
                                     ])
                                     ->columnSpanFull()
@@ -140,7 +130,7 @@ class PermohonanResource extends Resource
                                         'selesai' => 'Selesai',
                                     ])
                                     ->required()
-                                    ->native(false) // Untuk tampilan lebih modern
+                                    ->native(false)
                                     ->columnSpanFull(),
                                 Textarea::make('catatan_petugas')
                                     ->label('Catatan Petugas')
@@ -170,7 +160,7 @@ class PermohonanResource extends Resource
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge() // Menampilkan status sebagai badge berwarna
+                    ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'baru' => 'info',
                         'verifikasi_berkas' => 'warning',
@@ -186,7 +176,7 @@ class PermohonanResource extends Resource
                     ->label('Tanggal Pengajuan')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false), // Tampilkan secara default
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -208,13 +198,6 @@ class PermohonanResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                // Tambahkan custom action untuk perubahan status cepat jika diinginkan
-                // Tables\Actions\Action::make('approve')
-                //     ->label('Setujui')
-                //     ->color('success')
-                //     ->requiresConfirmation()
-                //     ->action(fn (Permohonan $record) => $record->update(['status' => 'disetujui']))
-                //     ->visible(fn (Permohonan $record): bool => $record->status !== 'disetujui' && $record->status !== 'ditolak'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -223,7 +206,6 @@ class PermohonanResource extends Resource
             ]);
     }
 
-    // Infolist untuk halaman View
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
@@ -253,7 +235,6 @@ class PermohonanResource extends Resource
 
                 InfolistSection::make('Data Detail Pemohon')
                     ->schema([
-                        // Ini akan menampilkan data_pemohon (JSON) sebagai Key-Value pair
                         KeyValueEntry::make('data_pemohon')
                             ->keyLabel('Field Data')
                             ->valueLabel('Nilai Data')
@@ -267,11 +248,10 @@ class PermohonanResource extends Resource
                             ->schema([
                                 TextEntry::make('name')
                                     ->label('Nama Berkas'),
-                                // Menampilkan link download atau preview gambar jika path mengarah ke file
                                 TextEntry::make('path')
                                     ->label('File')
                                     ->formatStateUsing(function (string $state): HtmlString {
-                                        $url = Storage::url($state); // Sesuaikan disk storage Anda
+                                        $url = Storage::disk('private')->temporaryUrl($state, now()->addMinutes(5));
                                         $filename = basename($state);
                                         $extension = pathinfo($filename, PATHINFO_EXTENSION);
 
@@ -289,8 +269,7 @@ class PermohonanResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // Anda bisa menambahkan relation manager di sini di masa depan,
-            // seperti history log permohonan.
+
         ];
     }
 
@@ -298,8 +277,6 @@ class PermohonanResource extends Resource
     {
         return [
             'index' => Pages\ListPermohonans::route('/'),
-            // Petugas tidak perlu membuat permohonan baru
-            // 'create' => Pages\CreatePermohonan::route('/create'),
             'view' => Pages\ViewPermohonan::route('/{record}'),
             'edit' => Pages\EditPermohonan::route('/{record}/edit'),
         ];
@@ -310,7 +287,6 @@ class PermohonanResource extends Resource
         return ['kode_permohonan', 'user.name', 'layanan.name'];
     }
 
-    // Nonaktifkan tombol 'Create' di resource listing page
     public static function canCreate(): bool
     {
         return false;
