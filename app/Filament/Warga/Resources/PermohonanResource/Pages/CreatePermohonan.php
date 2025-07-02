@@ -68,6 +68,7 @@ class CreatePermohonan extends CreateRecord
     {
         $data['user_id'] = Auth::id();
         $data['layanan_id'] = $this->layanan->id;
+        $data['status'] = 'baru';
         return $data;
     }
     

@@ -293,6 +293,7 @@ class PermohonanResource extends Resource
         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')
+                    ->columns(2)
                     ->schema([
                         TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
                         TextEntry::make('user.name')->label('Nama Warga'),
@@ -374,7 +375,7 @@ class PermohonanResource extends Resource
                             }
                         }
                         return $berkasFields;
-                    })->columns(2),
+                    })->columns(1),
             ]);
     }
     public static function getRelationManagers(): array

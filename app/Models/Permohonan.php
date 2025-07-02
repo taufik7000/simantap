@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Auth;
 
 class Permohonan extends Model
 {
@@ -83,19 +84,34 @@ class Permohonan extends Model
             }
         });
 
-        // Event yang berjalan SETELAH data diupdate
-        static::updated(function (Permohonan $permohonan) {
-            // Log perubahan status untuk audit trail
-            if ($permohonan->wasChanged('status')) {
-                \Log::info('Status permohonan berubah', [
-                    'kode_permohonan' => $permohonan->kode_permohonan,
-                    'status_lama' => $permohonan->getOriginal('status'),
-                    'status_baru' => $permohonan->status,
-                    'catatan_petugas' => $permohonan->catatan_petugas,
-                    'updated_by' => auth()->user()?->name ?? 'System',
+        // Saat permohonan BARU DIBUAT, buat log pertamanya
+        static::created(function (Permohonan $permohonan) {
+            $permohonan->logs()->create([
+                'status' => $permohonan->status,
+                'catatan' => 'Permohonan berhasil diajukan oleh warga.',
+                'user_id' => $permohonan->user_id,
+            ]);
+        });
+
+        // Saat permohonan DI-UPDATE, catat perubahan statusnya
+        static::updating(function (Permohonan $permohonan) {
+            // Cek jika kolom 'status' benar-benar berubah
+            if ($permohonan->isDirty('status')) {
+                $permohonan->logs()->create([
+                    'status' => $permohonan->getDirty()['status'],
+                    'catatan' => $permohonan->catatan_petugas ?? 'Status diperbarui.',
+                    'user_id' => Auth::id(), // User yang sedang login (petugas/sistem)
                 ]);
             }
         });
+    }
+    
+    /**
+     * Relasi ke riwayat log.
+     */
+    public function logs(): HasMany
+    {
+        return $this->hasMany(PermohonanLog::class)->orderBy('created_at', 'asc'); // diurutkan dari yang paling lama
     }
 
     public function getRouteKeyName(): string
@@ -171,238 +187,26 @@ class Permohonan extends Model
     }
 
     /**
-     * Mendapatkan durasi proses permohonan
+     * Cek apakah permohonan dapat direvisi oleh pengguna.
      */
-    public function getProcessingTimeAttribute(): ?int
+    public function canBeRevised(): bool
     {
-        if ($this->status === 'selesai' && $this->status_updated_at) {
-            return $this->created_at->diffInDays($this->status_updated_at);
-        }
-        
-        // Jika belum selesai, hitung dari created_at sampai sekarang
-        return $this->created_at->diffInDays(now());
+        return in_array($this->status, ['membutuhkan_revisi', 'butuh_perbaikan']);
     }
 
     /**
-     * Cek apakah permohonan sudah selesai diproses
+     * Cek apakah sudah ada revisi yang aktif (menunggu review).
      */
-    public function isCompleted(): bool
+    public function hasActiveRevision(): bool
     {
-        return in_array($this->status, ['disetujui', 'selesai']);
+        return $this->revisions()->where('status', 'pending')->exists();
     }
 
     /**
-     * Cek apakah permohonan ditolak atau perlu perbaikan
+     * Relasi ke semua revisi yang pernah dibuat untuk permohonan ini.
      */
-    public function isRejectedOrNeedsFix(): bool
+    public function revisions(): HasMany
     {
-        return in_array($this->status, ['ditolak', 'membutuhkan_revisi', 'butuh_perbaikan']);
+        return $this->hasMany(PermohonanRevision::class)->orderBy('revision_number', 'desc');
     }
-
-    /**
-     * Cek apakah permohonan sedang dalam proses
-     */
-    public function isInProcess(): bool
-    {
-        return in_array($this->status, ['sedang_ditinjau', 'verifikasi_berkas', 'diproses']);
-    }
-
-    /**
-     * Cek apakah permohonan dapat dibatalkan
-     */
-    public function canBeCancelled(): bool
-    {
-        return in_array($this->status, ['baru', 'sedang_ditinjau', 'verifikasi_berkas']);
-    }
-
-    /**
-     * Scope untuk filter berdasarkan status
-     */
-    public function scopeWithStatus($query, string $status)
-    {
-        return $query->where('status', $status);
-    }
-
-    /**
-     * Scope untuk permohonan yang perlu ditinjau
-     */
-    public function scopeNeedReview($query)
-    {
-        return $query->whereIn('status', ['baru', 'sedang_ditinjau', 'verifikasi_berkas']);
-    }
-
-    /**
-     * Scope untuk permohonan yang sudah selesai
-     */
-    public function scopeCompleted($query)
-    {
-        return $query->whereIn('status', ['disetujui', 'selesai']);
-    }
-
-    /**
-     * Scope untuk permohonan yang ditolak atau butuh perbaikan
-     */
-    public function scopeRejectedOrNeedsFix($query)
-    {
-        return $query->whereIn('status', ['ditolak', 'membutuhkan_revisi', 'butuh_perbaikan']);
-    }
-
-    /**
-     * Scope untuk permohonan berdasarkan layanan
-     */
-    public function scopeByLayanan($query, $layananId)
-    {
-        return $query->where('layanan_id', $layananId);
-    }
-
-    /**
-     * Scope untuk permohonan berdasarkan user
-     */
-    public function scopeByUser($query, $userId)
-    {
-        return $query->where('user_id', $userId);
-    }
-
-    /**
-     * Scope untuk permohonan dalam rentang tanggal
-     */
-    public function scopeInDateRange($query, $startDate, $endDate)
-    {
-        return $query->whereBetween('created_at', [$startDate, $endDate]);
-    }
-
-    /**
-     * Mendapatkan persentase kelengkapan berkas
-     */
-    public function getBerkasCompletenessAttribute(): float
-    {
-        if (!$this->berkas_pemohon || !is_array($this->berkas_pemohon)) {
-            return 0;
-        }
-
-        $totalBerkas = count($this->berkas_pemohon);
-        $berkasLengkap = 0;
-
-        foreach ($this->berkas_pemohon as $berkas) {
-            if (!empty($berkas['path_dokumen'])) {
-                $berkasLengkap++;
-            }
-        }
-
-        return $totalBerkas > 0 ? ($berkasLengkap / $totalBerkas) * 100 : 0;
-    }
-
-    /**
-     * Cek apakah permohonan sudah lewat batas waktu normal
-     */
-    public function isOverdue(): bool
-    {
-        $standardProcessingDays = 7; // 7 hari kerja
-        $workingDaysElapsed = $this->getWorkingDaysElapsed();
-        
-        return $workingDaysElapsed > $standardProcessingDays && !$this->isCompleted();
-    }
-
-    /**
-     * Menghitung hari kerja yang sudah berlalu
-     */
-    private function getWorkingDaysElapsed(): int
-    {
-        $start = $this->created_at;
-        $end = now();
-        $workingDays = 0;
-
-        while ($start->lte($end)) {
-            // Skip weekend (Saturday = 6, Sunday = 0)
-            if (!in_array($start->dayOfWeek, [0, 6])) {
-                $workingDays++;
-            }
-            $start->addDay();
-        }
-
-        return $workingDays;
-    }
-
-    /**
-     * Mendapatkan estimasi tanggal selesai
-     */
-    public function getEstimatedCompletionDateAttribute(): \Carbon\Carbon
-    {
-        $standardProcessingDays = 7;
-        $date = $this->created_at->copy();
-        $addedDays = 0;
-
-        while ($addedDays < $standardProcessingDays) {
-            $date->addDay();
-            // Skip weekend
-            if (!in_array($date->dayOfWeek, [0, 6])) {
-                $addedDays++;
-            }
-        }
-
-        return $date;
-    }
-
-    /**
-     * Mendapatkan prioritas berdasarkan urgency dan complexity
-     */
-    public function getPriorityLevelAttribute(): string
-    {
-        // Urgent jika sudah overdue
-        if ($this->isOverdue()) {
-            return 'urgent';
-        }
-
-        // High jika mendekati batas waktu
-        $workingDaysElapsed = $this->getWorkingDaysElapsed();
-        if ($workingDaysElapsed >= 5) {
-            return 'high';
-        }
-
-        // Medium jika ada tiket aktif (ada masalah)
-        if ($this->hasActiveTickets()) {
-            return 'medium';
-        }
-
-        return 'normal';
-    }
-
-    /**
-     * Mendapatkan next action yang perlu dilakukan
-     */
-    public function getNextActionAttribute(): string
-    {
-        return match ($this->status) {
-            'baru' => 'Menunggu peninjauan petugas',
-            'sedang_ditinjau' => 'Sedang dalam peninjauan',
-            'verifikasi_berkas' => 'Verifikasi kelengkapan berkas',
-            'diproses' => 'Sedang diproses oleh petugas',
-            'membutuhkan_revisi' => 'Memerlukan revisi dari pemohon',
-            'butuh_perbaikan' => 'Memerlukan perbaikan dokumen',
-            'disetujui' => 'Menunggu penerbitan dokumen',
-            'ditolak' => 'Permohonan ditolak',
-            'selesai' => 'Permohonan selesai diproses',
-            default => 'Status tidak diketahui',
-        };
-    }
-
-public function revisions(): HasMany
-{
-    return $this->hasMany(PermohonanRevision::class)->orderBy('revision_number', 'desc');
-}
-
-public function latestRevision()
-{
-    return $this->hasOne(PermohonanRevision::class)->latestOfMany('revision_number');
-}
-
-public function canBeRevised(): bool
-{
-    return in_array($this->status, ['membutuhkan_revisi', 'butuh_perbaikan']);
-}
-
-public function hasActiveRevision(): bool
-{
-    return $this->revisions()->where('status', 'pending')->exists();
-}
 }
