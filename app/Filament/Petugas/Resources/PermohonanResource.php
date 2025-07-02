@@ -245,7 +245,6 @@ class PermohonanResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
                 
                 // Action khusus untuk update status cepat
                 Action::make('updateStatus')
@@ -441,7 +440,6 @@ class PermohonanResource extends Resource
         return [
             'index' => Pages\ListPermohonans::route('/'),
             'view' => Pages\ViewPermohonan::route('/{record}'),
-            'edit' => Pages\EditPermohonan::route('/{record}/edit'),
         ];
     }
 

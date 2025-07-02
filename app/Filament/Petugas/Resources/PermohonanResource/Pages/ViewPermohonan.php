@@ -19,11 +19,6 @@ class ViewPermohonan extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make()
-                ->after(function () {
-                    $this->sendStatusUpdateNotification();
-                }),
-
             // Action untuk quick status update
             Action::make('quickStatusUpdate')
                 ->label('Update Status')
