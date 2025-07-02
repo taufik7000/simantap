@@ -143,4 +143,6 @@ class ViewTicket extends ViewRecord
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
     }
+
+    
 }

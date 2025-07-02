@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Vite;
 
 class PetugasPanelProvider extends PanelProvider
 {
@@ -26,9 +27,15 @@ class PetugasPanelProvider extends PanelProvider
             ->default()
             ->id('petugas')
             ->path('petugas')
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => view('filament.hooks.custom-assets')->render(),
+            )
             ->colors([
                 'primary' => Color::Emerald,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->discoverResources(in: app_path('Filament/Petugas/Resources'), for: 'App\\Filament\\Petugas\\Resources')
             ->discoverPages(in: app_path('Filament/Petugas/Pages'), for: 'App\\Filament\\Petugas\\Pages')
             ->discoverWidgets(in: app_path('Filament/Petugas/Widgets'), for: 'App\\Filament\\Petugas\\Widgets')
