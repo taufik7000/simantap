@@ -219,15 +219,5 @@ class ViewPermohonan extends ViewRecord
             ->color($notificationColor)
             ->sendToDatabase($user);
 
-        // Log the activity
-        activity()
-            ->performedOn($permohonan)
-            ->causedBy(Auth::user())
-            ->withProperties([
-                'old_status' => $oldStatus,
-                'new_status' => $currentStatus,
-                'catatan' => $catatan ?? $permohonan->catatan_petugas,
-            ])
-            ->log("Status permohonan diubah dari {$oldStatus} ke {$currentStatus}");
     }
 }
