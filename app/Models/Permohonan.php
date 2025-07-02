@@ -74,7 +74,6 @@ class Permohonan extends Model
                 
                 $nextNumber = 1;
                 if ($lastPermohonan) {
-                    // Ambil nomor dari kode terakhir dan tambahkan 1
                     $lastNumber = (int) substr($lastPermohonan->kode_permohonan, -4);
                     $nextNumber = $lastNumber + 1;
                 }

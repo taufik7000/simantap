@@ -25,56 +25,55 @@ class PermohonanRevisionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Group::make()
+                Forms\Components\Section::make('Informasi Revisi')
                     ->schema([
-                        Forms\Components\Section::make('Informasi Revisi')
-                            ->schema([
-                                Forms\Components\TextInput::make('permohonan.kode_permohonan')
-                                    ->label('Kode Permohonan')
-                                    ->disabled(),
-                                Forms\Components\TextInput::make('user.name')
-                                    ->label('Warga')
-                                    ->disabled(),
-                                Forms\Components\TextInput::make('revision_number')
-                                    ->label('Revisi Ke')
-                                    ->disabled(),
-                                Forms\Components\Textarea::make('catatan_revisi')
-                                    ->label('Catatan dari Warga')
-                                    ->disabled()
-                                    ->rows(3),
-                            ])->columns(2),
-                    ])->columnSpan(2),
+                        Forms\Components\TextInput::make('permohonan.kode_permohonan')
+                            ->label('Kode Permohonan')
+                            ->disabled(),
+                        Forms\Components\TextInput::make('user.name')
+                            ->label('Warga')
+                            ->disabled(),
+                        Forms\Components\TextInput::make('revision_number')
+                            ->label('Revisi Ke')
+                            ->disabled(),
+                        Forms\Components\Textarea::make('catatan_revisi')
+                            ->label('Catatan dari Warga')
+                            ->disabled()
+                            ->rows(3),
+                    ])->columns(2),
 
-                Forms\Components\Group::make()
+                Forms\Components\Section::make('Review Petugas')
                     ->schema([
-                        Forms\Components\Section::make('Review Petugas')
-                            ->schema([
-                                Forms\Components\Select::make('status')
-                                    ->label('Status Review')
-                                    ->options(PermohonanRevision::STATUS_OPTIONS)
-                                    ->required()
-                                    ->native(false)
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                        $defaultMessages = [
-                                            'reviewed' => 'Revisi telah ditinjau.',
-                                            'accepted' => 'Revisi diterima dan akan diproses lebih lanjut.',
-                                            'rejected' => 'Revisi ditolak. Silakan perbaiki dokumen sesuai catatan.',
-                                        ];
+                        Forms\Components\Select::make('status')
+                            ->label('Status Review')
+                            ->options([
+                                'pending' => 'Menunggu Review',
+                                'reviewed' => 'Sudah Direview',
+                                'accepted' => 'Diterima',
+                                'rejected' => 'Ditolak',
+                            ])
+                            ->required()
+                            ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $defaultMessages = [
+                                    'reviewed' => 'Revisi telah ditinjau.',
+                                    'accepted' => 'Revisi diterima dan akan diproses lebih lanjut.',
+                                    'rejected' => 'Revisi ditolak. Silakan perbaiki dokumen sesuai catatan.',
+                                ];
 
-                                        if (isset($defaultMessages[$state])) {
-                                            $set('catatan_petugas', $defaultMessages[$state]);
-                                        }
-                                    }),
+                                if (isset($defaultMessages[$state])) {
+                                    $set('catatan_petugas', $defaultMessages[$state]);
+                                }
+                            }),
 
-                                Forms\Components\Textarea::make('catatan_petugas')
-                                    ->label('Catatan Review')
-                                    ->required(fn (Forms\Get $get) => in_array($get('status'), ['rejected']))
-                                    ->rows(4)
-                                    ->placeholder('Berikan feedback untuk warga...'),
-                            ]),
-                    ])->columnSpan(1),
-            ])->columns(3);
+                        Forms\Components\Textarea::make('catatan_petugas')
+                            ->label('Catatan Review')
+                            ->required(fn (Forms\Get $get) => in_array($get('status'), ['rejected']))
+                            ->rows(4)
+                            ->placeholder('Berikan feedback untuk warga...'),
+                    ]),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -83,16 +82,19 @@ class PermohonanRevisionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('permohonan.kode_permohonan')
                     ->label('Kode Permohonan')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Warga')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('revision_number')
                     ->label('Revisi Ke')
                     ->badge()
-                    ->color('primary'),
+                    ->color('primary')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
@@ -104,7 +106,13 @@ class PermohonanRevisionResource extends Resource
                         'rejected' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => PermohonanRevision::STATUS_OPTIONS[$state] ?? $state),
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'pending' => 'Menunggu Review',
+                        'reviewed' => 'Sudah Direview',
+                        'accepted' => 'Diterima',
+                        'rejected' => 'Ditolak',
+                        default => $state,
+                    }),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal Kirim')
@@ -113,12 +121,135 @@ class PermohonanRevisionResource extends Resource
 
                 Tables\Columns\TextColumn::make('reviewedBy.name')
                     ->label('Direview Oleh')
-                    ->default('Belum direview'),
+                    ->default('Belum direview')
+                    ->sortable(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'pending' => 'Menunggu Review',
+                        'reviewed' => 'Sudah Direview',
+                        'accepted' => 'Diterima',
+                        'rejected' => 'Ditolak',
+                    ])
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
+                    ->label('Review')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
                     ->visible(fn ($record) => $record->status === 'pending'),
+                
+                Tables\Actions\Action::make('quick_approve')
+                    ->label('Terima')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Terima Revisi')
+                    ->modalDescription('Apakah Anda yakin ingin menerima revisi ini?')
+                    ->action(function (PermohonanRevision $record) {
+                        $record->update([
+                            'status' => 'accepted',
+                            'catatan_petugas' => 'Revisi diterima dan akan diproses lebih lanjut.',
+                            'reviewed_at' => now(),
+                            'reviewed_by' => auth()->id(),
+                        ]);
+
+                        // Update status permohonan
+                        $record->permohonan->update([
+                            'status' => 'diproses',
+                            'catatan_petugas' => "Revisi ke-{$record->revision_number} diterima. Permohonan akan diproses lebih lanjut.",
+                        ]);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Revisi Diterima')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn ($record) => $record->status === 'pending'),
+
+                Tables\Actions\Action::make('quick_reject')
+                    ->label('Tolak')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->form([
+                        Forms\Components\Textarea::make('catatan_petugas')
+                            ->label('Alasan Penolakan')
+                            ->required()
+                            ->rows(3)
+                            ->placeholder('Jelaskan mengapa revisi ini ditolak...'),
+                    ])
+                    ->action(function (PermohonanRevision $record, array $data) {
+                        $record->update([
+                            'status' => 'rejected',
+                            'catatan_petugas' => $data['catatan_petugas'],
+                            'reviewed_at' => now(),
+                            'reviewed_by' => auth()->id(),
+                        ]);
+
+                        // Update status permohonan
+                        $record->permohonan->update([
+                            'status' => 'membutuhkan_revisi',
+                            'catatan_petugas' => "Revisi ke-{$record->revision_number} ditolak. " . $data['catatan_petugas'],
+                        ]);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Revisi Ditolak')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn ($record) => $record->status === 'pending'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('bulk_review')
+                    ->label('Review Multiple')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\Select::make('status')
+                            ->label('Status Review')
+                            ->options([
+                                'reviewed' => 'Sudah Direview',
+                                'accepted' => 'Diterima',
+                                'rejected' => 'Ditolak',
+                            ])
+                            ->required()
+                            ->native(false),
+                        Forms\Components\Textarea::make('catatan_petugas')
+                            ->label('Catatan Review')
+                            ->required()
+                            ->rows(3),
+                    ])
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                        foreach ($records as $record) {
+                            $record->update([
+                                'status' => $data['status'],
+                                'catatan_petugas' => $data['catatan_petugas'],
+                                'reviewed_at' => now(),
+                                'reviewed_by' => auth()->id(),
+                            ]);
+
+                            // Update permohonan status based on revision status
+                            match ($data['status']) {
+                                'accepted' => $record->permohonan->update([
+                                    'status' => 'diproses',
+                                    'catatan_petugas' => "Revisi ke-{$record->revision_number} diterima. " . $data['catatan_petugas'],
+                                ]),
+                                'rejected' => $record->permohonan->update([
+                                    'status' => 'membutuhkan_revisi',
+                                    'catatan_petugas' => "Revisi ke-{$record->revision_number} ditolak. " . $data['catatan_petugas'],
+                                ]),
+                                default => null,
+                            };
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Review berhasil untuk ' . $records->count() . ' revisi')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -143,10 +274,16 @@ class PermohonanRevisionResource extends Resource
                                 'rejected' => 'danger',
                                 default => 'gray',
                             })
-                            ->formatStateUsing(fn (string $state): string => PermohonanRevision::STATUS_OPTIONS[$state] ?? $state),
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'pending' => 'Menunggu Review',
+                                'reviewed' => 'Sudah Direview',
+                                'accepted' => 'Diterima',
+                                'rejected' => 'Ditolak',
+                                default => $state,
+                            }),
                         TextEntry::make('created_at')->label('Tanggal Kirim')->dateTime(),
                         TextEntry::make('reviewed_at')->label('Tanggal Review')->dateTime(),
-                        TextEntry::make('reviewedBy.name')->label('Direview Oleh'),
+                        TextEntry::make('reviewedBy.name')->label('Direview Oleh')->default('Belum direview'),
                     ]),
 
                 InfolistSection::make('Catatan')
@@ -181,7 +318,6 @@ class PermohonanRevisionResource extends Resource
                         return $berkasFields;
                     })->columns(2),
 
-                // Informasi Permohonan Asli
                 InfolistSection::make('Detail Permohonan Asli')
                     ->columns(2)
                     ->schema([
@@ -211,5 +347,26 @@ class PermohonanRevisionResource extends Resource
     {
         $count = static::getNavigationBadge();
         return $count > 0 ? 'warning' : null;
+    }
+
+    // PENTING: Method ini memastikan petugas bisa edit semua revisi
+    public static function canEdit($record): bool
+    {
+        return true; // Petugas bisa edit semua revisi
+    }
+
+    public static function canView($record): bool
+    {
+        return true; // Petugas bisa view semua revisi
+    }
+
+    public static function canCreate(): bool
+    {
+        return false; // Petugas tidak bisa create revisi (hanya warga)
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false; // Tidak boleh delete revisi untuk audit trail
     }
 }

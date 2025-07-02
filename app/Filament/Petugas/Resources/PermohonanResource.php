@@ -329,11 +329,13 @@ class PermohonanResource extends Resource
                         TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull(),
                         TextEntry::make('created_at')->label('Tanggal Pengajuan')->dateTime(),
                         TextEntry::make('updated_at')->label('Terakhir Diperbarui')->dateTime(),
-                    ]),
+                    ])
+                    ->collapsed(),
 
                 // Detail Data Diri Pemohon
                 InfolistSection::make('Detail Data Diri Pemohon')
                     ->columns(3)
+                    ->description('Informasi Lengkap Profile Pemohon')
                     ->schema([
                         TextEntry::make('user.nik')->label('NIK'),
                         TextEntry::make('user.nomor_kk')->label('Nomor KK'),
@@ -352,7 +354,8 @@ class PermohonanResource extends Resource
                         TextEntry::make('user.status_perkawinan')->label('Status Perkawinan'),
                         TextEntry::make('user.pekerjaan')->label('Pekerjaan'),
                         TextEntry::make('user.pendidikan')->label('Pendidikan Terakhir'),
-                    ]),
+                    ])
+                    ->collapsed(),
 
                 InfolistSection::make('Berkas Permohonan')
                     ->schema(function (Permohonan $record) {
