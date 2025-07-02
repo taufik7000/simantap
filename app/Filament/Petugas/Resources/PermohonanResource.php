@@ -293,7 +293,6 @@ class PermohonanResource extends Resource
         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')
-                    ->columns(3)
                     ->schema([
                         TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
                         TextEntry::make('user.name')->label('Nama Warga'),

@@ -386,7 +386,7 @@ class Permohonan extends Model
         };
     }
 
-    public function revisions(): HasMany
+public function revisions(): HasMany
 {
     return $this->hasMany(PermohonanRevision::class)->orderBy('revision_number', 'desc');
 }
