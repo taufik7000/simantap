@@ -19,11 +19,10 @@ class ViewPermohonan extends ViewRecord
     {
         return [
             // TOMBOL AKSI UNTUK KIRIM REVISI
-            Actions\Action::make('kirim_revisi')
+                Actions\Action::make('kirim_revisi')
                 ->label('Kirim Revisi')
                 ->icon('heroicon-o-arrow-path')
                 ->color('warning')
-                // Tampilkan tombol ini HANYA jika statusnya membutuhkan revisi dan belum ada revisi aktif
                 ->visible(fn (): bool => $this->record->canBeRevised() && !$this->record->hasActiveRevision())
                 ->form([
                     // Mengambil skema form dari logika sebelumnya
@@ -75,7 +74,7 @@ class ViewPermohonan extends ViewRecord
                         ->sendToDatabase(Auth::user());
                         
                     // 4. Refresh data di halaman untuk memperbarui tampilan status dan menyembunyikan tombol
-                    $this->refreshFormData();
+                    $this->redirect($this->getResource()::getUrl('view', ['record' => $this->getRecord()]));
                 })
                 ->modalHeading('Kirim Dokumen Perbaikan')
                 ->modalDescription('Unggah dokumen perbaikan sesuai catatan dari petugas.')
