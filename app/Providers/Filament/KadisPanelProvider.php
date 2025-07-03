@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationGroup;
+use App\Filament\Petugas\Resources\PermohonanResource;
+use Illuminate\Support\Facades\Vite;
 
 class KadisPanelProvider extends PanelProvider
 {
@@ -29,6 +31,10 @@ class KadisPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Emerald,
             ])
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => view('filament.hooks.custom-assets')->render(),
+            )
             ->discoverResources(in: app_path('Filament/Kadis/Resources'), for: 'App\\Filament\\Kadis\\Resources')
             ->discoverPages(in: app_path('Filament/Kadis/Pages'), for: 'App\\Filament\\Kadis\\Pages')
             ->pages([
@@ -38,6 +44,9 @@ class KadisPanelProvider extends PanelProvider
                 NavigationGroup::make()
                  ->label('Manajemen Layanan')
                  ->collapsible(false),
+            ])
+            ->resources([
+                PermohonanResource::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Kadis/Widgets'), for: 'App\\Filament\\Kadis\\Widgets')
             ->widgets([

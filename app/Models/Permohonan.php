@@ -12,26 +12,59 @@ class Permohonan extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'user_id', 'layanan_id', 'kode_permohonan', 'data_pemohon', 'berkas_pemohon',
-        'status', 'catatan_petugas', 'status_updated_at', 'status_updated_by',
-        'assigned_to', 'assigned_at', 'assigned_by',
+        'user_id',
+        'layanan_id',
+        'kode_permohonan',
+        'data_pemohon',
+        'berkas_pemohon',
+        'status',
+        'catatan_petugas',
+        'status_updated_at',
+        'status_updated_by',
+        'assigned_to', 
+        'assigned_at', 
+        'assigned_by',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
-        'data_pemohon' => 'array', 'berkas_pemohon' => 'array',
-        'status_updated_at' => 'datetime', 'assigned_at' => 'datetime',
+        'data_pemohon' => 'array',
+        'berkas_pemohon' => 'array',
+        'status_updated_at' => 'datetime',
+        'assigned_at' => 'datetime',
     ];
 
+    /**
+     * Status yang tersedia untuk permohonan.
+     */
     public const STATUS_OPTIONS = [
-        'baru' => 'Baru Diajukan', 'sedang_ditinjau' => 'Sedang Ditinjau',
-        'verifikasi_berkas' => 'Verifikasi Berkas', 'diproses' => 'Sedang Diproses',
-        'membutuhkan_revisi' => 'Membutuhkan Revisi', 'butuh_perbaikan' => 'Butuh Perbaikan',
-        'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak', 'selesai' => 'Selesai',
+        'baru' => 'Baru Diajukan',
+        'sedang_ditinjau' => 'Sedang Ditinjau',
+        'verifikasi_berkas' => 'Verifikasi Berkas',
+        'diproses' => 'Sedang Diproses',
+        'membutuhkan_revisi' => 'Membutuhkan Revisi',
+        'butuh_perbaikan' => 'Butuh Perbaikan',
+        'disetujui' => 'Disetujui',
+        'ditolak' => 'Ditolak',
+        'selesai' => 'Selesai',
     ];
 
+    /**
+     * The "booted" method of the model.
+     */
     protected static function booted(): void
     {
+        // Membuat kode permohonan unik saat data baru dibuat
         static::creating(function (Permohonan $permohonan) {
             if (empty($permohonan->kode_permohonan)) {
                 $prefix = 'SP-' . now()->format('Ymd');
@@ -41,6 +74,7 @@ class Permohonan extends Model
             }
         });
 
+        // Membuat log pertama saat permohonan berhasil dibuat
         static::created(function (Permohonan $permohonan) {
             $permohonan->logs()->create([
                 'status' => $permohonan->status,
@@ -49,6 +83,7 @@ class Permohonan extends Model
             ]);
         });
 
+        // Membuat log setiap kali status permohonan diubah
         static::updating(function (Permohonan $permohonan) {
             if ($permohonan->isDirty('status')) {
                 $permohonan->logs()->create([
@@ -64,11 +99,6 @@ class Permohonan extends Model
     // RELATIONSHIPS
     //=====================================================
 
-    public function logs(): HasMany
-    {
-        return $this->hasMany(PermohonanLog::class)->orderBy('created_at', 'asc');
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -79,9 +109,9 @@ class Permohonan extends Model
         return $this->belongsTo(Layanan::class);
     }
 
-    public function tickets(): HasMany
+    public function logs(): HasMany
     {
-        return $this->hasMany(Ticket::class);
+        return $this->hasMany(PermohonanLog::class)->orderBy('created_at', 'asc');
     }
 
     public function revisions(): HasMany
@@ -100,59 +130,46 @@ class Permohonan extends Model
     }
 
     //=====================================================
-    // ASSIGNMENT & STATUS METHODS
+    // HELPER METHODS
     //=====================================================
 
     public function assignTo(int $petugasId, ?int $assignedById = null): bool
     {
-        $this->update([
+        return $this->update([
             'assigned_to' => $petugasId,
             'assigned_at' => now(),
             'assigned_by' => $assignedById ?? Auth::id(),
         ]);
-        return true;
     }
 
     public function reassignTo(int $newPetugasId, ?string $reason = null): bool
     {
         return $this->assignTo($newPetugasId, Auth::id());
     }
-    
-    public function unassign(?string $reason = null): bool
-    {
-        return $this->update([
-            'assigned_to' => null,
-            'assigned_at' => null,
-            'assigned_by' => null,
-        ]);
-    }
-
-    public function autoAssign(): bool
-    {
-        if ($this->isAssigned()) return false;
-        $petugas = static::getPetugasWithLightestWorkload();
-        if (!$petugas) return false;
-        return $this->assignTo($petugas->id, null);
-    }
 
     public function isAssigned(): bool
     {
         return !is_null($this->assigned_to);
     }
-    
+
     public function isAssignedTo(int $userId): bool
     {
         return $this->assigned_to === $userId;
     }
-    
-    public function canBeAssignedTo(?User $user = null): bool
+
+    public function canBeRevised(): bool
     {
-        $user = $user ?? Auth::user();
-        if (!$user || !$user->hasAnyRole(['petugas', 'admin', 'kadis'])) return false;
-        if ($this->isAssigned() && !$this->isAssignedTo($user->id)) {
-            return $user->hasAnyRole(['admin', 'kadis']);
-        }
-        return true;
+        return in_array($this->status, ['membutuhkan_revisi', 'butuh_perbaikan']);
+    }
+
+    public function hasActiveRevision(): bool
+    {
+        return $this->revisions()->where('status', 'pending')->exists();
+    }
+    
+    public function getAssignmentDurationAttribute(): ?int
+    {
+        return $this->assigned_at ? $this->assigned_at->diffInHours(now()) : null;
     }
 
     public function isAssignmentOverdue(int $maxHours = 72): bool
@@ -160,35 +177,18 @@ class Permohonan extends Model
         return $this->assignment_duration !== null && $this->assignment_duration > $maxHours;
     }
 
-    public function getAssignmentDurationAttribute(): ?int
-    {
-        return $this->assigned_at ? $this->assigned_at->diffInHours(now()) : null;
-    }
-    
     //=====================================================
-    // SCOPES & STATISTICS
+    // STATIC METHODS FOR WIDGETS & STATISTICS
     //=====================================================
 
-    public function scopeUnassigned($query)
+    public static function getAssignmentStatistics(): array
     {
-        return $query->whereNull('assigned_to');
-    }
-
-    public function scopeAssigned($query)
-    {
-        return $query->whereNotNull('assigned_to');
-    }
-    
-    public function scopeAssignedTo($query, $userId)
-    {
-        return $query->where('assigned_to', $userId);
-    }
-
-    public function scopeOverdueAssignment($query, int $maxHours = 72)
-    {
-        return $query->whereNotNull('assigned_at')
-            ->where('assigned_at', '<', now()->subHours($maxHours))
-            ->whereNotIn('status', ['selesai', 'ditolak']);
+        return [
+            'total_permohonan' => static::count(),
+            'belum_ditugaskan' => static::whereNull('assigned_to')->count(),
+            'sudah_ditugaskan' => static::whereNotNull('assigned_to')->count(),
+            'overdue_assignment' => static::whereNotNull('assigned_at')->where('assigned_at', '<', now()->subHours(72))->whereNotIn('status', ['selesai', 'ditolak'])->count(),
+        ];
     }
 
     public static function getPetugasWorkload(int $petugasId): int
@@ -197,14 +197,38 @@ class Permohonan extends Model
             ->whereNotIn('status', ['selesai', 'ditolak'])
             ->count();
     }
-    
-    public static function getPetugasWithLightestWorkload(): ?User
+
+    public static function getWorkloadDistribution(): array
     {
         $petugasList = User::role(['petugas', 'admin'])->get();
-        if ($petugasList->isEmpty()) return null;
+        
+        return $petugasList->map(function ($petugas) {
+            return [
+                'petugas_name' => $petugas->name,
+                'active_count' => static::getPetugasWorkload($petugas->id),
+            ];
+        })->toArray();
+    }
 
-        return $petugasList->mapWithKeys(function ($petugas) {
+    public function autoAssign(): bool
+    {
+        if ($this->isAssigned()) {
+            return false;
+        }
+
+        $petugasList = User::role(['petugas', 'admin'])->get();
+        if ($petugasList->isEmpty()) {
+            return false;
+        }
+
+        $lightestPetugas = $petugasList->mapWithKeys(function ($petugas) {
             return [$petugas->id => static::getPetugasWorkload($petugas->id)];
-        })->sort()->keys()->map(fn($id) => $petugasList->find($id))->first();
+        })->sort()->keys()->first();
+        
+        if (!$lightestPetugas) {
+            return false;
+        }
+
+        return $this->assignTo($lightestPetugas, null);
     }
 }

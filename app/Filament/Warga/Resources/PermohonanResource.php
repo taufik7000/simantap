@@ -17,6 +17,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder; // Pastikan use statement ini ada
 use Illuminate\Support\Facades\Auth;
 
 class PermohonanResource extends Resource
@@ -26,8 +27,18 @@ class PermohonanResource extends Resource
     protected static ?string $navigationLabel = 'Permohonan Saya';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    /**
+     * INI ADALAH METHOD KUNCI YANG HILANG
+     * Method ini memfilter data agar warga hanya melihat permohonan miliknya.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('user_id', auth()->id());
+    }
+
     public static function form(Form $form): Form
     {
+        // ... (Tidak ada perubahan di sini)
         return $form
             ->schema([
                 Forms\Components\Hidden::make('data_pemohon.jenis_permohonan')->required(),
@@ -54,6 +65,7 @@ class PermohonanResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // ... (Tidak ada perubahan di sini)
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode_permohonan')->label('Kode')->searchable(),
@@ -86,7 +98,6 @@ class PermohonanResource extends Resource
                     ->label('Perbaiki Permohonan')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
-                    // --- PERUBAHAN DI SINI: Menyederhanakan aturan visibilitas ---
                     ->visible(fn (Permohonan $record): bool => $record->canBeRevised())
                     ->form([
                         Forms\Components\Textarea::make('catatan_revisi')
@@ -133,9 +144,9 @@ class PermohonanResource extends Resource
             ]);
     }
 
-    // (Method infolist, getRelations, dan getPages tidak ada perubahan)
     public static function infolist(Infolist $infolist): Infolist
     {
+        // ... (Tidak ada perubahan di sini)
         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')

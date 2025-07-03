@@ -223,7 +223,7 @@ class PermohonanResource extends Resource
                     ->default('Belum ditugaskan')
                     ->badge()
                     ->color(fn ($state) => $state === 'Belum ditugaskan' ? 'gray' : 'primary')
-                    ->icon(fn ($state) => $state === 'Belum ditugaskan' ? 'heroicon-o-user-minus' : 'heroicon-o-user-check')
+                    ->icon(fn ($state) => $state === 'Belum ditugaskan' ? 'heroicon-o-user-minus' : 'heroicon-o-user')
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('assignment_duration')
@@ -436,14 +436,24 @@ class PermohonanResource extends Resource
     {
     $user = Auth::user();
 
-        if ($user->hasRole('admin')) {
-            // Untuk admin, kita panggil sebagai static method karena tidak terikat pada satu objek
-         return static::getModel()::whereNull('assigned_to')->count();
-     } else {
-         // Untuk petugas, kita juga panggil sebagai static method
-         return static::getModel()::where('assigned_to', $user->id)
-             ->whereNotIn('status', ['selesai', 'ditolak'])
-             ->count();
+       $user = Auth::user();
+
+        // --- TAMBAHKAN PENGECEKAN INI ---
+        // Jika karena suatu alasan user belum ada, jangan lakukan apa-apa.
+        if (! $user) {
+            return null;
+        }
+        // ---------------------------------
+        
+        if ($user->hasRole(['admin', 'kadis'])) {
+            // Admin melihat total permohonan yang belum ditugaskan
+            // Gunakan ::class untuk referensi model yang lebih aman
+            return static::getModel()::whereNull('assigned_to')->count();
+        } else {
+            // Petugas melihat permohonan yang ditugaskan ke mereka
+            return static::getModel()::where('assigned_to', $user->id)
+                ->whereNotIn('status', ['selesai', 'ditolak'])
+                ->count();
     }
     }
 

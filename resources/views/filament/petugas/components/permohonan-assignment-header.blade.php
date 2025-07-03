@@ -1,18 +1,19 @@
 @props(['record'])
 
 <div class="fi-header-heading mb-4">
-    {{-- Assignment Status Card --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="flex-shrink-0">
                     @if($record->isAssigned())
                         <div class="flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
-                            <x-heroicon-o-user-check class="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                            {{-- PERBAIKAN DI SINI --}}
+                            @svg('heroicon-o-user-check', 'w-6 h-6 text-primary-600 dark:text-primary-400')
                         </div>
                     @else
                         <div class="flex items-center justify-center w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                            <x-heroicon-o-user-minus class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                            {{-- PERBAIKAN DI SINI --}}
+                            @svg('heroicon-o-user-minus', 'w-6 h-6 text-gray-500 dark:text-gray-400')
                         </div>
                     @endif
                 </div>
@@ -33,13 +34,15 @@
                             
                             <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 <span>
-                                    <x-heroicon-s-clock class="w-4 h-4 inline mr-1" />
+                                    {{-- PERBAIKAN DI SINI --}}
+                                    @svg('heroicon-s-clock', 'w-4 h-4 inline mr-1')
                                     {{ $record->assigned_at->format('d M Y, H:i') }}
                                 </span>
                                 
                                 @if($record->assignedBy)
                                     <span>
-                                        <x-heroicon-s-user class="w-4 h-4 inline mr-1" />
+                                        {{-- PERBAIKAN DI SINI --}}
+                                        @svg('heroicon-s-user', 'w-4 h-4 inline mr-1')
                                         oleh {{ $record->assignedBy->name }}
                                     </span>
                                 @endif
@@ -53,9 +56,7 @@
                 </div>
             </div>
 
-            {{-- Tombol Aksi Cepat --}}
             <div class="flex items-center space-x-2">
-                {{-- Tombol ini akan memanggil Action 'alihkan_tugas' yang ada di ViewPermohonan.php --}}
                 @if($record->isAssigned())
                     <x-filament::button
                         color="gray"
@@ -69,11 +70,11 @@
             </div>
         </div>
 
-        {{-- Peringatan jika Assignment Overdue --}}
         @if($record->isAssigned() && $record->isAssignmentOverdue(72))
             <div class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg">
                 <div class="flex items-center">
-                    <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-500 dark:text-red-400 mr-3" />
+                    {{-- PERBAIKAN DI SINI --}}
+                    @svg('heroicon-s-exclamation-triangle', 'w-5 h-5 text-red-500 dark:text-red-400 mr-3')
                     <div class="text-sm">
                         <p class="text-red-800 dark:text-red-200 font-medium">Penugasan Overdue</p>
                         <p class="text-red-600 dark:text-red-300 mt-1">
