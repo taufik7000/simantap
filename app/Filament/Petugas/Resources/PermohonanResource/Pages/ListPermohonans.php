@@ -62,42 +62,45 @@ class ListPermohonans extends ListRecords
         ];
     }
 
-    public function getTabs(): array
-    {
-        $user = Auth::user();
-        $tabs = [];
+ public function getTabs(): array
+{
+    $user = Auth::user();
+    $tabs = [];
 
-        if ($user->hasAnyRole(['admin', 'kadis'])) {
-            $tabs['semua'] = Tab::make('Semua Permohonan')
-                ->badge($this->getModel()::count());
+    if ($user->hasAnyRole(['admin', 'kadis'])) {
+        $tabs['semua'] = Tab::make('Semua Permohonan')
+            ->badge($this->getModel()::count());
+    }
+
+    // Tab untuk tugas milik petugas yang sedang login
+    $tabs['tugas_saya'] = Tab::make('Tugas Saya')
+        ->modifyQueryUsing(fn (Builder $query) => $query->where('assigned_to', $user->id))
+        ->badge($this->getModel()::where('assigned_to', $user->id)->count())
+        ->badgeColor('success');
+
+    // PERUBAHAN: Tab belum ditugaskan sekarang bisa dilihat semua petugas
+    $tabs['belum_ditugaskan'] = Tab::make('Belum Ditugaskan')
+        ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('assigned_to'))
+        ->badge($this->getModel()::whereNull('assigned_to')->count())
+        ->badgeColor('danger');
+    
+    // Tab overdue assignment - hanya untuk admin/kadis
+    if ($user->hasAnyRole(['admin', 'kadis'])) {
+        $overdueCount = $this->getModel()::whereNotNull('assigned_at')
+            ->where('assigned_at', '<', now()->subHours(72))
+            ->whereNotIn('status', ['selesai', 'ditolak'])->count();
+        if ($overdueCount > 0) {
+            $tabs['overdue'] = Tab::make('Assignment Overdue')
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('assigned_at')
+                    ->where('assigned_at', '<', now()->subHours(72))
+                    ->whereNotIn('status', ['selesai', 'ditolak']))
+                ->badge($overdueCount)
+                ->badgeColor('danger')
+                ->icon('heroicon-o-exclamation-triangle');
         }
-
-        // Tab untuk tugas milik petugas yang sedang login
-        $tabs['tugas_saya'] = Tab::make('Tugas Saya')
-            ->modifyQueryUsing(fn (Builder $query) => $query->where('assigned_to', $user->id))
-            ->badge($this->getModel()::where('assigned_to', $user->id)->count())
-            ->badgeColor('success');
-
-        // Tab yang hanya bisa dilihat oleh admin/kadis
-        if ($user->hasAnyRole(['admin', 'kadis'])) {
-            $tabs['belum_ditugaskan'] = Tab::make('Belum Ditugaskan')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('assigned_to'))
-                ->badge($this->getModel()::whereNull('assigned_to')->count())
-                ->badgeColor('danger');
-            
-            $overdueCount = $this->getModel()::whereNotNull('assigned_at')
-                ->where('assigned_at', '<', now()->subHours(72))
-                ->whereNotIn('status', ['selesai', 'ditolak'])->count();
-            if ($overdueCount > 0) {
-                $tabs['overdue'] = Tab::make('Assignment Overdue')
-                    ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('assigned_at')->where('assigned_at', '<', now()->subHours(72))->whereNotIn('status', ['selesai', 'ditolak']))
-                    ->badge($overdueCount)
-                    ->badgeColor('danger')
-                    ->icon('heroicon-o-exclamation-triangle');
-            }
-        }
-        
-        return $tabs;
+    }
+    
+    return $tabs;
     }
 
     protected function getHeaderWidgets(): array
@@ -118,12 +121,12 @@ class ListPermohonans extends ListRecords
     {
         $user = Auth::user();
         
-        if ($user->hasAnyRole(['admin', 'kadis'])) {
+        if ($user->hasAnyRole(['kadis'])) {
             // Admin/kadis melihat yang belum ditugaskan terlebih dahulu
             return 'belum_ditugaskan';
         }
         
-        // Petugas biasa melihat tugasnya terlebih dahulu
-        return 'tugas_saya';
+        // Kadis biasa melihat belum ditugaskan terlebih dahulu
+        return 'belum_ditugaskan';
     }
 }
