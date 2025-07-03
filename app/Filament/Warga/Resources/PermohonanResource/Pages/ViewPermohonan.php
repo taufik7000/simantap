@@ -18,12 +18,10 @@ class ViewPermohonan extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            // Tombol untuk mengirim revisi
             Actions\Action::make('kirim_revisi')
                 ->label('Kirim Revisi')
                 ->icon('heroicon-o-arrow-path')
                 ->color('warning')
-                // --- PERUBAHAN DI SINI: Menyederhanakan aturan visibilitas ---
                 ->visible(fn (): bool => $this->record->canBeRevised())
                 ->form([
                     Forms\Components\Textarea::make('catatan_revisi')
@@ -49,7 +47,6 @@ class ViewPermohonan extends ViewRecord
                         ->minItems(1),
                 ])
                 ->action(function (array $data): void {
-                    // Logika ini tetap sama
                     PermohonanRevision::create([
                         'permohonan_id' => $this->record->id,
                         'user_id' => Auth::id(),
@@ -75,7 +72,6 @@ class ViewPermohonan extends ViewRecord
                 ->modalDescription('Unggah dokumen perbaikan sesuai catatan dari petugas.')
                 ->modalSubmitActionLabel('Kirim'),
 
-            // --- Aksi-aksi lainnya tidak berubah ---
             Actions\Action::make('create_ticket')
                 ->label('Buat Tiket Bantuan')
                 ->icon('heroicon-o-chat-bubble-left-right')
