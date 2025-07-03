@@ -3,56 +3,42 @@
         <!-- Informasi Tiket -->
         <div class="lg:col-span-1">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <x-heroicon-o-ticket class="h-5 w-5 text-primary-600"/>
-                    Informasi Tiket
-                </h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Tiket</h3>
+                    <span class="text-sm font-medium text-primary-600 dark:text-primary-400">{{ $record->kode_tiket }}</span>
+                </div>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Kode Tiket</label>
-                        <p class="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $record->kode_tiket }}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Permohonan Terkait</label>
-                        <p class="text-sm">{{ $record->permohonan->kode_permohonan }}</p>
-                    </div>
-                    
-                    <div>
                         <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
-                        <div class="mt-1">
-                            @php
-                                $statusColors = [
-                                    'open' => 'bg-gray-100 text-gray-800',
-                                    'in_progress' => 'bg-blue-100 text-blue-800',
-                                    'resolved' => 'bg-green-100 text-green-800',
-                                    'closed' => 'bg-purple-100 text-purple-800',
-                                ];
-                                $statusColor = $statusColors[$record->status] ?? 'bg-gray-100 text-gray-800';
-                            @endphp
-                            <span @class(['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', $statusColor])>
-                                {{ \App\Models\Ticket::STATUS_OPTIONS[$record->status] ?? $record->status }}
-                            </span>
-                        </div>
+                        @php
+                            $statusColor = match($record->status) {
+                                'open' => 'bg-blue-100 text-blue-800',
+                                'in_progress' => 'bg-yellow-100 text-yellow-800',
+                                'resolved' => 'bg-green-100 text-green-800',
+                                'closed' => 'bg-gray-100 text-gray-800',
+                                default => 'bg-gray-100 text-gray-800'
+                            };
+                        @endphp
+                        <span @class(['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', $statusColor])>
+                            {{ \App\Models\Ticket::STATUS_OPTIONS[$record->status] ?? $record->status }}
+                        </span>
                     </div>
                     
                     <div>
                         <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Prioritas</label>
-                        <div class="mt-1">
-                            @php
-                                $priorityColors = [
-                                    'low' => 'bg-gray-100 text-gray-800',
-                                    'medium' => 'bg-yellow-100 text-yellow-800',
-                                    'high' => 'bg-orange-100 text-orange-800',
-                                    'urgent' => 'bg-red-100 text-red-800',
-                                ];
-                                $priorityColor = $priorityColors[$record->priority] ?? 'bg-gray-100 text-gray-800';
-                            @endphp
-                            <span @class(['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', $priorityColor])>
-                                {{ \App\Models\Ticket::PRIORITY_OPTIONS[$record->priority] ?? $record->priority }}
-                            </span>
-                        </div>
+                        @php
+                        $priorityColor = match($record->priority) {
+                                'low' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                'medium' => 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300',
+                                'high' => 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300',
+                                'urgent' => 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300',
+                                default => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                            };
+                        @endphp
+                        <span @class(['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', $priorityColor])>
+                            {{ \App\Models\Ticket::PRIORITY_OPTIONS[$record->priority] ?? $record->priority }}
+                        </span>
                     </div>
                     
                     <div>
@@ -95,36 +81,27 @@
                 <div class="flex-1 overflow-y-auto p-6 space-y-4" id="messages-container">
                     @forelse($record->messages()->public()->get() as $message)
                         <div class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
-                            <div class="max-w-xs lg:max-w-md">
-                                <!-- Message Bubble -->
+                            <div class="max-w-xs lg:max-w-md xl:max-w-lg">
                                 <div @class([
-                                    'px-4 py-3 rounded-2xl',
+                                    'rounded-lg px-4 py-2 text-sm',
                                     'bg-primary-600 text-white' => $message->user_id === auth()->id(),
-                                    'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' => $message->user_id !== auth()->id(),
+                                    'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' => $message->user_id !== auth()->id(),
                                 ])>
-                                    <p class="text-sm whitespace-pre-wrap">{{ $message->message }}</p>
+                                    <p class="whitespace-pre-wrap">{{ $message->message }}</p>
                                     
-                                    <!-- Attachments -->
                                     @if($message->attachments)
                                         <div class="mt-2 space-y-1">
                                             @foreach($message->attachments as $attachment)
-                                                <a href="{{ \Illuminate\Support\Facades\Storage::disk('private')->url($attachment) }}" 
-                                                   target="_blank"
-                                                   class="inline-flex items-center gap-1 text-xs underline hover:no-underline">
-                                                    <x-heroicon-s-paper-clip class="h-3 w-3"/>
-                                                    {{ basename($attachment) }}
+                                                <a href="{{ Storage::disk('private')->url($attachment) }}" 
+                                                   target="_blank" 
+                                                   class="block text-xs {{ $message->user_id === auth()->id() ? 'text-primary-100 hover:text-white' : 'text-primary-600 hover:text-primary-800' }}">
+                                                    📎 {{ basename($attachment) }}
                                                 </a>
                                             @endforeach
                                         </div>
                                     @endif
                                 </div>
-                                
-                                <!-- Message Info -->
-                                <div @class([
-                                    'text-xs text-gray-500 dark:text-gray-400 mt-1',
-                                    'text-right' => $message->user_id === auth()->id(),
-                                    'text-left' => $message->user_id !== auth()->id(),
-                                ])>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 {{ $message->user_id === auth()->id() ? 'text-right' : 'text-left' }}">
                                     <span class="font-medium">
                                         {{ $message->user_id === auth()->id() ? 'Anda' : $message->user->name }}
                                     </span>
@@ -143,8 +120,66 @@
                     @endforelse
                 </div>
 
-                <!-- Status Notice -->
-                @if(!$record->isActive())
+                <!-- Input Area - YANG BARU -->
+                @if($record->isActive())
+                    <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                        <form wire:submit="sendMessage" class="space-y-3">
+                            <div class="flex gap-3">
+                                <!-- Text Input -->
+                                <div class="flex-1">
+                                    <textarea 
+                                        wire:model="messageText"
+                                        placeholder="Tulis pesan Anda..."
+                                        rows="2"
+                                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 resize-none"
+                                        @keydown.enter.prevent="
+                                            if (!$event.shiftKey) {
+                                                $wire.sendMessage();
+                                            }
+                                        "
+                                    ></textarea>
+                                </div>
+                                
+                                <!-- Send Button -->
+                                <div class="flex flex-col justify-end">
+                                    <button 
+                                        type="submit"
+                                        class="inline-flex items-center justify-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :disabled="!$wire.messageText?.trim()"
+                                    >
+                                        <x-heroicon-o-paper-airplane class="h-4 w-4"/>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- File Upload Area -->
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <input 
+                                        type="file" 
+                                        wire:model="attachments"
+                                        multiple
+                                        accept="image/*,application/pdf,.doc,.docx"
+                                        class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 dark:file:bg-gray-600 dark:file:text-gray-300 dark:hover:file:bg-gray-500"
+                                    />
+                                </div>
+                                
+                                @if($attachments)
+                                    <div class="text-xs text-gray-500">
+                                        {{ count($attachments) }} file dipilih
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            <!-- Hint -->
+                            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Tekan Enter untuk kirim, Shift+Enter untuk baris baru</span>
+                                <span>Max 5MB per file</span>
+                            </div>
+                        </form>
+                    </div>
+                @else
+                    <!-- Status Notice untuk tiket yang sudah selesai -->
                     <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
                         <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                             <x-heroicon-s-lock-closed class="h-4 w-4"/>
@@ -166,6 +201,18 @@
             if (messagesContainer) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
+        });
+
+        // Auto-scroll setelah pesan baru dikirim
+        document.addEventListener('livewire:load', function () {
+            Livewire.hook('message.processed', (message, component) => {
+                const messagesContainer = document.getElementById('messages-container');
+                if (messagesContainer) {
+                    setTimeout(() => {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }, 100);
+                }
+            });
         });
     </script>
 </x-filament-panels::page>
