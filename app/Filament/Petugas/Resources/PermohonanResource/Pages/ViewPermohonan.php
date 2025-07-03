@@ -3,6 +3,7 @@
 namespace App\Filament\Petugas\Resources\PermohonanResource\Pages;
 
 use App\Filament\Petugas\Resources\PermohonanResource;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Actions\Action;
@@ -19,7 +20,92 @@ class ViewPermohonan extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            // Action untuk quick status update
+            // Assignment Actions
+            Action::make('ambil_tugas')
+                ->label('Ambil Tugas')
+                ->icon('heroicon-o-hand-raised')
+                ->color('primary')
+                ->action(function () {
+                    $this->record->assignTo(auth()->id());
+                    
+                    // Update status jika masih baru
+                    if ($this->record->status === 'baru') {
+                        $this->record->update([
+                            'status' => 'sedang_ditinjau',
+                            'catatan_petugas' => 'Permohonan telah diambil oleh ' . auth()->user()->name . ' dan sedang dalam tahap peninjauan.'
+                        ]);
+                    }
+
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Tugas berhasil diambil')
+                        ->body('Permohonan sekarang menjadi tanggung jawab Anda.')
+                        ->success()
+                        ->send();
+                })
+                ->visible(fn (): bool => !$this->record->isAssigned())
+                ->requiresConfirmation()
+                ->modalHeading('Ambil Tugas Permohonan')
+                ->modalDescription('Apakah Anda yakin ingin mengambil tugas untuk menangani permohonan ini?')
+                ->modalSubmitActionLabel('Ya, Ambil Tugas'),
+                
+            Action::make('alihkan_tugas')
+                ->label('Alihkan Tugas')
+                ->icon('heroicon-o-arrow-right-circle')
+                ->color('warning')
+                ->form([
+                    Select::make('assigned_to')
+                        ->label('Alihkan Ke Petugas')
+                        ->options(function () {
+                            return User::role(['petugas', 'admin'])
+                                ->where('id', '!=', auth()->id())
+                                ->pluck('name', 'id');
+                        })
+                        ->required()
+                        ->searchable()
+                        ->preload(),
+                    Textarea::make('catatan_pengalihan')
+                        ->label('Catatan Pengalihan (Opsional)')
+                        ->placeholder('Berikan catatan khusus untuk petugas yang akan menangani...')
+                        ->rows(3),
+                ])
+                ->action(function (array $data) {
+                    $newAssignee = User::find($data['assigned_to']);
+                    $oldAssignee = $this->record->assignedTo;
+                    
+                    $this->record->assignTo($data['assigned_to'], auth()->id());
+                    
+                    // Update catatan jika ada
+                    if (!empty($data['catatan_pengalihan'])) {
+                        $currentNote = $this->record->catatan_petugas ?? '';
+                        $newNote = $currentNote . "\n\nDialihkan dari " . $oldAssignee->name . " ke " . $newAssignee->name . " oleh " . auth()->user()->name . ":\n" . $data['catatan_pengalihan'];
+                        $this->record->update(['catatan_petugas' => $newNote]);
+                    }
+
+                    // Kirim notifikasi ke petugas baru
+                    Notification::make()
+                        ->title('Tugas Baru: ' . $this->record->kode_permohonan)
+                        ->body('Anda telah ditugaskan untuk menangani permohonan ini.')
+                        ->success()
+                        ->sendToDatabase($newAssignee);
+
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Tugas berhasil dialihkan')
+                        ->body("Permohonan telah dialihkan ke {$newAssignee->name}")
+                        ->success()
+                        ->send();
+                })
+                ->visible(fn (): bool => 
+                    $this->record->isAssigned() && 
+                    (auth()->user()->hasRole('admin') || $this->record->isAssignedTo(auth()->id()))
+                )
+                ->modalHeading('Alihkan Tugas Permohonan')
+                ->modalSubmitActionLabel('Alihkan Tugas'),
+
+            // Status Update Actions
             Action::make('quickStatusUpdate')
                 ->label('Update Status')
                 ->icon('heroicon-m-pencil-square')
@@ -42,7 +128,6 @@ class ViewPermohonan extends ViewRecord
                         ->native(false)
                         ->live()
                         ->afterStateUpdated(function ($state, Forms\Set $set) {
-                            // Auto-fill catatan berdasarkan status
                             $defaultMessages = [
                                 'sedang_ditinjau' => 'Permohonan Anda sedang dalam tahap peninjauan oleh petugas kami.',
                                 'verifikasi_berkas' => 'Kami sedang melakukan verifikasi kelengkapan berkas yang Anda ajukan.',
@@ -73,6 +158,11 @@ class ViewPermohonan extends ViewRecord
                 ->action(function (array $data): void {
                     $oldStatus = $this->record->status;
                     
+                    // Auto-assign jika belum di-assign dan bukan petugas yang mengupdate
+                    if (!$this->record->isAssigned()) {
+                        $this->record->assignTo(auth()->id());
+                    }
+                    
                     $this->record->update([
                         'status' => $data['status'],
                         'catatan_petugas' => $data['catatan_petugas'],
@@ -94,7 +184,7 @@ class ViewPermohonan extends ViewRecord
                 ->modalDescription('Update status akan mengirim notifikasi kepada pemohon')
                 ->modalSubmitActionLabel('Update & Kirim Notifikasi'),
 
-            // Action untuk approve/reject dengan satu klik
+            // Quick Actions
             Action::make('approve')
                 ->label('Setujui')
                 ->icon('heroicon-m-check-circle')
@@ -111,6 +201,11 @@ class ViewPermohonan extends ViewRecord
                 ])
                 ->action(function (array $data): void {
                     $oldStatus = $this->record->status;
+                    
+                    // Auto-assign jika belum di-assign
+                    if (!$this->record->isAssigned()) {
+                        $this->record->assignTo(auth()->id());
+                    }
                     
                     $this->record->update([
                         'status' => 'disetujui',
@@ -145,6 +240,11 @@ class ViewPermohonan extends ViewRecord
                 ->action(function (array $data): void {
                     $oldStatus = $this->record->status;
                     
+                    // Auto-assign jika belum di-assign
+                    if (!$this->record->isAssigned()) {
+                        $this->record->assignTo(auth()->id());
+                    }
+                    
                     $this->record->update([
                         'status' => 'ditolak',
                         'catatan_petugas' => 'Mohon maaf, permohonan Anda tidak dapat disetujui. Alasan: ' . $data['catatan_petugas'],
@@ -167,14 +267,13 @@ class ViewPermohonan extends ViewRecord
      */
     protected function sendStatusUpdateNotification(string $oldStatus = null, string $newStatus = null, string $catatan = null): void
     {
-        $permohonan = $this->record->fresh(); // Get fresh data
+        $permohonan = $this->record->fresh();
         $user = $permohonan->user;
         
         if (!$user) {
             return;
         }
 
-        // Use current status if not provided
         $currentStatus = $newStatus ?? $permohonan->status;
         $statusLabels = [
             'baru' => 'Baru Diajukan',
@@ -204,7 +303,6 @@ class ViewPermohonan extends ViewRecord
             default => 'info',
         };
 
-        // Create notification body
         $body = "Status permohonan Anda dengan kode {$permohonan->kode_permohonan} telah diperbarui menjadi: {$statusLabel}";
         
         if ($catatan ?? $permohonan->catatan_petugas) {
@@ -218,6 +316,5 @@ class ViewPermohonan extends ViewRecord
             ->body($body)
             ->color($notificationColor)
             ->sendToDatabase($user);
-
     }
 }

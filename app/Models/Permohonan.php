@@ -28,6 +28,10 @@ class Permohonan extends Model
         'catatan_petugas',
         'status_updated_at',
         'status_updated_by',
+        'assigned_to', 
+        'assigned_at', 
+        'assigned_by',
+
     ];
 
     /**
@@ -208,5 +212,22 @@ class Permohonan extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(PermohonanRevision::class)->orderBy('revision_number', 'desc');
+    }
+
+    /**
+     * Relasi ke petugas yang DITUGASKAN.
+     */
+
+        public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Relasi ke petugas yang MENUGASKAN.
+     */
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 }
