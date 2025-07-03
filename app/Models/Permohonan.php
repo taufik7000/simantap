@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 
 class Permohonan extends Model
 {
@@ -96,6 +97,32 @@ class Permohonan extends Model
     }
 
     //=====================================================
+    // ROUTE MODEL BINDING METHODS  
+    //=====================================================
+
+    /**
+     * Mendapatkan route key name untuk binding
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'kode_permohonan';
+    }
+
+    /**
+     * Custom route model binding untuk kode_permohonan
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        // Jika menggunakan kode_permohonan sebagai route key
+        if ($field === 'kode_permohonan' || $this->getRouteKeyName() === 'kode_permohonan') {
+            return $this->where('kode_permohonan', $value)->first();
+        }
+        
+        // Fallback ke default behavior untuk field lain
+        return parent::resolveRouteBinding($value, $field);
+    }
+
+    //=====================================================
     // RELATIONSHIPS
     //=====================================================
 
@@ -117,6 +144,11 @@ class Permohonan extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(PermohonanRevision::class)->orderBy('revision_number', 'desc');
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
     }
 
     public function assignedTo(): BelongsTo
@@ -147,6 +179,15 @@ class Permohonan extends Model
         return $this->assignTo($newPetugasId, Auth::id());
     }
 
+    public function unassign(?string $reason = null): bool
+    {
+        return $this->update([
+            'assigned_to' => null,
+            'assigned_at' => null,
+            'assigned_by' => null,
+        ]);
+    }
+
     public function isAssigned(): bool
     {
         return !is_null($this->assigned_to);
@@ -157,6 +198,17 @@ class Permohonan extends Model
         return $this->assigned_to === $userId;
     }
 
+    /**
+     * MISSING METHOD - Cek apakah permohonan bisa ditugaskan
+     */
+    public function canBeAssignedTo(): bool
+    {
+        // Permohonan bisa ditugaskan jika:
+        // 1. Belum ditugaskan ke siapa pun
+        // 2. Statusnya bukan selesai atau ditolak
+        return is_null($this->assigned_to) && !in_array($this->status, ['selesai', 'ditolak']);
+    }
+
     public function canBeRevised(): bool
     {
         return in_array($this->status, ['membutuhkan_revisi', 'butuh_perbaikan']);
@@ -165,6 +217,25 @@ class Permohonan extends Model
     public function hasActiveRevision(): bool
     {
         return $this->revisions()->where('status', 'pending')->exists();
+    }
+
+    /**
+     * MISSING METHOD - Cek apakah permohonan memiliki tiket aktif
+     */
+    public function hasActiveTickets(): bool
+    {
+        return $this->tickets()
+            ->whereIn('status', ['open', 'in_progress'])
+            ->exists();
+    }
+
+    /**
+     * MISSING METHOD - Mendapatkan tiket aktif
+     */
+    public function activeTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class)
+            ->whereIn('status', ['open', 'in_progress']);
     }
     
     public function getAssignmentDurationAttribute(): ?int
@@ -230,5 +301,27 @@ class Permohonan extends Model
         }
 
         return $this->assignTo($lightestPetugas, null);
+    }
+
+    //=====================================================
+    // MISSING SCOPE METHODS
+    //=====================================================
+
+    /**
+     * Scope untuk permohonan yang belum ditugaskan
+     */
+    public function scopeUnassigned(Builder $query): Builder
+    {
+        return $query->whereNull('assigned_to');
+    }
+
+    /**
+     * Scope untuk permohonan overdue assignment
+     */
+    public function scopeOverdueAssignment(Builder $query, int $maxHours = 72): Builder
+    {
+        return $query->whereNotNull('assigned_at')
+            ->where('assigned_at', '<', now()->subHours($maxHours))
+            ->whereNotIn('status', ['selesai', 'ditolak']);
     }
 }

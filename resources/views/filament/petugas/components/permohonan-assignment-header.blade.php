@@ -8,12 +8,10 @@
                     @if($record->isAssigned())
                         <div class="flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
                             {{-- PERBAIKAN DI SINI --}}
-                            @svg('heroicon-o-user-check', 'w-6 h-6 text-primary-600 dark:text-primary-400')
                         </div>
                     @else
                         <div class="flex items-center justify-center w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg">
                             {{-- PERBAIKAN DI SINI --}}
-                            @svg('heroicon-o-user-minus', 'w-6 h-6 text-gray-500 dark:text-gray-400')
                         </div>
                     @endif
                 </div>

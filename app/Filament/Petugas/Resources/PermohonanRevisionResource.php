@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Illuminate\Support\Facades\Auth; // IMPORT YANG HILANG
 
 class PermohonanRevisionResource extends Resource
 {
@@ -154,7 +155,7 @@ class PermohonanRevisionResource extends Resource
                             'status' => 'accepted',
                             'catatan_petugas' => 'Revisi diterima dan akan diproses lebih lanjut.',
                             'reviewed_at' => now(),
-                            'reviewed_by' => auth()->id(),
+                            'reviewed_by' => Auth::id(),
                         ]);
 
                         // Update status permohonan
@@ -186,7 +187,7 @@ class PermohonanRevisionResource extends Resource
                             'status' => 'rejected',
                             'catatan_petugas' => $data['catatan_petugas'],
                             'reviewed_at' => now(),
-                            'reviewed_by' => auth()->id(),
+                            'reviewed_by' => Auth::id(),
                         ]);
 
                         // Update status permohonan
@@ -228,7 +229,7 @@ class PermohonanRevisionResource extends Resource
                                 'status' => $data['status'],
                                 'catatan_petugas' => $data['catatan_petugas'],
                                 'reviewed_at' => now(),
-                                'reviewed_by' => auth()->id(),
+                                'reviewed_by' => Auth::id(),
                             ]);
 
                             // Update permohonan status based on revision status
