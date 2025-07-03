@@ -5,43 +5,20 @@ namespace App\Filament\Petugas\Resources;
 use App\Filament\Petugas\Resources\PermohonanResource\Pages;
 use App\Filament\Petugas\Resources\PermohonanResource\RelationManagers;
 use App\Models\Permohonan;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\KeyValue;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\FileUpload;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\Section as InfolistSection;
-use Filament\Infolists\Components\KeyValueEntry;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\ImageEntry;
-use Filament\Infolists\Infolist;
-use Illuminate\Support\HtmlString;
-use Illuminate\Support\Facades\Storage;
-use Filament\Tables\Actions\Action;
-use Filament\Forms\Components\Markdown;
-use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Auth;
 
 class PermohonanResource extends Resource
 {
     protected static ?string $model = Permohonan::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
-
     protected static ?string $navigationGroup = 'Manajemen Pelayanan';
-
     protected static ?string $navigationLabel = 'Permohonan Warga';
     protected static ?string $modelLabel = 'Permohonan';
     protected static ?string $pluralModelLabel = 'Permohonan-Permohonan';
@@ -52,7 +29,7 @@ class PermohonanResource extends Resource
             ->schema([
                 Forms\Components\Group::make()
                     ->schema([
-                        Section::make('Informasi Permohonan')
+                        Forms\Components\Section::make('Informasi Permohonan')
                             ->schema([
                                 Forms\Components\TextInput::make('kode_permohonan')
                                     ->label('Kode Permohonan')
@@ -74,7 +51,41 @@ class PermohonanResource extends Resource
                                     ->columnSpanFull(),
                             ])->columns(2),
 
-                        Section::make('Data Pemohon')
+                        // SECTION BARU: Informasi Assignment
+                        Forms\Components\Section::make('Informasi Penugasan')
+                            ->schema([
+                                Forms\Components\Select::make('assigned_to')
+                                    ->label('Ditugaskan Kepada')
+                                    ->options(function () {
+                                        return User::role(['petugas', 'admin', 'kadis'])
+                                            ->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Belum ditugaskan')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        if ($state) {
+                                            $set('assigned_at', now());
+                                            $set('assigned_by', Auth::id());
+                                        } else {
+                                            $set('assigned_at', null);
+                                            $set('assigned_by', null);
+                                        }
+                                    }),
+                                    
+                                Forms\Components\DateTimePicker::make('assigned_at')
+                                    ->label('Tanggal Ditugaskan')
+                                    ->disabled(),
+                                    
+                                Forms\Components\Select::make('assigned_by')
+                                    ->label('Ditugaskan Oleh')
+                                    ->relationship('assignedBy', 'name')
+                                    ->disabled(),
+                            ])->columns(3)
+                            ->visible(fn () => Auth::user()->hasRole(['admin', 'kadis'])),
+
+                        Forms\Components\Section::make('Data Pemohon')
                             ->schema([
                                 Forms\Components\KeyValue::make('data_pemohon')
                                     ->keyLabel('Field')
@@ -87,19 +98,19 @@ class PermohonanResource extends Resource
                                     ->hiddenOn('create'),
                             ]),
 
-                        Section::make('Berkas Pemohon')
+                        Forms\Components\Section::make('Berkas Pemohon')
                             ->schema([
-                                Repeater::make('berkas_pemohon')
+                                Forms\Components\Repeater::make('berkas_pemohon')
                                     ->label('Daftar Berkas')
                                     ->addable(false)
                                     ->deletable(false)
                                     ->collapsible()
                                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                                     ->schema([
-                                        TextInput::make('name')
+                                        Forms\Components\TextInput::make('name')
                                             ->label('Nama Berkas')
                                             ->readOnly(),
-                                        FileUpload::make('path_dokumen')
+                                        Forms\Components\FileUpload::make('path_dokumen')
                                             ->label('File')
                                             ->disabled()
                                             ->disk('private')
@@ -118,9 +129,9 @@ class PermohonanResource extends Resource
 
                 Forms\Components\Group::make()
                     ->schema([
-                        Section::make('Status & Catatan Petugas')
+                        Forms\Components\Section::make('Status & Catatan Petugas')
                             ->schema([
-                                Select::make('status')
+                                Forms\Components\Select::make('status')
                                     ->label('Status Permohonan')
                                     ->options([
                                         'baru' => 'Baru Diajukan',
@@ -136,9 +147,8 @@ class PermohonanResource extends Resource
                                     ->required()
                                     ->native(false)
                                     ->columnSpanFull()
-                                    ->live() // Membuat field reactive
+                                    ->live()
                                     ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                        // Auto-fill catatan berdasarkan status
                                         match($state) {
                                             'sedang_ditinjau' => $set('catatan_petugas', 'Permohonan sedang dalam tahap peninjauan oleh petugas.'),
                                             'verifikasi_berkas' => $set('catatan_petugas', 'Sedang melakukan verifikasi kelengkapan berkas.'),
@@ -149,7 +159,7 @@ class PermohonanResource extends Resource
                                         };
                                     }),
                                 
-                                Textarea::make('catatan_petugas')
+                                Forms\Components\Textarea::make('catatan_petugas')
                                     ->label('Catatan Petugas')
                                     ->placeholder('Tambahkan catatan internal mengenai permohonan ini...')
                                     ->rows(5)
@@ -163,6 +173,25 @@ class PermohonanResource extends Resource
                                             : 'Catatan opsional untuk dokumentasi internal.'
                                     ),
                             ]),
+
+                        // SECTION BARU: Statistik Assignment (untuk Admin)
+                        Forms\Components\Section::make('Statistik Workload')
+                            ->schema([
+                                Forms\Components\Placeholder::make('current_workload')
+                                    ->label('Workload Anda Saat Ini')
+                                    ->content(fn () => Permohonan::getPetugasWorkload(Auth::id()) . ' permohonan aktif'),
+                                    
+                                Forms\Components\Placeholder::make('total_unassigned')
+                                    ->label('Permohonan Belum Ditugaskan')
+                                    ->content(fn () => Permohonan::unassigned()->count() . ' permohonan'),
+                                    
+                                Forms\Components\Placeholder::make('overdue_assignments')
+                                    ->label('Assignment Overdue')
+                                    ->content(fn () => Permohonan::overdueAssignment(72)->count() . ' permohonan')
+                                    ->extraAttributes(['class' => 'text-red-600']),
+                            ])
+                            ->visible(fn () => Auth::user()->hasRole(['admin', 'kadis']))
+                            ->collapsible(),
                     ])->columnSpan(1),
             ])->columns(3);
     }
@@ -171,21 +200,55 @@ class PermohonanResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('kode_permohonan')
+                Tables\Columns\TextColumn::make('kode_permohonan')
                     ->label('Kode Permohonan')
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                TextColumn::make('user.name')
+                    
+                Tables\Columns\TextColumn::make('user.name')
                     ->label('Warga')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('layanan.name')
+                    
+                Tables\Columns\TextColumn::make('layanan.name')
                     ->label('Jenis Layanan')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                TextColumn::make('status')
+
+                // KOLOM BARU: Assignment Info
+                Tables\Columns\TextColumn::make('assignedTo.name')
+                    ->label('Ditugaskan Ke')
+                    ->default('Belum ditugaskan')
+                    ->badge()
+                    ->color(fn ($state) => $state === 'Belum ditugaskan' ? 'gray' : 'primary')
+                    ->icon(fn ($state) => $state === 'Belum ditugaskan' ? 'heroicon-o-user-minus' : 'heroicon-o-user-check')
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('assignment_duration')
+                    ->label('Durasi Assignment')
+                    ->getStateUsing(function (Permohonan $record): ?string {
+                        if (!$record->assigned_at) {
+                            return null;
+                        }
+                        $hours = $record->assignment_duration;
+                        if ($hours < 24) {
+                            return $hours . ' jam';
+                        }
+                        return round($hours / 24, 1) . ' hari';
+                    })
+                    ->badge()
+                    ->color(function (Permohonan $record): string {
+                        if (!$record->assigned_at) return 'gray';
+                        $hours = $record->assignment_duration;
+                        if ($hours > 72) return 'danger';
+                        if ($hours > 48) return 'warning';
+                        return 'success';
+                    })
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -200,184 +263,159 @@ class PermohonanResource extends Resource
                         'selesai' => 'primary',
                         default => 'secondary',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'baru' => 'Baru Diajukan',
-                        'sedang_ditinjau' => 'Sedang Ditinjau',
-                        'verifikasi_berkas' => 'Verifikasi Berkas',
-                        'diproses' => 'Sedang Diproses',
-                        'membutuhkan_revisi' => 'Membutuhkan Revisi',
-                        'butuh_perbaikan' => 'Butuh Perbaikan',
-                        'disetujui' => 'Disetujui',
-                        'ditolak' => 'Ditolak',
-                        'selesai' => 'Selesai',
-                        default => $state,
-                    })
+                    ->formatStateUsing(fn (string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state)
                     ->sortable(),
-                TextColumn::make('created_at')
+                    
+                Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal Pengajuan')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('updated_at')
+                    
+                Tables\Columns\TextColumn::make('updated_at')
                     ->label('Terakhir Diupdate')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('status')
-                    ->options([
-                        'baru' => 'Baru Diajukan',
-                        'sedang_ditinjau' => 'Sedang Ditinjau',
-                        'verifikasi_berkas' => 'Verifikasi Berkas',
-                        'diproses' => 'Sedang Diproses',
-                        'membutuhkan_revisi' => 'Membutuhkan Revisi',
-                        'butuh_perbaikan' => 'Butuh Perbaikan',
-                        'disetujui' => 'Disetujui',
-                        'ditolak' => 'Ditolak',
-                        'selesai' => 'Selesai',
-                    ])
+                Tables\Filters\SelectFilter::make('status')
+                    ->options(Permohonan::STATUS_OPTIONS)
                     ->native(false),
-                SelectFilter::make('layanan_id')
+                    
+                Tables\Filters\SelectFilter::make('layanan_id')
                     ->relationship('layanan', 'name')
                     ->label('Jenis Layanan')
                     ->native(false),
+
+                // FILTER BARU: Assignment Status
+                Tables\Filters\SelectFilter::make('assignment_status')
+                    ->label('Status Penugasan')
+                    ->options([
+                        'unassigned' => 'Belum Ditugaskan',
+                        'assigned_to_me' => 'Ditugaskan ke Saya',
+                        'assigned_to_others' => 'Ditugaskan ke Lainnya',
+                        'overdue' => 'Assignment Overdue',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!$data['value']) {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+                            'unassigned' => $query->whereNull('assigned_to'),
+                            'assigned_to_me' => $query->where('assigned_to', Auth::id()),
+                            'assigned_to_others' => $query->whereNotNull('assigned_to')->where('assigned_to', '!=', Auth::id()),
+                            'overdue' => $query->overdueAssignment(72),
+                            default => $query,
+                        };
+                    }),
+
+                Tables\Filters\SelectFilter::make('assigned_to')
+                    ->label('Ditugaskan Kepada')
+                    ->options(fn () => User::role(['petugas', 'admin', 'kadis'])->pluck('name', 'id'))
+                    ->native(false)
+                    ->visible(fn () => Auth::user()->hasRole(['admin', 'kadis'])),
             ])
             ->actions([
+                // ACTION BARU: Quick Assignment
+                Tables\Actions\Action::make('quick_assign')
+                    ->label('Ambil')
+                    ->icon('heroicon-o-hand-raised')
+                    ->color('primary')
+                    ->action(function (Permohonan $record) {
+                        $success = $record->assignTo(Auth::id());
+                        
+                        if ($success) {
+                            // Update status if still new
+                            if ($record->status === 'baru') {
+                                $record->update([
+                                    'status' => 'sedang_ditinjau',
+                                    'catatan_petugas' => 'Permohonan telah diambil oleh ' . Auth::user()->name
+                                ]);
+                            }
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('Tugas berhasil diambil')
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn (Permohonan $record) => $record->canBeAssignedTo())
+                    ->requiresConfirmation(),
+
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (Permohonan $record) => 
+                        Auth::user()->hasRole('admin') || 
+                        $record->isAssignedTo(Auth::id())
+                    ),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     
-                    // Bulk action untuk update status multiple permohonan
-                    Tables\Actions\BulkAction::make('bulkUpdateStatus')
-                        ->label('Update Status')
-                        ->icon('heroicon-m-pencil-square')
-                        ->color('warning')
+                    // BULK ACTION BARU: Bulk Assignment
+                    Tables\Actions\BulkAction::make('bulkAssign')
+                        ->label('Tugaskan ke Petugas')
+                        ->icon('heroicon-m-users')
+                        ->color('primary')
                         ->form([
-                            Select::make('status')
-                                ->label('Status Baru')
-                                ->options([
-                                    'sedang_ditinjau' => 'Sedang Ditinjau',
-                                    'verifikasi_berkas' => 'Verifikasi Berkas',
-                                    'diproses' => 'Sedang Diproses',
-                                ])
+                            Forms\Components\Select::make('assigned_to')
+                                ->label('Tugaskan Kepada')
+                                ->options(fn () => User::role(['petugas', 'admin', 'kadis'])->pluck('name', 'id'))
                                 ->required()
-                                ->native(false),
-                            Textarea::make('catatan_petugas')
-                                ->label('Catatan Petugas')
-                                ->rows(3),
+                                ->native(false)
+                                ->searchable(),
                         ])
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
-                            $records->each(function (Permohonan $record) use ($data) {
-                                $record->update([
-                                    'status' => $data['status'],
-                                    'catatan_petugas' => $data['catatan_petugas'],
-                                ]);
-                            });
+                            $successCount = 0;
+                            $assigneeName = User::find($data['assigned_to'])->name;
+                            
+                            foreach ($records as $record) {
+                                if ($record->assignTo($data['assigned_to'], Auth::id())) {
+                                    $successCount++;
+                                }
+                            }
 
-                            Notification::make()
-                                ->title('Status berhasil diupdate untuk ' . $records->count() . ' permohonan')
+                            \Filament\Notifications\Notification::make()
+                                ->title("Berhasil menugaskan {$successCount} permohonan")
+                                ->body("Permohonan telah ditugaskan kepada {$assigneeName}")
                                 ->success()
                                 ->send();
                         })
+                        ->visible(fn () => Auth::user()->hasRole(['admin', 'kadis']))
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('bulkAutoAssign')
+                        ->label('Auto-Assign')
+                        ->icon('heroicon-m-cpu-chip')
+                        ->color('warning')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records): void {
+                            $successCount = 0;
+                            
+                            foreach ($records as $record) {
+                                if (!$record->isAssigned() && $record->autoAssign()) {
+                                    $successCount++;
+                                }
+                            }
+
+                            \Filament\Notifications\Notification::make()
+                                ->title("Berhasil auto-assign {$successCount} permohonan")
+                                ->body('Permohonan telah ditugaskan berdasarkan workload petugas')
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn () => Auth::user()->hasRole(['admin', 'kadis']))
+                        ->requiresConfirmation()
+                        ->modalDescription('Sistem akan secara otomatis menugaskan permohonan ke petugas dengan workload paling ringan.')
                         ->deselectRecordsAfterCompletion(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
     }
 
-    public static function infolist(Infolist $infolist): Infolist
-    {
-        return $infolist
-            ->schema([
-                InfolistSection::make('Informasi Permohonan')
-                    ->columns(2)
-                    ->schema([
-                        TextEntry::make('kode_permohonan')->label('Kode Permohonan'),
-                        TextEntry::make('user.name')->label('Nama Warga'),
-                        TextEntry::make('layanan.name')->label('Jenis Layanan'),
-                        TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
-                        TextEntry::make('status')
-                            ->label('Status Permohonan')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'baru' => 'gray',
-                                'sedang_ditinjau' => 'info',
-                                'verifikasi_berkas' => 'warning',
-                                'diproses' => 'info',
-                                'membutuhkan_revisi' => 'danger',
-                                'butuh_perbaikan' => 'danger',
-                                'disetujui' => 'success',
-                                'ditolak' => 'danger',
-                                'selesai' => 'primary',
-                                default => 'secondary',
-                            })
-                            ->formatStateUsing(fn (string $state): string => match ($state) {
-                                'baru' => 'Baru Diajukan',
-                                'sedang_ditinjau' => 'Sedang Ditinjau',
-                                'verifikasi_berkas' => 'Verifikasi Berkas',
-                                'diproses' => 'Sedang Diproses',
-                                'membutuhkan_revisi' => 'Membutuhkan Revisi',
-                                'butuh_perbaikan' => 'Butuh Perbaikan',
-                                'disetujui' => 'Disetujui',
-                                'ditolak' => 'Ditolak',
-                                'selesai' => 'Selesai',
-                                default => $state,
-                            }),
-                        TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull(),
-                        TextEntry::make('created_at')->label('Tanggal Pengajuan')->dateTime(),
-                        TextEntry::make('updated_at')->label('Terakhir Diperbarui')->dateTime(),
-                    ])
-                    ->collapsed(),
-
-                // Detail Data Diri Pemohon
-                InfolistSection::make('Detail Data Diri Pemohon')
-                    ->columns(3)
-                    ->description('Informasi Lengkap Profile Pemohon')
-                    ->schema([
-                        TextEntry::make('user.nik')->label('NIK'),
-                        TextEntry::make('user.nomor_kk')->label('Nomor KK'),
-                        TextEntry::make('user.nomor_whatsapp')->label('Nomor WhatsApp'),
-                        TextEntry::make('user.jenis_kelamin')->label('Jenis Kelamin'),
-                        TextEntry::make('user.agama')->label('Agama'),
-                        TextEntry::make('user.tempat_lahir')->label('Tempat Lahir'),
-                        TextEntry::make('user.tanggal_lahir')->label('Tanggal Lahir')->date(),
-                        TextEntry::make('user.gol_darah')->label('Golongan Darah'),
-                        TextEntry::make('user.alamat')->label('Alamat Lengkap')->columnSpanFull(),
-                        TextEntry::make('user.rt_rw')->label('RT/RW'),
-                        TextEntry::make('user.desa_kelurahan')->label('Desa/Kelurahan'),
-                        TextEntry::make('user.kecamatan')->label('Kecamatan'),
-                        TextEntry::make('user.kabupaten')->label('Kabupaten'),
-                        TextEntry::make('user.status_keluarga')->label('Status dalam Keluarga'),
-                        TextEntry::make('user.status_perkawinan')->label('Status Perkawinan'),
-                        TextEntry::make('user.pekerjaan')->label('Pekerjaan'),
-                        TextEntry::make('user.pendidikan')->label('Pendidikan Terakhir'),
-                    ])
-                    ->collapsed(),
-
-                InfolistSection::make('Berkas Permohonan')
-                    ->schema(function (Permohonan $record) {
-                        $berkasFields = [];
-                        if (is_array($record->berkas_pemohon)) {
-                            foreach ($record->berkas_pemohon as $index => $berkas) {
-                                if (empty($berkas['path_dokumen'])) continue;
-
-                                $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen")
-                                    ->label('Nama Dokumen')
-                                    ->url(fn() => route('secure.download', [
-                                        'permohonan_id' => $record->id,
-                                        'path' => $berkas['path_dokumen']
-                                    ]), true)
-                                    ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)')
-                                    ->icon('heroicon-m-arrow-down-tray');
-                            }
-                        }
-                        return $berkasFields;
-                    })->columns(1),
-            ]);
-    }
+    // Method yang sudah ada sebelumnya...
     public static function getRelationManagers(): array
     {
         return [
@@ -390,12 +428,29 @@ class PermohonanResource extends Resource
         return [
             'index' => Pages\ListPermohonans::route('/'),
             'view' => Pages\ViewPermohonan::route('/{record}'),
+            'edit' => Pages\EditPermohonan::route('/{record}/edit'),
         ];
     }
 
-    public static function getGloballySearchableAttributes(): array
+    public static function getNavigationBadge(): ?string
     {
-        return ['kode_permohonan', 'user.name', 'layanan.name'];
+    $user = Auth::user();
+
+        if ($user->hasRole('admin')) {
+            // Untuk admin, kita panggil sebagai static method karena tidak terikat pada satu objek
+         return static::getModel()::whereNull('assigned_to')->count();
+     } else {
+         // Untuk petugas, kita juga panggil sebagai static method
+         return static::getModel()::where('assigned_to', $user->id)
+             ->whereNotIn('status', ['selesai', 'ditolak'])
+             ->count();
+    }
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = static::getNavigationBadge();
+        return $count > 0 ? 'warning' : null;
     }
 
     public static function canCreate(): bool

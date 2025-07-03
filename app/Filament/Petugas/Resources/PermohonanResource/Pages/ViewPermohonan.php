@@ -20,34 +20,48 @@ class ViewPermohonan extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            // Assignment Actions
+            // ===================
+            // ASSIGNMENT ACTIONS
+            // ===================
+            
             Action::make('ambil_tugas')
                 ->label('Ambil Tugas')
                 ->icon('heroicon-o-hand-raised')
                 ->color('primary')
                 ->action(function () {
-                    $this->record->assignTo(auth()->id());
+                    $success = $this->record->assignTo(auth()->id());
                     
-                    // Update status jika masih baru
-                    if ($this->record->status === 'baru') {
-                        $this->record->update([
-                            'status' => 'sedang_ditinjau',
-                            'catatan_petugas' => 'Permohonan telah diambil oleh ' . auth()->user()->name . ' dan sedang dalam tahap peninjauan.'
-                        ]);
+                    if ($success) {
+                        // Update status jika masih baru
+                        if ($this->record->status === 'baru') {
+                            $this->record->update([
+                                'status' => 'sedang_ditinjau',
+                                'catatan_petugas' => 'Permohonan telah diambil oleh ' . auth()->user()->name . ' dan sedang dalam tahap peninjauan.'
+                            ]);
+                        }
+
+                        $this->fillForm();
+
+                        Notification::make()
+                            ->title('Tugas berhasil diambil')
+                            ->body('Permohonan sekarang menjadi tanggung jawab Anda.')
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Gagal mengambil tugas')
+                            ->body('Terjadi kesalahan saat mengambil tugas.')
+                            ->danger()
+                            ->send();
                     }
-
-                    $this->fillForm();
-
-                    Notification::make()
-                        ->title('Tugas berhasil diambil')
-                        ->body('Permohonan sekarang menjadi tanggung jawab Anda.')
-                        ->success()
-                        ->send();
                 })
-                ->visible(fn (): bool => !$this->record->isAssigned())
+                ->visible(fn (): bool => $this->record->canBeAssignedTo())
                 ->requiresConfirmation()
                 ->modalHeading('Ambil Tugas Permohonan')
-                ->modalDescription('Apakah Anda yakin ingin mengambil tugas untuk menangani permohonan ini?')
+                ->modalDescription(fn () => 
+                    "Apakah Anda yakin ingin mengambil tugas untuk menangani permohonan {$this->record->kode_permohonan}? " .
+                    "Setelah mengambil tugas, Anda akan bertanggung jawab untuk memproses permohonan ini."
+                )
                 ->modalSubmitActionLabel('Ya, Ambil Tugas'),
                 
             Action::make('alihkan_tugas')
@@ -64,39 +78,49 @@ class ViewPermohonan extends ViewRecord
                         })
                         ->required()
                         ->searchable()
-                        ->preload(),
+                        ->preload()
+                        ->helperText('Pilih petugas yang akan menangani permohonan ini'),
+                    
                     Textarea::make('catatan_pengalihan')
-                        ->label('Catatan Pengalihan (Opsional)')
+                        ->label('Catatan Pengalihan')
                         ->placeholder('Berikan catatan khusus untuk petugas yang akan menangani...')
-                        ->rows(3),
+                        ->rows(3)
+                        ->helperText('Catatan ini akan membantu petugas baru memahami kondisi permohonan'),
                 ])
                 ->action(function (array $data) {
                     $newAssignee = User::find($data['assigned_to']);
                     $oldAssignee = $this->record->assignedTo;
                     
-                    $this->record->assignTo($data['assigned_to'], auth()->id());
+                    $success = $this->record->reassignTo($data['assigned_to'], $data['catatan_pengalihan']);
                     
-                    // Update catatan jika ada
-                    if (!empty($data['catatan_pengalihan'])) {
-                        $currentNote = $this->record->catatan_petugas ?? '';
-                        $newNote = $currentNote . "\n\nDialihkan dari " . $oldAssignee->name . " ke " . $newAssignee->name . " oleh " . auth()->user()->name . ":\n" . $data['catatan_pengalihan'];
-                        $this->record->update(['catatan_petugas' => $newNote]);
+                    if ($success) {
+                        // Update catatan jika ada
+                        if (!empty($data['catatan_pengalihan'])) {
+                            $currentNote = $this->record->catatan_petugas ?? '';
+                            $newNote = $currentNote . "\n\n[PENGALIHAN] Dialihkan dari " . $oldAssignee?->name . " ke " . $newAssignee->name . " oleh " . auth()->user()->name . ":\n" . $data['catatan_pengalihan'];
+                            $this->record->update(['catatan_petugas' => $newNote]);
+                        }
+
+                        // Kirim notifikasi ke petugas baru
+                        Notification::make()
+                            ->title('Tugas Baru: ' . $this->record->kode_permohonan)
+                            ->body("Anda telah ditugaskan untuk menangani permohonan ini. Catatan: " . ($data['catatan_pengalihan'] ?? 'Tidak ada catatan khusus.'))
+                            ->success()
+                            ->sendToDatabase($newAssignee);
+
+                        $this->fillForm();
+
+                        Notification::make()
+                            ->title('Tugas berhasil dialihkan')
+                            ->body("Permohonan telah dialihkan ke {$newAssignee->name}")
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Gagal mengalihkan tugas')
+                            ->danger()
+                            ->send();
                     }
-
-                    // Kirim notifikasi ke petugas baru
-                    Notification::make()
-                        ->title('Tugas Baru: ' . $this->record->kode_permohonan)
-                        ->body('Anda telah ditugaskan untuk menangani permohonan ini.')
-                        ->success()
-                        ->sendToDatabase($newAssignee);
-
-                    $this->fillForm();
-
-                    Notification::make()
-                        ->title('Tugas berhasil dialihkan')
-                        ->body("Permohonan telah dialihkan ke {$newAssignee->name}")
-                        ->success()
-                        ->send();
                 })
                 ->visible(fn (): bool => 
                     $this->record->isAssigned() && 
@@ -105,7 +129,39 @@ class ViewPermohonan extends ViewRecord
                 ->modalHeading('Alihkan Tugas Permohonan')
                 ->modalSubmitActionLabel('Alihkan Tugas'),
 
-            // Status Update Actions
+            Action::make('batal_assignment')
+                ->label('Batalkan Assignment')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->form([
+                    Textarea::make('reason')
+                        ->label('Alasan Pembatalan')
+                        ->required()
+                        ->placeholder('Jelaskan mengapa assignment dibatalkan...')
+                        ->rows(3),
+                ])
+                ->action(function (array $data) {
+                    $success = $this->record->unassign($data['reason']);
+                    
+                    if ($success) {
+                        $this->fillForm();
+
+                        Notification::make()
+                            ->title('Assignment berhasil dibatalkan')
+                            ->success()
+                            ->send();
+                    }
+                })
+                ->visible(fn (): bool => 
+                    $this->record->isAssigned() && auth()->user()->hasRole('admin')
+                )
+                ->requiresConfirmation()
+                ->modalHeading('Batalkan Assignment'),
+
+            // ======================
+            // STATUS UPDATE ACTIONS
+            // ======================
+            
             Action::make('quickStatusUpdate')
                 ->label('Update Status')
                 ->icon('heroicon-m-pencil-square')
@@ -158,8 +214,8 @@ class ViewPermohonan extends ViewRecord
                 ->action(function (array $data): void {
                     $oldStatus = $this->record->status;
                     
-                    // Auto-assign jika belum di-assign dan bukan petugas yang mengupdate
-                    if (!$this->record->isAssigned()) {
+                    // Auto-assign jika belum di-assign dan bukan status yang mengindikasikan selesai
+                    if (!$this->record->isAssigned() && !in_array($data['status'], ['ditolak', 'selesai'])) {
                         $this->record->assignTo(auth()->id());
                     }
                     
@@ -184,7 +240,10 @@ class ViewPermohonan extends ViewRecord
                 ->modalDescription('Update status akan mengirim notifikasi kepada pemohon')
                 ->modalSubmitActionLabel('Update & Kirim Notifikasi'),
 
-            // Quick Actions
+            // =================
+            // QUICK ACTIONS
+            // =================
+            
             Action::make('approve')
                 ->label('Setujui')
                 ->icon('heroicon-m-check-circle')
@@ -259,6 +318,14 @@ class ViewPermohonan extends ViewRecord
                         ->send();
                 })
                 ->visible(fn () => !in_array($this->record->status, ['disetujui', 'selesai', 'ditolak'])),
+
+            // =================
+            // NAVIGATION ACTIONS
+            // =================
+            
+            Actions\EditAction::make()
+                ->label('Edit Detail')
+                ->icon('heroicon-o-pencil-square'),
         ];
     }
 
@@ -309,6 +376,11 @@ class ViewPermohonan extends ViewRecord
             $body .= "\n\nCatatan: " . ($catatan ?? $permohonan->catatan_petugas);
         }
 
+        // Add assignment info if applicable
+        if ($permohonan->isAssigned()) {
+            $body .= "\n\nDitangani oleh: " . $permohonan->assignedTo->name;
+        }
+
         // Send notification to user
         Notification::make()
             ->title('Status Permohonan Diperbarui')
@@ -316,5 +388,51 @@ class ViewPermohonan extends ViewRecord
             ->body($body)
             ->color($notificationColor)
             ->sendToDatabase($user);
+    }
+
+    /**
+     * Get the form model
+     */
+    protected function getFormModel(): string
+    {
+        return $this->record::class;
+    }
+
+    /**
+     * Customize the view data
+     */
+    protected function getViewData(): array
+    {
+        $data = parent::getViewData();
+        
+        // Add assignment information
+        $data['assignmentInfo'] = [
+            'isAssigned' => $this->record->isAssigned(),
+            'assignedTo' => $this->record->assignedTo,
+            'assignedAt' => $this->record->assigned_at,
+            'assignedBy' => $this->record->assignedBy,
+            'assignmentDuration' => $this->record->assignment_duration,
+            'isOverdue' => $this->record->isAssignmentOverdue(),
+            'canBeAssigned' => $this->record->canBeAssignedTo(),
+            'currentUserWorkload' => \App\Models\Permohonan::getPetugasWorkload(auth()->id()),
+        ];
+
+        // Add workload distribution for admins
+        if (auth()->user()->hasRole('admin')) {
+            $data['workloadDistribution'] = \App\Models\Permohonan::getWorkloadDistribution();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Show assignment info in header
+     */
+    public function getHeader(): ?\Illuminate\Contracts\View\View
+    {
+        return view('filament.petugas.components.permohonan-assignment-header', [
+            'record' => $this->record,
+            'assignmentInfo' => $this->getViewData()['assignmentInfo'],
+        ]);
     }
 }
