@@ -1,4 +1,3 @@
-{{-- resources/views/filament/infolists/components/revision-history.blade.php --}}
 <div class="space-y-4">
     @forelse($getRecord()->revisions()->orderBy('created_at', 'desc')->get() as $revision)
                     <div class="border border-gray-200 rounded-lg p-4 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">

@@ -100,33 +100,52 @@ class QuickActionsController extends Controller
             return back()->with('success', 'Revisi telah berhasil diterima.');
 
         } else { // reject
-            $catatanPetugas = 'Revisi ditolak. Silakan perbaiki dokumen sesuai ketentuan yang berlaku.';
-
-            $revision->update([
-                'status' => 'rejected',
-                'catatan_petugas' => $catatanPetugas,
-                'reviewed_at' => now(),
-                'reviewed_by' => Auth::id(),
+            // Untuk reject, redirect ke halaman dengan form alasan
+            return redirect()->back()->with([
+                'reject_revision_id' => $revision->id,
+                'reject_revision_number' => $revision->revision_number
             ]);
-
-            // Update status permohonan induk
-            $revision->permohonan->update([
-                'status' => 'membutuhkan_revisi',
-                'catatan_petugas' => "Revisi ke-{$revision->revision_number} ditolak. " . $catatanPetugas,
-            ]);
-
-            // Kirim notifikasi ke warga
-            try {
-                Notification::make()
-                    ->title('Revisi Perlu Diperbaiki')
-                    ->body("Revisi ke-{$revision->revision_number} ditolak. " . $catatanPetugas)
-                    ->warning()
-                    ->sendToDatabase($revision->user);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send notification: ' . $e->getMessage());
-            }
-
-            return back()->with('success', 'Revisi telah ditolak dengan catatan.');
         }
+    }
+
+    public function quickRevisionReject(Request $request)
+    {
+        $request->validate([
+            'revision_id' => 'required|exists:permohonan_revisions,id',
+            'reject_reason' => 'required|string|max:1000'
+        ]);
+
+        // Validasi akses
+        if (!Auth::user()->hasRole(['petugas', 'admin', 'kadis'])) {
+            return back()->with('error', 'Anda tidak memiliki izin untuk melakukan aksi ini.');
+        }
+
+        $revision = PermohonanRevision::findOrFail($request->revision_id);
+
+        $revision->update([
+            'status' => 'rejected',
+            'catatan_petugas' => $request->reject_reason,
+            'reviewed_at' => now(),
+            'reviewed_by' => Auth::id(),
+        ]);
+
+        // Update status permohonan induk
+        $revision->permohonan->update([
+            'status' => 'membutuhkan_revisi',
+            'catatan_petugas' => "Revisi ke-{$revision->revision_number} ditolak. " . $request->reject_reason,
+        ]);
+
+        // Kirim notifikasi ke warga
+        try {
+            Notification::make()
+                ->title('Revisi Perlu Diperbaiki')
+                ->body("Revisi ke-{$revision->revision_number} ditolak. " . $request->reject_reason)
+                ->warning()
+                ->sendToDatabase($revision->user);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send notification: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Revisi telah ditolak dengan catatan.');
     }
 }

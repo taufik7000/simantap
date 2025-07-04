@@ -47,12 +47,15 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    // Quick Actions untuk Petugas - gunakan middleware yang benar
     Route::post('/petugas/quick-status-update', [App\Http\Controllers\Petugas\QuickActionsController::class, 'quickStatusUpdate'])
         ->name('petugas.quick-status-update');
         
     Route::post('/petugas/quick-revision-action', [App\Http\Controllers\Petugas\QuickActionsController::class, 'quickRevisionAction'])
         ->name('petugas.quick-revision-action');
+    
+    // Route baru untuk reject dengan alasan
+    Route::post('/petugas/quick-revision-reject', [App\Http\Controllers\Petugas\QuickActionsController::class, 'quickRevisionReject'])
+        ->name('petugas.quick-revision-reject');
     
     // Download semua berkas permohonan (zip)
     Route::get('/berkas/download-all/{permohonan}', [App\Http\Controllers\BerkasController::class, 'downloadAll'])
