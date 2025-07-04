@@ -66,14 +66,18 @@ class Permohonan extends Model
     protected static function booted(): void
     {
         // Membuat kode permohonan unik saat data baru dibuat
-        static::creating(function (Permohonan $permohonan) {
-            if (empty($permohonan->kode_permohonan)) {
-                $prefix = 'SP-' . now()->format('Ymd');
-                $lastPermohonan = self::where('kode_permohonan', 'like', $prefix . '%')->latest('id')->first();
-                $nextNumber = $lastPermohonan ? (int) substr($lastPermohonan->kode_permohonan, -4) + 1 : 1;
-                $permohonan->kode_permohonan = $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-            }
-        });
+    static::creating(function (Permohonan $permohonan) {
+        if (empty($permohonan->kode_permohonan)) {
+        // Format: SP + Base36 encoded timestamp
+        $timestamp = now()->timestamp;
+        $encoded = strtoupper(base_convert($timestamp, 10, 36));
+        
+        // Tambahkan random 2 karakter untuk keunikan ekstra
+        $randomChars = strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 2));
+        
+        $permohonan->kode_permohonan = 'SP' . $encoded . $randomChars;
+    }
+    });
 
         // Membuat log pertama saat permohonan berhasil dibuat
         static::created(function (Permohonan $permohonan) {

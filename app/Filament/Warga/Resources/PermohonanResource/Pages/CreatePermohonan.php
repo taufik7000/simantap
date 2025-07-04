@@ -3,90 +3,112 @@
 namespace App\Filament\Warga\Resources\PermohonanResource\Pages;
 
 use App\Filament\Warga\Resources\PermohonanResource;
-use App\Models\FormulirMaster;
 use App\Models\Layanan;
-use Filament\Notifications\Notification;
-use Filament\Resources\Pages\CreateRecord;
+use App\Models\Permohonan;
+use App\Services\FormValidationService;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection; // Mengimpor Collection untuk kejelasan
 
-class CreatePermohonan extends CreateRecord
+class CreatePermohonan extends Page implements HasForms
 {
+    use InteractsWithForms;
+
     protected static string $resource = PermohonanResource::class;
-    
-    // 1. Tunjuk ke view custom kita
+
+    // Tunjuk ke view custom kita
     protected static string $view = 'filament.warga.pages.create-permohonan';
 
-    // Properti ini akan kita kirim ke view
+    // Properti untuk dikirim ke view
     public Layanan $layanan;
     public array $jenisPermohonanData = [];
+
+    // Properti untuk menampung data dari form
+    public $selected_jenis_id;
 
     public function mount(): void
     {
         $layananId = request()->query('layanan_id');
         abort_if(!$layananId, 404);
-        
+
         $this->layanan = Layanan::findOrFail($layananId);
 
         // Siapkan data untuk dikirim ke view Blade
         if ($this->layanan->description && is_array($this->layanan->description)) {
-            foreach ($this->layanan->description as $syarat) {
-                // 'formulir_master_id' sekarang bisa berupa array ID atau ID tunggal
-                $formulirIds = $syarat['formulir_master_id'] ?? null; 
-
-                $namaFormulirList = [];
-                // PERBAIKAN UTAMA: Periksa apakah ada ID formulir dan proses sebagai array
-                if (!empty($formulirIds)) {
-                    // Pastikan $formulirIds adalah array untuk whereIn(), bahkan jika hanya 1 ID
-                    $formulirIds = (array) $formulirIds; 
-                    
-                    // Ambil semua formulir master yang terkait dalam satu query efisien
-                    $formulirs = FormulirMaster::whereIn('id', $formulirIds)->get();
-
-                    // Kumpulkan nama-nama formulir yang ditemukan
-                    foreach ($formulirs as $formulir) {
-                        $namaFormulirList[] = $formulir->nama_formulir;
-                    }
-                }
-
+            foreach ($this->layanan->description as $index => $syarat) {
                 $this->jenisPermohonanData[] = [
+                    'id' => $index, // Gunakan index sebagai ID unik sementara
                     'nama' => $syarat['nama_syarat'],
                     'deskripsi' => $syarat['deskripsi_syarat'],
-                    // Simpan ID formulir yang dipilih (bisa array atau null)
-                    'formulir_master_id' => $formulirIds, 
-                    // Kirim juga array nama formulir ke view (jika ada)
-                    'nama_formulir' => !empty($namaFormulirList) ? $namaFormulirList : null,
+                    'formulir_master_id' => $syarat['formulir_master_id'] ?? null,
+                    // BARU: Form fields untuk data collection
+                    'form_fields' => $syarat['form_fields'] ?? [],
+                    // BARU: File requirements
+                    'file_requirements' => $syarat['file_requirements'] ?? [],
                 ];
             }
         }
-        
-        $this->form->fill();
     }
 
-    // Metode ini tetap diperlukan untuk menambahkan user_id & layanan_id
-    protected function mutateFormDataBeforeCreate(array $data): array
+    // Fungsi ini akan dipanggil dari frontend untuk memproses form
+    public function submitPermohonan(Request $request)
     {
-        $data['user_id'] = Auth::id();
-        $data['layanan_id'] = $this->layanan->id;
-        $data['status'] = 'baru';
-        return $data;
-    }
-    
-    protected function afterCreate(): void
-    {
-        $permohonan = $this->record;
-        $user = Auth::user();
+        // Ambil jenis permohonan yang dipilih berdasarkan ID
+        $jenisPermohonanId = $request->input('selected_jenis_id');
+        $jenisPermohonan = null;
+        foreach ($this->jenisPermohonanData as $data) {
+            if ($data['id'] == $jenisPermohonanId) {
+                $jenisPermohonan = $data;
+                break;
+            }
+        }
 
-        Notification::make()
-            ->title('Permohonan Berhasil Diajukan!')
-            ->icon('heroicon-o-check-circle')
-            ->body("Permohonan Anda dengan kode {$permohonan->kode_permohonan} telah berhasil kami terima.")
-            ->success()
-            ->sendToDatabase($user);
-    }
-    
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
+        abort_if(!$jenisPermohonan, 404, 'Jenis permohonan tidak valid.');
+
+        // Validasi dinamis
+        [$rules, $messages] = FormValidationService::validateDynamicForm($jenisPermohonan, $request);
+        $validatedData = $request->validate($rules, $messages);
+
+        // Process file uploads
+        $berkasData = [];
+        if ($request->hasFile('berkas_pemohon')) {
+            // Cari detail file_requirements yang sesuai
+            $fileReqsMap = collect($jenisPermohonan['file_requirements'] ?? [])->keyBy('file_key');
+
+            foreach ($request->file('berkas_pemohon') as $key => $file) {
+                if ($file) {
+                    $path = $file->store('berkas-permohonan', 'private');
+                    $fileReq = $fileReqsMap->get($key);
+                    $berkasData[] = [
+                        'file_key' => $key,
+                        'nama_dokumen' => $fileReq['file_name'] ?? $key,
+                        'path_dokumen' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                    ];
+                }
+            }
+        }
+
+        // Ambil data pemohon dari request
+        $dataPemohonInput = $validatedData['data_pemohon'] ?? [];
+        // Gabungkan dengan nama jenis permohonan
+        $dataPemohonFinal = array_merge(
+            $dataPemohonInput,
+            ['jenis_permohonan' => $jenisPermohonan['nama']]
+        );
+
+        // Create permohonan
+        $permohonan = Permohonan::create([
+            'user_id' => auth()->id(),
+            'layanan_id' => $this->layanan->id,
+            'data_pemohon' => $dataPemohonFinal,
+            'berkas_pemohon' => $berkasData,
+            'status' => 'baru'
+        ]);
+
+        return redirect()->route('filament.warga.resources.permohonans.view', $permohonan->kode_permohonan)
+            ->with('success', 'Permohonan berhasil diajukan!');
     }
 }

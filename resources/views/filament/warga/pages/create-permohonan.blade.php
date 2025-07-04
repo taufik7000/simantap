@@ -1,136 +1,224 @@
-<x-filament-panels::page>
-    <div
-        x-data="{
-            // selectedService sekarang akan menjadi string nama layanan yang dipilih
-            selectedService: null, // Biarkan sebagai string nama layanan
-            
-            requirements: '',
-            // UBAH INI: properti untuk ID dan Nama formulir harus array
-            selectedFormulirIds: [],    // Ini akan menampung array ID
-            selectedFormulirNamas: [],  // Ini akan menampung array nama
-            
-            selectService(service) {
-                this.selectedService = service.nama;
-                this.requirements = service.deskripsi;
-                // UBAH INI: Pastikan service.formulir_master_id dan service.nama_formulir
-                //           diperlakukan sebagai array jika multiple selection
-                this.selectedFormulirIds = service.formulir_master_id || []; // Pastikan ini array, jika null/undefined jadi array kosong
-                this.selectedFormulirNamas = service.nama_formulir || []; // Pastikan ini array, jika null/undefined jadi array kosong
-                
-                // Pastikan Livewire state diperbarui secara eksplisit untuk visibilitas unggah dokumen
-                $wire.set('data.data_pemohon.jenis_permohonan', service.nama); 
-            },
+@extends('filament-panels::components.layout')
 
-            // Tambahkan init() untuk menangani kasus edit atau halaman reload dengan data
-            init() {
-                // Ambil nilai awal dari Livewire state jika ada
-                const initialLivewireJenisPermohonan = @js($this->data['data_pemohon']['jenis_permohonan'] ?? null);
-                if (initialLivewireJenisPermohonan) {
-                    // Cari data layanan yang cocok
-                    const initialService = {{ Js::from($this->jenisPermohonanData) }}.find(service => service.nama === initialLivewireJenisPermohonan);
-                    if (initialService) {
-                        this.selectedService = initialService.nama; // Set selectedService lokal
-                        this.requirements = initialService.deskripsi;
-                        this.selectedFormulirIds = initialService.formulir_master_id || [];
-                        this.selectedFormulirNamas = initialService.nama_formulir || [];
-                    }
-                }
-            }
-        }"
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-    >
-        <form wire:submit="create">
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+@section('content')
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-200">Buat Permohonan: {{ $layanan->name }}</h1>
 
-                <div class="lg:col-span-3 space-y-6">
-                    <x-filament::section class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                        <x-slot name="heading" class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <h2 class="text-xl font-bold text-gray-800 dark:text-white">Pilih Jenis Permohonan</h2>
-                        </x-slot>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
-                            @foreach($this->jenisPermohonanData as $service)
-                                <div
-                                    @click="selectService(@js($service))"
-                                    :class="{
-                                        // Kelas untuk saat item TERPILIH (hijau)
-                                        'border-primary-600 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-600': selectedService === '{{ $service['nama'] }}',
-                                        
-                                        // Kelas untuk saat item TIDAK TERPILIH (default, dengan border yang tetap jelas)
-                                        'border-gray-300 dark:border-gray-600 hover:border-primary-500 bg-white dark:bg-gray-800': selectedService !== '{{ $service['nama'] }}'
-                                    }"
-                                    class="flex items-center p-4 rounded-xl cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md border"
-                                >
-                                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mr-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                    </div>
-                                    <h3 class="font-bold text-gray-900 dark:text-white">{{ $service['nama'] }}</h3>
-                                </div>
-                            @endforeach
-                        </div>
-                    </x-filament::section>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Pilih Jenis Permohonan</h2>
 
-                    {{-- UNDUH FORMULIR WAJIB - MENDUKUNG MULTIPLE FILES --}}
-                    {{-- Kondisi x-show: section muncul jika ada setidaknya satu ID formulir di array --}}
-                    <div x-show="selectedFormulirIds.length > 0" x-transition>
-                        <x-filament::section class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                             <x-slot name="heading" class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                                <h2 class="text-xl font-bold text-gray-800 dark:text-white">Unduh Formulir Wajib</h2>
-                            </x-slot>
-                            <div class="p-6">
-                                <p class="text-sm text-center text-gray-600 dark:text-gray-400 mb-4">
-                                    Layanan ini memerlukan formulir fisik. Silakan unduh, isi, lalu unggah bersama dokumen lainnya.
-                                </p>
-                                {{-- Gunakan x-for untuk mengiterasi setiap formulir dan membuat tombol unduh terpisah --}}
-                                <div class="space-y-3"> {{-- Memberi jarak antar tombol unduh --}}
-                                    <template x-for="(formId, index) in selectedFormulirIds" :key="index">
-                                        <a x-bind:href="`/download-formulir-master/${formId}`"
-                                           class="w-full inline-flex items-center justify-center gap-x-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-white/5 dark:text-white dark:ring-white/20 dark:hover:bg-white/10 transition-all duration-200"
-                                        >
-                                            <x-heroicon-m-arrow-down-tray class="w-5 h-5"/>
-                                            {{-- Menampilkan nama formulir yang sesuai dengan indeks --}}
-                                            <span x-text="selectedFormulirNamas[index] ? `Unduh: ${selectedFormulirNamas[index]}` : 'Unduh Formulir'"></span>
-                                        </a>
-                                    </template>
-                                </div>
-                            </div>
-                        </x-filament::section>
-                    </div>
+        @foreach($jenisPermohonanData as $jenis)
+        <div class="border dark:border-gray-700 rounded-lg p-4 mb-4 cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700/50 jenis-permohonan-option"
+             data-jenis-id="{{ $jenis['id'] }}">
+            <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ $jenis['nama'] }}</h3>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1 prose dark:prose-invert max-w-none">{!! $jenis['deskripsi'] !!}</div>
 
-                    <div x-show="selectedService" x-transition.opacity>
-                        <x-filament::section class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                            <x-slot name="heading" class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                                <h2 class="text-xl font-bold text-gray-800 dark:text-white">Deskripsi & Persyaratan</h2>
-                            </x-slot>
-                            <div class="prose max-w-none dark:prose-invert p-6" x-html="requirements"></div>
-                        </x-filament::section>
-                    </div>
-                </div>
+            <div class="flex items-center gap-2 mt-3">
+                 @if(!empty($jenis['form_fields']))
+                    <span class="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-1 rounded-full">
+                        {{ count($jenis['form_fields']) }} isian data
+                    </span>
+                @endif
 
-                <div class="lg:col-span-2 space-y-6"> 
-                    {{-- UNGGAH DOKUMEN --}}
-                    <div x-show="selectedService" x-transition.delay.200ms>
-                        <x-filament::section class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden !p-0">
-                            <x-slot name="heading" class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                                <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-                                    <span x-text="'Unggah Dokumen untuk: ' + selectedService"></span>
-                                </h2>
-                            </x-slot>
-                            <div class="p-6 space-y-6">
-                                {{ $this->form }}
-                            </div>
-                        </x-filament::section>
-                    </div>
+                @if(!empty($jenis['file_requirements']))
+                    <span class="text-xs bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 px-2 py-1 rounded-full">
+                        {{ count($jenis['file_requirements']) }} berkas diperlukan
+                    </span>
+                @endif
+            </div>
+        </div>
+        @endforeach
+    </div>
 
-                    {{-- TOMBOL AJUKAN PERMOHONAN SEKARANG --}}
-                    <div x-show="selectedService" x-transition.delay.300ms> 
-                        <div class="flex justify-end"> 
-                            <x-filament::button type="submit" wire:loading.attr="disabled">
-                                Ajukan Permohonan Sekarang
-                            </x-filament::button>
-                        </div>
-                    </div>
-                </div>
+    <div id="dynamic-form-container" class="hidden">
+        {{-- Form ini akan submit ke method `submitPermohonan` di backend --}}
+        <form action="{{ route('filament.warga.pages.create-permohonan', ['layanan_id' => $layanan->id]) }}" method="POST" enctype="multipart/form-data" id="permohonan-form">
+            @csrf
+            {{-- Input tersembunyi untuk menyimpan ID jenis permohonan yang dipilih --}}
+            <input type="hidden" name="selected_jenis_id" id="selected_jenis_id">
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6" id="data-form-section">
+                <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Isi Data Permohonan</h2>
+                <div id="dynamic-fields" class="space-y-6"></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6" id="file-upload-section">
+                <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Upload Berkas</h2>
+                <div id="dynamic-file-uploads" class="space-y-6"></div>
+            </div>
+
+            <div class="flex justify-end">
+                 <button type="submit" class="fi-btn fi-btn-size-md fi-btn-color-primary">
+                    Ajukan Permohonan
+                </button>
             </div>
         </form>
     </div>
-</x-filament-panels::page>
+</div>
+
+<script>
+    const jenisPermohonanData = @json($jenisPermohonanData);
+    let selectedJenisId = null;
+
+    document.querySelectorAll('.jenis-permohonan-option').forEach(el => {
+        el.addEventListener('click', function() {
+            selectJenisPermohonan(this.dataset.jenisId);
+        });
+    });
+
+    function selectJenisPermohonan(jenisId) {
+        selectedJenisId = jenisId;
+        const selectedJenis = jenisPermohonanData.find(j => j.id == jenisId);
+
+        // Update UI
+        document.querySelectorAll('.jenis-permohonan-option').forEach(el => {
+            el.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700/50');
+        });
+        document.querySelector(`[data-jenis-id="${jenisId}"]`).classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700/50');
+
+        // Set value untuk input hidden
+        document.getElementById('selected_jenis_id').value = jenisId;
+
+        // Generate form dinamis
+        generateDynamicForm(selectedJenis);
+
+        // Tampilkan form container
+        document.getElementById('dynamic-form-container').classList.remove('hidden');
+    }
+
+    function generateDynamicForm(jenis) {
+        const dynamicFieldsContainer = document.getElementById('dynamic-fields');
+        const dynamicFilesContainer = document.getElementById('dynamic-file-uploads');
+
+        dynamicFieldsContainer.innerHTML = '';
+        dynamicFilesContainer.innerHTML = '';
+
+        // Generate form fields jika ada
+        const hasFormFields = jenis.form_fields && jenis.form_fields.length > 0;
+        document.getElementById('data-form-section').style.display = hasFormFields ? 'block' : 'none';
+        if (hasFormFields) {
+            jenis.form_fields
+                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                .forEach(field => {
+                    const fieldHtml = generateFieldHtml(field);
+                    dynamicFieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+                });
+        }
+
+        // Generate file uploads jika ada
+        const hasFileReqs = jenis.file_requirements && jenis.file_requirements.length > 0;
+        document.getElementById('file-upload-section').style.display = hasFileReqs ? 'block' : 'none';
+        if (hasFileReqs) {
+            jenis.file_requirements.forEach(fileReq => {
+                const fileHtml = generateFileUploadHtml(fileReq);
+                dynamicFilesContainer.insertAdjacentHTML('beforeend', fileHtml);
+            });
+        }
+    }
+
+    function generateFieldHtml(field) {
+        const required = field.is_required ? 'required' : '';
+        const helpText = field.help_text ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${field.help_text}</p>` : '';
+        let inputHtml = '';
+        const commonClasses = 'block w-full transition duration-75 rounded-lg shadow-sm focus:ring-1 focus:ring-inset disabled:opacity-70 dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500';
+
+        switch (field.field_type) {
+            case 'text':
+                inputHtml = `<input type="text" name="data_pemohon[${field.field_name}]" class="${commonClasses}" ${required}>`;
+                break;
+            case 'textarea':
+                inputHtml = `<textarea name="data_pemohon[${field.field_name}]" rows="4" class="${commonClasses}" ${required}></textarea>`;
+                break;
+            case 'select':
+                let options = '<option value="">Pilih...</option>';
+                if (field.field_options) {
+                    field.field_options.forEach(opt => {
+                        options += `<option value="${opt.value}">${opt.label}</option>`;
+                    });
+                }
+                inputHtml = `<select name="data_pemohon[${field.field_name}]" class="${commonClasses}" ${required}>${options}</select>`;
+                break;
+            case 'date':
+                inputHtml = `<input type="date" name="data_pemohon[${field.field_name}]" class="${commonClasses}" ${required}>`;
+                break;
+            case 'number':
+                inputHtml = `<input type="number" name="data_pemohon[${field.field_name}]" class="${commonClasses}" ${required}>`;
+                break;
+            case 'email':
+                inputHtml = `<input type="email" name="data_pemohon[${field.field_name}]" class="${commonClasses}" ${required}>`;
+                break;
+            case 'checkbox':
+                if (field.field_options) {
+                    inputHtml = '<div class="space-y-2">';
+                    field.field_options.forEach(opt => {
+                        inputHtml += `
+                            <label class="flex items-center gap-x-3">
+                                <input type="checkbox" name="data_pemohon[${field.field_name}][]" value="${opt.value}" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">${opt.label}</span>
+                            </label>`;
+                    });
+                    inputHtml += '</div>';
+                }
+                break;
+            case 'radio':
+                if (field.field_options) {
+                    inputHtml = '<div class="space-y-2">';
+                    field.field_options.forEach(opt => {
+                        inputHtml += `
+                            <label class="flex items-center gap-x-3">
+                                <input type="radio" name="data_pemohon[${field.field_name}]" value="${opt.value}" class="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600" ${required}>
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">${opt.label}</span>
+                            </label>`;
+                    });
+                    inputHtml += '</div>';
+                }
+                break;
+        }
+
+        return `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    ${field.field_label}
+                    ${field.is_required ? '<span class="text-red-500">*</span>' : ''}
+                </label>
+                ${inputHtml}
+                ${helpText}
+            </div>
+        `;
+    }
+
+    function generateFileUploadHtml(fileReq) {
+        const required = fileReq.is_required ? 'required' : '';
+        const accept = getAcceptAttribute(fileReq.file_type);
+        const description = fileReq.file_description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${fileReq.file_description}</p>` : '';
+        
+        return `
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+                <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    ${fileReq.file_name}
+                    ${fileReq.is_required ? '<span class="text-red-500">*</span>' : ''}
+                </label>
+                
+                ${description}
+                
+                <input type="file" name="berkas_pemohon[${fileReq.file_key}]" 
+                       accept="${accept}" ${required}
+                       class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400">
+                
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Tipe: ${accept}. Ukuran Maksimal: ${fileReq.max_size || 2}MB.
+                </p>
+            </div>
+        `;
+    }
+
+    function getAcceptAttribute(fileType) {
+        switch (fileType) {
+            case 'image': return '.jpg,.jpeg,.png';
+            case 'pdf': return '.pdf';
+            case 'document': return '.pdf,.doc,.docx';
+            default: return '*/*';
+        }
+    }
+</script>
+@endsection

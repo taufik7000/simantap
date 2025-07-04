@@ -373,7 +373,6 @@ class PermohonanResource extends Resource
     {
         return [
             'index' => Pages\ListPermohonans::route('/'),
-            'create' => Pages\CreatePermohonan::route('/create'), // HARUS DI ATAS view
             'view' => Pages\ViewPermohonan::route('/{record:kode_permohonan}'), // Gunakan kode_permohonan sebagai key
         ];
     }
