@@ -6,6 +6,7 @@ use App\Filament\Petugas\Resources\PermohonanResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 
 class EditPermohonan extends EditRecord
@@ -91,6 +92,11 @@ class EditPermohonan extends EditRecord
             ->icon($notificationIcon)
             ->body($body)
             ->color($notificationColor)
+            ->actions([
+                Action::make('Lihat Detail')
+                    ->button()
+                    ->url(\App\Filament\Warga\Resources\PermohonanResource::getUrl('view', ['record' => $permohonan->kode_permohonan]), shouldOpenInNewTab: true)
+            ])           
             ->sendToDatabase($user);
 
         // Send notification to current user (petugas)

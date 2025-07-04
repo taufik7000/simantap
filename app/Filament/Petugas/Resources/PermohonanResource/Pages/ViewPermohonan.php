@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms;
 use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action as NotificationAction;
 use Illuminate\Support\Facades\Auth;
 
 class ViewPermohonan extends ViewRecord
@@ -379,15 +380,10 @@ class ViewPermohonan extends ViewRecord
             default => 'info',
         };
 
-        $body = "Status permohonan Anda dengan kode {$permohonan->kode_permohonan} telah diperbarui menjadi: {$statusLabel}";
+        $body = "Permohonan dengan kode {$permohonan->kode_permohonan} {$statusLabel}";
         
         if ($catatan ?? $permohonan->catatan_petugas) {
-            $body .= "\n\nCatatan: " . ($catatan ?? $permohonan->catatan_petugas);
-        }
-
-        // Add assignment info if applicable
-        if ($permohonan->isAssigned()) {
-            $body .= "\n\nDitangani oleh: " . $permohonan->assignedTo->name;
+            $body .= "\n\n" . ($catatan ?? $permohonan->catatan_petugas);
         }
 
         // Send notification to user
@@ -396,6 +392,11 @@ class ViewPermohonan extends ViewRecord
             ->icon($notificationIcon)
             ->body($body)
             ->color($notificationColor)
+            ->actions([
+             NotificationAction::make('Lihat Detail')
+                    ->button()
+                    ->url(route('filament.warga.resources.permohonans.view', ['record' => $this->record->kode_permohonan]), shouldOpenInNewTab: false)
+            ])
             ->sendToDatabase($user);
     }
 
