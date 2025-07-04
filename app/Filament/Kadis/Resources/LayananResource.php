@@ -15,6 +15,7 @@ use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Wizard; // Import Wizard
 use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
@@ -35,191 +36,158 @@ class LayananResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Dasar')
+                // Section untuk informasi dasar layanan tetap sama
+                Section::make('Informasi Dasar Layanan')
+                    ->description('Masukkan detail dasar untuk kategori layanan ini.')
                     ->schema([
-                        Forms\Components\Select::make('kategori_layanan_id')
+                        Select::make('kategori_layanan_id')
                             ->relationship('KategoriLayanan', 'name')
-                            ->label('Pilih Kategori Layanan Induk')
+                            ->label('Kategori Layanan Induk')
                             ->required(),
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama Sub Layanan')
+                        TextInput::make('name')
+                            ->label('Nama Layanan')
                             ->required()
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
-                        Forms\Components\TextInput::make('slug')
+                        TextInput::make('slug')
                             ->required()
                             ->unique(ignoreRecord: true),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Layanan ini Aktif?')
+                        Toggle::make('is_active')
+                            ->label('Aktifkan Layanan Ini?')
                             ->default(true),
                     ])->columns(2),
 
-                // START: Form Builder Integration
+                // --- PERBAIKAN UTAMA: Mengganti Repeater dengan Wizard (Tabs Dinamis) ---
                 Repeater::make('description')
-                    ->label('Persyaratan Layanan')
-                    ->schema([
-                        TextInput::make('nama_syarat')
-                            ->label('Nama Jenis Permohonan')
-                            ->required(),
-
-                        RichEditor::make('deskripsi_syarat')
-                            ->label('Deskripsi & Syarat Lengkap')
-                            ->required(),
-
-                        // EXISTING: Formulir Master PDF
-                        Select::make('formulir_master_id')
-                            ->label('Pilih Formulir Master (PDF)')
-                            ->options(FormulirMaster::all()->pluck('nama_formulir', 'id'))
-                            ->searchable()
-                            ->multiple()
-                            ->placeholder('Tidak ada formulir master'),
-
-                        // NEW: Form Builder Dinamis
-                        Section::make('Form Builder - Data yang Dikumpulkan')
-                            ->description('Buat form khusus untuk mengumpulkan data dari warga')
-                            ->schema([
-                                Repeater::make('form_fields')
-                                    ->label('Field Formulir')
-                                    ->schema([
-                                        Grid::make(2)->schema([
-                                            TextInput::make('field_name')
-                                                ->label('Nama Field (Internal)')
-                                                ->required()
-                                                ->helperText('Contoh: alamat_baru, nomor_telepon'),
-
-                                            TextInput::make('field_label')
-                                                ->label('Label Field (User)')
-                                                ->required()
-                                                ->helperText('Contoh: Alamat Lengkap Baru'),
-                                        ]),
-
-                                        Grid::make(3)->schema([
-                                            Select::make('field_type')
-                                                ->label('Tipe Field')
-                                                ->options([
-                                                    'text' => 'Teks Pendek',
-                                                    'textarea' => 'Teks Panjang',
-                                                    'select' => 'Pilihan Dropdown',
-                                                    'checkbox' => 'Checkbox',
-                                                    'radio' => 'Radio Button',
-                                                    'date' => 'Tanggal',
-                                                    'number' => 'Angka',
-                                                    'email' => 'Email',
-                                                ])
-                                                ->reactive()
-                                                ->required(),
-
-                                            Toggle::make('is_required')
-                                                ->label('Wajib Diisi')
-                                                ->default(false),
-
-                                            TextInput::make('sort_order')
-                                                ->label('Urutan')
-                                                ->numeric()
-                                                ->default(0),
-                                        ]),
-
-                                        // Opsi untuk select/radio/checkbox
-                                        Repeater::make('field_options')
-                                            ->label('Pilihan Opsi')
-                                            ->schema([
-                                                Grid::make(2)->schema([
-                                                    TextInput::make('value')->label('Nilai')->required(),
-                                                    TextInput::make('label')->label('Label')->required(),
-                                                ])
-                                            ])
-                                            ->visible(fn ($get) => in_array($get('field_type'), ['select', 'radio', 'checkbox']))
-                                            ->collapsible(),
-
-                                        Textarea::make('help_text')
-                                            ->label('Teks Bantuan')
-                                            ->placeholder('Petunjuk untuk warga...'),
-
-                                        TagsInput::make('validation_rules')
-                                            ->label('Aturan Validasi')
-                                            ->suggestions([
-                                                'required' => 'Wajib diisi',
-                                                'min:3' => 'Minimal 3 karakter',
-                                                'max:255' => 'Maksimal 255 karakter',
-                                                'numeric' => 'Hanya angka',
-                                                'email' => 'Format email valid'
-                                            ])
-                                    ])
-                                    ->addActionLabel('Tambah Field Form')
-                                    ->reorderable()
-                                    ->collapsible()
-                                    ->itemLabel(
-                                        fn (array $state): ?string =>
-                                        ($state['field_label'] ?? 'Field Baru') .
-                                            ' (' . ($state['field_type'] ?? 'text') . ')'
-                                    )
-                            ])
-                            ->collapsible()
-                            ->collapsed(),
-
-                        // NEW: File Requirements Builder
-                        Section::make('File Requirements - Berkas yang Wajib Diupload')
-                            ->description('Tentukan berkas apa saja yang harus diupload warga')
-                            ->schema([
-                                Repeater::make('file_requirements')
-                                    ->label('Persyaratan Berkas')
-                                    ->schema([
-                                        Grid::make(2)->schema([
-                                            TextInput::make('file_name')
-                                                ->label('Nama Berkas')
-                                                ->required()
-                                                ->helperText('Contoh: KTP Lama, Kartu Keluarga'),
-
-                                            TextInput::make('file_key')
-                                                ->label('Key (Internal)')
-                                                ->required()
-                                                ->helperText('Contoh: ktp_lama, kartu_keluarga'),
-                                        ]),
-
-                                        Grid::make(3)->schema([
-                                            Select::make('file_type')
-                                                ->label('Tipe File')
-                                                ->options([
-                                                    'image' => 'Gambar (JPG, PNG)',
-                                                    'pdf' => 'PDF',
-                                                    'document' => 'Dokumen (PDF, DOC, DOCX)',
-                                                    'any' => 'Semua Tipe'
-                                                ])
-                                                ->default('image'),
-
-                                            Toggle::make('is_required')
-                                                ->label('Wajib')
-                                                ->default(true),
-
-                                            TextInput::make('max_size')
-                                                ->label('Ukuran Max (MB)')
-                                                ->numeric()
-                                                ->default(2),
-                                        ]),
-
-                                        Textarea::make('file_description')
-                                            ->label('Keterangan')
-                                            ->placeholder('Petunjuk untuk warga tentang berkas ini...')
-                                    ])
-                                    ->addActionLabel('Tambah Persyaratan Berkas')
-                                    ->reorderable()
-                                    ->collapsible()
-                                    ->itemLabel(
-                                        fn (array $state): ?string =>
-                                        $state['file_name'] ?? 'Berkas Baru'
-                                    )
-                            ])
-                            ->collapsible()
-                            ->collapsed()
-                    ])
-                    ->addActionLabel('Tambah Jenis Permohonan')
-                    ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? 'Jenis Permohonan Baru')
+                    ->label('Jenis-Jenis Permohonan')
+                    ->addActionLabel('Tambah Jenis Permohonan Baru')
                     ->collapsible()
-                    ->columnSpanFull()
-                // END: Form Builder Integration
+                    ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? 'Jenis Permohonan Baru')
+                    ->schema([
+                        // Setiap item repeater akan menjadi sebuah "tab"
+                        Wizard::make([
+                            Wizard\Step::make('Informasi Dasar')
+                                ->icon('heroicon-o-identification')
+                                ->schema([
+                                    TextInput::make('nama_syarat')
+                                        ->label('Nama Jenis Permohonan')
+                                        ->helperText('Contoh: Pembuatan KTP Baru, Perpanjangan SIM A')
+                                        ->required()
+                                        ->columnSpanFull(),
+                                    RichEditor::make('deskripsi_syarat')
+                                        ->label('Deskripsi & Keterangan untuk Warga')
+                                        ->toolbarButtons([
+                                            'bold', 'italic', 'underline', 'strike', 'bulletList', 'orderedList', 'link',
+                                        ])
+                                        ->required(),
+                                    Select::make('formulir_master_id')
+                                        ->label('Lampirkan Formulir Master (PDF)')
+                                        ->options(FormulirMaster::all()->pluck('nama_formulir', 'id'))
+                                        ->multiple()
+                                        ->searchable()
+                                        ->placeholder('Kosongkan jika tidak ada formulir PDF'),
+                                ]),
+
+                            Wizard\Step::make('Form Builder')
+                                ->icon('heroicon-o-pencil-square')
+                                ->description('Buat field formulir untuk diisi oleh warga.')
+                                ->schema([
+                                    Repeater::make('form_fields')
+                                        ->label(false) // Label sudah ada di Step
+                                        ->schema(self::getFormBuilderFields()) // Menggunakan fungsi terpisah agar rapi
+                                        ->addActionLabel('Tambah Field')
+                                        ->reorderableWithButtons()
+                                        ->collapsible()
+                                        ->itemLabel(fn (array $state): ?string => $state['field_label'] ?? 'Field Baru'),
+                                ]),
+
+                            Wizard\Step::make('Syarat Berkas')
+                                ->icon('heroicon-o-document-arrow-up')
+                                ->description('Tentukan berkas yang wajib di-upload oleh warga.')
+                                ->schema([
+                                    Repeater::make('file_requirements')
+                                        ->label(false) // Label sudah ada di Step
+                                        ->schema(self::getFileRequirementFields()) // Menggunakan fungsi terpisah
+                                        ->addActionLabel('Tambah Syarat Berkas')
+                                        ->reorderableWithButtons()
+                                        ->collapsible()
+                                        ->itemLabel(fn (array $state): ?string => $state['file_name'] ?? 'Berkas Baru'),
+                                ]),
+                        ])->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 
+    /**
+     * Helper function untuk mendefinisikan field pada Form Builder.
+     * Menggunakan Tailwind CSS classes via ->extraAttributes() untuk tampilan.
+     */
+    protected static function getFormBuilderFields(): array
+    {
+        return [
+            Grid::make(2)->schema([
+                TextInput::make('field_label')
+                    ->label('Label Field (Untuk Warga)')
+                    ->required()
+                    ->placeholder('Contoh: Alamat Lengkap'),
+                TextInput::make('field_name')
+                    ->label('Nama Field (Untuk Sistem)')
+                    ->required()
+                    ->placeholder('Contoh: alamat_lengkap')
+                    ->helperText('Gunakan huruf kecil dan underscore, tanpa spasi.'),
+            ]),
+            Grid::make(3)->schema([
+                Select::make('field_type')
+                    ->label('Tipe Field')
+                    ->options([
+                        'text' => 'Teks Pendek', 'textarea' => 'Teks Panjang',
+                        'select' => 'Pilihan Dropdown', 'checkbox' => 'Checkbox',
+                        'radio' => 'Radio Button', 'date' => 'Tanggal',
+                        'number' => 'Angka', 'email' => 'Email',
+                    ])
+                    ->reactive()->required(),
+                Toggle::make('is_required')->label('Wajib Diisi')->default(true),
+                TextInput::make('sort_order')->label('Urutan')->numeric()->default(0),
+            ]),
+            // Opsi untuk select/radio/checkbox
+            Repeater::make('field_options')
+                ->label('Opsi Pilihan')
+                ->schema([
+                    Grid::make(2)->schema([
+                        TextInput::make('value')->label('Nilai (Sistem)')->required(),
+                        TextInput::make('label')->label('Label (Warga)')->required(),
+                    ])
+                ])
+                ->visible(fn ($get) => in_array($get('field_type'), ['select', 'radio', 'checkbox']))
+                ->addActionLabel('Tambah Opsi')
+                ->collapsible()->collapsed(),
+        ];
+    }
+
+    /**
+     * Helper function untuk mendefinisikan persyaratan berkas.
+     */
+    protected static function getFileRequirementFields(): array
+    {
+        return [
+            Grid::make(2)->schema([
+                TextInput::make('file_name')->label('Nama Berkas')->required()->placeholder('Contoh: Scan KTP'),
+                TextInput::make('file_key')->label('Key (Sistem)')->required()->placeholder('Contoh: file_ktp'),
+            ]),
+            Grid::make(3)->schema([
+                Select::make('file_type')->label('Tipe File')->options([
+                    'image' => 'Gambar (JPG, PNG)', 'pdf' => 'PDF',
+                    'document' => 'Dokumen (PDF, DOC, DOCX)', 'any' => 'Semua Tipe'
+                ])->default('pdf'),
+                Toggle::make('is_required')->label('Wajib')->default(true),
+                TextInput::make('max_size')->label('Ukuran Max (MB)')->numeric()->default(2),
+            ]),
+            Textarea::make('file_description')->label('Keterangan Tambahan')->placeholder('Petunjuk untuk warga...'),
+        ];
+    }
+    
+    // Method table() dan lainnya tetap sama
     public static function table(Table $table): Table
     {
         return $table
