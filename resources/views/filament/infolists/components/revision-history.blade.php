@@ -1,3 +1,5 @@
+{{-- resources/views/filament/infolists/components/revision-history.blade.php --}}
+
 <div class="space-y-4">
     @forelse($getRecord()->revisions()->orderBy('created_at', 'desc')->get() as $revision)
         <div class="border border-gray-200 rounded-lg p-4 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">
@@ -33,21 +35,19 @@
                                 <input type="hidden" name="revision_id" value="{{ $revision->id }}">
                                 <input type="hidden" name="action" value="approve">
                                 <button type="submit"
-                                        onclick="return confirm('Apakah Anda yakin ingin menerima revisi ke-{{ $revision->revision_number }}?')"
-                                        class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 transition-colors border border-green-200"
-                                        title="Terima Revisi">
-                                    <x-heroicon-o-check-circle class="w-3 h-3 mr-1" />
-                                    Terima
+                                        onclick="return confirm('Apakah Anda yakin ingin menerima revisi ke-{{ $revision->revision_number }}? \n\nRevisi akan diterima dan permohonan akan dilanjutkan ke proses berikutnya.')"
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm">
+                                    <x-heroicon-o-check-circle class="w-4 h-4 mr-1" />
+                                    Terima Revisi
                                 </button>
                             </form>
 
                             <!-- Tombol Tolak -->
                             <button type="button"
                                     onclick="showRejectModal('{{ $revision->id }}', '{{ $revision->revision_number }}')"
-                                    class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 transition-colors border border-red-200"
-                                    title="Tolak Revisi">
-                                <x-heroicon-o-x-circle class="w-3 h-3 mr-1" />
-                                Tolak
+                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm">
+                                <x-heroicon-o-x-circle class="w-4 h-4 mr-1" />
+                                Tolak Revisi
                             </button>
                         </div>
                     @endif
@@ -101,37 +101,6 @@
                     @endif
                 </div>
             @endif
-
-            <!-- Quick Action Buttons for Pending Revisions (Alternative Layout) -->
-            @if($revision->status === 'pending' && auth()->user()->hasRole(['petugas', 'admin', 'kadis']))
-                <div class="mt-3 pt-3 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-700">Aksi Quick Review:</span>
-                        <div class="flex space-x-2">
-                            <!-- Tombol Terima -->
-                            <form action="{{ route('petugas.quick-revision-action') }}" method="POST" class="inline">
-                                @csrf
-                                <input type="hidden" name="revision_id" value="{{ $revision->id }}">
-                                <input type="hidden" name="action" value="approve">
-                                <button type="submit"
-                                        onclick="return confirm('Terima revisi ke-{{ $revision->revision_number }}? \n\nRevisi akan diterima dan permohonan akan dilanjutkan ke proses berikutnya.')"
-                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm">
-                                    <x-heroicon-o-check-circle class="w-4 h-4 mr-1" />
-                                    Terima Revisi
-                                </button>
-                            </form>
-
-                            <!-- Tombol Tolak -->
-                            <button type="button"
-                                    onclick="showRejectModal('{{ $revision->id }}', '{{ $revision->revision_number }}')"
-                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm">
-                                <x-heroicon-o-x-circle class="w-4 h-4 mr-1" />
-                                Tolak Revisi
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            @endif
         </div>
     @empty
         <div class="text-center py-8 text-gray-500">
@@ -154,22 +123,25 @@
                 </button>
             </div>
             
-            <form id="rejectForm" action="{{ route('petugas.quick-revision-action') }}" method="POST">
+            <!-- Fixed Form - menggunakan route yang benar -->
+            <form id="rejectForm" action="{{ route('petugas.quick-revision-reject') }}" method="POST">
                 @csrf
                 <input type="hidden" name="revision_id" id="reject_revision_id">
-                <input type="hidden" name="action" value="reject">
                 
                 <div class="mb-4">
-                    <label for="catatan_petugas" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="reject_reason" class="block text-sm font-medium text-gray-700 mb-2">
                         Alasan Penolakan <span class="text-red-500">*</span>
                     </label>
                     <textarea 
-                        name="catatan_petugas" 
-                        id="catatan_petugas" 
+                        name="reject_reason" 
+                        id="reject_reason" 
                         rows="4" 
                         required
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
                         placeholder="Jelaskan mengapa revisi ini ditolak dan apa yang perlu diperbaiki..."></textarea>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Berikan penjelasan yang jelas agar warga dapat memperbaiki revisi dengan tepat.
+                    </p>
                 </div>
 
                 <div class="flex items-center justify-end space-x-3">
@@ -191,33 +163,104 @@
 
 <script>
 function showRejectModal(revisionId, revisionNumber) {
+    // Set nilai revision ID ke hidden input
     document.getElementById('reject_revision_id').value = revisionId;
+    
+    // Update title modal
     document.getElementById('modal-title').textContent = `Tolak Revisi ke-${revisionNumber}`;
-    document.getElementById('catatan_petugas').value = '';
+    
+    // Clear textarea
+    document.getElementById('reject_reason').value = '';
+    
+    // Show modal
     document.getElementById('rejectModal').classList.remove('hidden');
     
-    // Focus on textarea
+    // Focus on textarea setelah modal muncul
     setTimeout(() => {
-        document.getElementById('catatan_petugas').focus();
+        document.getElementById('reject_reason').focus();
     }, 100);
 }
 
 function hideRejectModal() {
+    // Hide modal
     document.getElementById('rejectModal').classList.add('hidden');
-    document.getElementById('catatan_petugas').value = '';
+    
+    // Clear form
+    document.getElementById('reject_reason').value = '';
+    document.getElementById('reject_revision_id').value = '';
 }
 
-// Close modal when clicking outside
+// Close modal saat klik di luar modal
 document.getElementById('rejectModal').addEventListener('click', function(e) {
     if (e.target === this) {
         hideRejectModal();
     }
 });
 
-// Close modal with Escape key
+// Close modal dengan tombol Escape
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && !document.getElementById('rejectModal').classList.contains('hidden')) {
         hideRejectModal();
     }
 });
+
+// Validasi form sebelum submit
+document.getElementById('rejectForm').addEventListener('submit', function(e) {
+    const reason = document.getElementById('reject_reason').value.trim();
+    const revisionId = document.getElementById('reject_revision_id').value;
+    
+    if (!reason) {
+        e.preventDefault();
+        alert('Alasan penolakan harus diisi!');
+        document.getElementById('reject_reason').focus();
+        return false;
+    }
+    
+    if (!revisionId) {
+        e.preventDefault();
+        alert('Terjadi kesalahan. Silakan refresh halaman dan coba lagi.');
+        return false;
+    }
+    
+    // Konfirmasi sebelum submit
+    if (!confirm(`Yakin ingin menolak revisi ini?\n\nAlasan: ${reason}`)) {
+        e.preventDefault();
+        return false;
+    }
+});
 </script>
+
+{{-- Show error messages jika ada --}}
+@if($errors->any())
+    <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <x-heroicon-o-exclamation-triangle class="h-5 w-5 text-red-400" />
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Terjadi kesalahan:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+{{-- Show success message jika ada --}}
+@if(session('success'))
+    <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <x-heroicon-o-check-circle class="h-5 w-5 text-green-400" />
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
+            </div>
+        </div>
+    </div>
+@endif
