@@ -3,55 +3,414 @@
 namespace App\Filament\Petugas\Resources\PermohonanResource\Pages;
 
 use App\Filament\Petugas\Resources\PermohonanResource;
+use App\Models\Permohonan;
+use App\Models\PermohonanRevision;
 use App\Models\User;
-use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
+use Filament\Infolists\Components\Grid as InfolistGrid;
+use Filament\Infolists\Components\Group as InfolistGroup;
+use Filament\Infolists\Components\Section as InfolistSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
-use Filament\Notifications\Actions\Action as NotificationAction;
+use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
 
 class ViewPermohonan extends ViewRecord
 {
     protected static string $resource = PermohonanResource::class;
 
+    public function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                // HEADER SECTION - Informasi Utama
+                InfolistSection::make('Informasi Permohonan')
+                    ->icon('heroicon-o-document-text')
+                    ->schema([
+                        InfolistGrid::make(3)
+                            ->schema([
+                                TextEntry::make('kode_permohonan')
+                                    ->label('Kode Permohonan')
+                                    ->copyable()
+                                    ->copyMessage('Kode permohonan disalin!')
+                                    ->icon('heroicon-s-hashtag')
+                                    ->color('primary')
+                                    ->weight('bold'),
+
+                                TextEntry::make('data_pemohon.jenis_permohonan')
+                                    ->label('Jenis Permohonan')
+                                    ->badge()
+                                    ->color('info'),
+
+                                TextEntry::make('status')
+                                    ->label('Status')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'baru' => 'gray',
+                                        'sedang_ditinjau' => 'warning',
+                                        'verifikasi_berkas' => 'info',
+                                        'diproses' => 'primary',
+                                        'membutuhkan_revisi' => 'danger',
+                                        'butuh_perbaikan' => 'warning',
+                                        'disetujui' => 'success',
+                                        'ditolak' => 'danger',
+                                        'selesai' => 'success',
+                                        default => 'gray',
+                                    })
+                                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                                        'baru' => 'Baru Diajukan',
+                                        'sedang_ditinjau' => 'Sedang Ditinjau',
+                                        'verifikasi_berkas' => 'Verifikasi Berkas',
+                                        'diproses' => 'Sedang Diproses',
+                                        'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                                        'butuh_perbaikan' => 'Butuh Perbaikan',
+                                        'disetujui' => 'Disetujui',
+                                        'ditolak' => 'Ditolak',
+                                        'selesai' => 'Selesai',
+                                        default => $state,
+                                    }),
+                            ]),
+
+                        InfolistGrid::make(4)
+                            ->schema([
+                                TextEntry::make('created_at')
+                                    ->label('Tanggal Diajukan')
+                                    ->dateTime('d M Y H:i')
+                                    ->icon('heroicon-s-calendar'),
+
+                                TextEntry::make('updated_at')
+                                    ->label('Terakhir Update')
+                                    ->since()
+                                    ->icon('heroicon-s-clock'),
+
+                                TextEntry::make('assigned_to')
+                                    ->label('Ditugaskan ke')
+                                    ->getStateUsing(fn (Permohonan $record) => 
+                                        $record->assignedTo ? $record->assignedTo->name : 'Belum Ditugaskan'
+                                    )
+                                    ->badge()
+                                    ->color(fn (Permohonan $record) => $record->assigned_to ? 'success' : 'warning'),
+
+                                TextEntry::make('priority_level')
+                                    ->label('Prioritas')
+                                    ->getStateUsing(function (Permohonan $record) {
+                                        $hours = now()->diffInHours($record->created_at);
+                                        if ($hours > 72) return 'Tinggi';
+                                        if ($hours > 24) return 'Sedang';
+                                        return 'Normal';
+                                    })
+                                    ->badge()
+                                    ->color(function (Permohonan $record) {
+                                        $hours = now()->diffInHours($record->created_at);
+                                        if ($hours > 72) return 'danger';
+                                        if ($hours > 24) return 'warning';
+                                        return 'success';
+                                    }),
+                            ]),
+                    ]),
+
+                // DATA PEMOHON SECTION
+                InfolistSection::make('Data Pemohon')
+                    ->icon('heroicon-o-user')
+                    ->schema([
+                        InfolistGrid::make(3)
+                            ->schema([
+                                TextEntry::make('user.name')
+                                    ->label('Nama Lengkap')
+                                    ->icon('heroicon-s-user'),
+
+                                TextEntry::make('user.nik')
+                                    ->label('NIK')
+                                    ->icon('heroicon-s-identification'),
+
+                                TextEntry::make('user.nomor_kk')
+                                    ->label('No. KK')
+                                    ->icon('heroicon-s-home'),
+
+                                TextEntry::make('user.email')
+                                    ->label('Email')
+                                    ->icon('heroicon-s-envelope')
+                                    ->copyable(),
+
+                                TextEntry::make('user.nomor_telepon')
+                                    ->label('No. Telepon')
+                                    ->icon('heroicon-s-phone')
+                                    ->copyable(),
+
+                                TextEntry::make('user.alamat')
+                                    ->label('Alamat')
+                                    ->icon('heroicon-s-map-pin')
+                                    ->columnSpan(1),
+                            ]),
+                    ]),
+
+                // CATATAN PETUGAS SECTION
+                InfolistSection::make('Catatan & Komunikasi')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->schema([
+                        TextEntry::make('catatan_petugas')
+                            ->label('Catatan Petugas')
+                            ->markdown()
+                            ->columnSpanFull()
+                            ->placeholder('Belum ada catatan.')
+                            ->color(fn (Permohonan $record) => match($record->status) {
+                                'membutuhkan_revisi', 'butuh_perbaikan', 'ditolak' => 'danger',
+                                'disetujui', 'selesai' => 'success',
+                                default => 'primary',
+                            }),
+                    ])
+                    ->visible(fn (Permohonan $record) => !empty($record->catatan_petugas)),
+
+                // LAYOUT GRID UNTUK KONTEN UTAMA
+                InfolistGrid::make(12)
+                    ->schema([
+                        // KOLOM KIRI - BERKAS & REVISI (span 8)
+                        InfolistGroup::make()
+                            ->schema([
+                                // BERKAS PERMOHONAN AWAL
+                                InfolistSection::make('Berkas Permohonan Awal')
+                                    ->icon('heroicon-o-document-arrow-down')
+                                    ->collapsible()
+                                    ->schema(function (Permohonan $record) {
+                                        $berkasFields = [];
+                                        if (is_array($record->berkas_pemohon)) {
+                                            foreach ($record->berkas_pemohon as $index => $berkas) {
+                                                if (empty($berkas['path_dokumen'])) continue;
+                                                $berkasFields[] = TextEntry::make("berkas_awal_{$index}")
+                                                    ->label($berkas['nama_dokumen'] ?? "Dokumen " . ($index + 1))
+                                                    ->getStateUsing(function () use ($berkas, $record) {
+                                                        $downloadUrl = route('secure.download', [
+                                                            'permohonan_id' => $record->id,
+                                                            'path' => $berkas['path_dokumen']
+                                                        ]);
+                                                        return view('filament.infolists.components.download-link', [
+                                                            'url' => $downloadUrl,
+                                                            'filename' => basename($berkas['path_dokumen']),
+                                                            'filePath' => $berkas['path_dokumen'], // Pass the actual file path
+                                                            'label' => 'Unduh Dokumen',
+                                                            'icon' => 'heroicon-o-arrow-down-tray'
+                                                        ])->render();
+                                                    })
+                                                    ->html()
+                                                    ->columnSpanFull();
+                                            }
+                                        }
+                                        return $berkasFields ?: [
+                                            TextEntry::make('no_files')
+                                                ->label('')
+                                                ->getStateUsing(fn () => 'Tidak ada berkas yang diupload.')
+                                                ->color('warning')
+                                        ];
+                                    }),
+
+                                // RIWAYAT REVISI DARI WARGA
+                                InfolistSection::make('Riwayat Revisi dari Warga')
+                                    ->icon('heroicon-o-arrow-path')
+                                    ->collapsible()
+                                    ->schema([
+                                        ViewEntry::make('revisions')
+                                            ->label('')
+                                            ->view('filament.infolists.components.revision-history')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->visible(fn (Permohonan $record) => $record->revisions()->count() > 0),
+
+                                // DETAIL REVISI AKTIF
+                                InfolistSection::make('Detail Revisi Terbaru')
+                                    ->icon('heroicon-o-document-plus')
+                                    ->schema(function (Permohonan $record) {
+                                        $latestRevision = $record->revisions()->latest()->first();
+                                        if (!$latestRevision) {
+                                            return [
+                                                TextEntry::make('no_revision')
+                                                    ->label('')
+                                                    ->getStateUsing(fn () => 'Belum ada revisi yang diajukan.')
+                                                    ->color('gray')
+                                            ];
+                                        }
+
+                                        $schema = [
+                                            InfolistGrid::make(3)
+                                                ->schema([
+                                                    TextEntry::make('revision_number')
+                                                        ->label('Revisi ke-')
+                                                        ->getStateUsing(fn () => $latestRevision->revision_number)
+                                                        ->badge()
+                                                        ->color('info'),
+
+                                                    TextEntry::make('revision_status')
+                                                        ->label('Status Revisi')
+                                                        ->getStateUsing(fn () => match($latestRevision->status) {
+                                                            'pending' => 'Menunggu Review',
+                                                            'approved' => 'Diterima',
+                                                            'rejected' => 'Ditolak',
+                                                            default => $latestRevision->status
+                                                        })
+                                                        ->badge()
+                                                        ->color(fn () => match($latestRevision->status) {
+                                                            'pending' => 'warning',
+                                                            'approved' => 'success',
+                                                            'rejected' => 'danger',
+                                                            default => 'gray'
+                                                        }),
+
+                                                    TextEntry::make('revision_date')
+                                                        ->label('Tanggal Revisi')
+                                                        ->getStateUsing(fn () => $latestRevision->created_at->format('d M Y H:i'))
+                                                        ->icon('heroicon-s-calendar'),
+                                                ]),
+
+                                            TextEntry::make('revision_notes')
+                                                ->label('Catatan Revisi dari Warga')
+                                                ->getStateUsing(fn () => $latestRevision->catatan_revisi ?: 'Tidak ada catatan.')
+                                                ->markdown()
+                                                ->columnSpanFull(),
+                                        ];
+
+                                        // Tampilkan berkas revisi
+                                        if (is_array($latestRevision->berkas_revisi)) {
+                                            $schema[] = TextEntry::make('revision_files_label')
+                                                ->label('Berkas Revisi:')
+                                                ->getStateUsing(fn () => '')
+                                                ->columnSpanFull();
+
+                                            foreach ($latestRevision->berkas_revisi as $index => $berkas) {
+                                                if (empty($berkas['path_dokumen'])) continue;
+                                                $schema[] = TextEntry::make("revision_file_{$index}")
+                                                    ->label($berkas['nama_dokumen'] ?? "Dokumen Revisi " . ($index + 1))
+                                                    ->getStateUsing(function () use ($berkas, $latestRevision) {
+                                                        $downloadUrl = route('secure.download.revision', [
+                                                            'revision_id' => $latestRevision->id,
+                                                            'path' => $berkas['path_dokumen']
+                                                        ]);
+                                                        return view('filament.infolists.components.download-link', [
+                                                            'url' => $downloadUrl,
+                                                            'filename' => basename($berkas['path_dokumen']),
+                                                            'filePath' => $berkas['path_dokumen'], // Pass the actual file path
+                                                            'label' => 'Unduh Berkas Revisi',
+                                                            'icon' => 'heroicon-o-arrow-down-tray',
+                                                            'color' => 'warning'
+                                                        ])->render();
+                                                    })
+                                                    ->html()
+                                                    ->columnSpanFull();
+                                            }
+                                        }
+
+                                        // Catatan petugas untuk revisi
+                                        if (!empty($latestRevision->catatan_petugas)) {
+                                            $schema[] = TextEntry::make('revision_petugas_notes')
+                                                ->label('Catatan Petugas untuk Revisi')
+                                                ->getStateUsing(fn () => $latestRevision->catatan_petugas)
+                                                ->markdown()
+                                                ->color(fn () => match($latestRevision->status) {
+                                                    'approved' => 'success',
+                                                    'rejected' => 'danger',
+                                                    default => 'primary'
+                                                })
+                                                ->columnSpanFull();
+                                        }
+
+                                        return $schema;
+                                    })
+                                    ->visible(fn (Permohonan $record) => $record->revisions()->count() > 0),
+                            ])
+                            ->columnSpan(8),
+
+                        // KOLOM KANAN - TIMELINE & STATISTIK (span 4)
+                        InfolistGroup::make()
+                            ->schema([
+                                // TIMELINE LOG
+                                InfolistSection::make('Timeline Permohonan')
+                                    ->icon('heroicon-o-clock')
+                                    ->schema([
+                                        ViewEntry::make('logs')
+                                            ->label('')
+                                            ->view('filament.infolists.components.timeline-log'),
+                                    ]),
+
+                                // STATISTIK PERMOHONAN
+                                InfolistSection::make('Statistik')
+                                    ->icon('heroicon-o-chart-bar')
+                                    ->schema([
+                                        TextEntry::make('processing_time')
+                                            ->label('Waktu Proses')
+                                            ->getStateUsing(function (Permohonan $record) {
+                                                $hours = now()->diffInHours($record->created_at);
+                                                $days = floor($hours / 24);
+                                                $remainingHours = $hours % 24;
+                                                
+                                                if ($days > 0) {
+                                                    return "{$days} hari {$remainingHours} jam";
+                                                }
+                                                return "{$hours} jam";
+                                            })
+                                            ->icon('heroicon-s-clock'),
+
+                                        TextEntry::make('revision_count')
+                                            ->label('Jumlah Revisi')
+                                            ->getStateUsing(fn (Permohonan $record) => $record->revisions()->count())
+                                            ->badge()
+                                            ->color(fn (Permohonan $record) => $record->revisions()->count() > 2 ? 'warning' : 'success'),
+
+                                        TextEntry::make('last_activity')
+                                            ->label('Aktivitas Terakhir')
+                                            ->getStateUsing(function (Permohonan $record) {
+                                                $lastRevision = $record->revisions()->latest()->first();
+                                                if ($lastRevision) {
+                                                    return $lastRevision->created_at->diffForHumans();
+                                                }
+                                                return $record->updated_at->diffForHumans();
+                                            })
+                                            ->icon('heroicon-s-arrow-path'),
+                                    ]),
+
+                                // QUICK ACTIONS
+                                InfolistSection::make('Aksi Cepat')
+                                    ->icon('heroicon-o-bolt')
+                                    ->schema([
+                                        ViewEntry::make('quick_actions')
+                                            ->label('')
+                                            ->view('filament.infolists.components.quick-actions')
+                                            ->viewData([
+                                                'record' => fn (Permohonan $record) => $record
+                                            ]),
+                                    ]),
+                            ])
+                            ->columnSpan(4),
+                    ]),
+            ]);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            // ===================
-            // ASSIGNMENT ACTIONS
-            // ===================
-            
-            Action::make('ambil_tugas')
+            // ASSIGN PERMOHONAN
+            Action::make('assign_to_me')
                 ->label('Ambil Tugas')
-                ->icon('heroicon-o-hand-raised')
-                ->color('primary')
-                ->action(function () {
-                    $success = $this->record->assignTo(auth()->id());
-                    
-                    if ($success) {
-                        // Update status jika masih baru
-                        if ($this->record->status === 'baru') {
-                            $this->record->update([
-                                'status' => 'sedang_ditinjau',
-                                'catatan_petugas' => 'Permohonan telah diambil oleh ' . auth()->user()->name . ' dan sedang dalam tahap peninjauan.'
-                            ]);
-                        }
-
-                        $this->fillForm();
+                ->icon('heroicon-o-user-plus')
+                ->color('success')
+                ->action(function (): void {
+                    try {
+                        $this->record->update([
+                            'assigned_to' => Auth::id(),
+                            'status' => 'sedang_ditinjau',
+                            'catatan_petugas' => 'Permohonan telah ditugaskan dan sedang dalam peninjauan.',
+                        ]);
 
                         Notification::make()
-                            ->title('Tugas berhasil diambil')
-                            ->body('Permohonan sekarang menjadi tanggung jawab Anda.')
+                            ->title('Tugas Berhasil Diambil!')
+                            ->body("Anda sekarang bertanggung jawab untuk permohonan {$this->record->kode_permohonan}")
                             ->success()
                             ->send();
-                    } else {
+                    } catch (\Exception $e) {
                         Notification::make()
-                            ->title('Gagal mengambil tugas')
-                            ->body('Terjadi kesalahan saat mengambil tugas.')
+                            ->title('Terjadi Kesalahan')
+                            ->body('Tidak dapat mengambil tugas permohonan ini.')
                             ->danger()
                             ->send();
                     }
@@ -65,10 +424,7 @@ class ViewPermohonan extends ViewRecord
                 )
                 ->modalSubmitActionLabel('Ya, Ambil Tugas'),
 
-            // ======================
-            // STATUS UPDATE ACTIONS
-            // ======================
-            
+            // UPDATE STATUS
             Action::make('update_status')
                 ->label('Update Status')
                 ->icon('heroicon-m-pencil-square')
@@ -101,337 +457,111 @@ class ViewPermohonan extends ViewRecord
                                 'ditolak' => 'Mohon maaf, permohonan Anda tidak dapat disetujui. Alasan: ',
                                 'selesai' => 'Permohonan Anda telah selesai diproses. Terima kasih atas kepercayaan Anda.',
                             ];
-
-                            if (isset($defaultMessages[$state])) {
-                                $set('catatan_petugas', $defaultMessages[$state]);
-                            }
+                            $set('catatan_petugas', $defaultMessages[$state] ?? '');
                         }),
-                    Textarea::make('catatan_petugas')
-                        ->label('Catatan untuk Pemohon')
+
+                    Forms\Components\Textarea::make('catatan_petugas')
+                        ->label('Catatan untuk Warga')
+                        ->placeholder('Tambahkan catatan atau keterangan untuk warga...')
+                        ->rows(4)
                         ->required(fn (Forms\Get $get) => 
                             in_array($get('status'), ['membutuhkan_revisi', 'butuh_perbaikan', 'ditolak'])
                         )
                         ->helperText(fn (Forms\Get $get) => 
                             in_array($get('status'), ['membutuhkan_revisi', 'butuh_perbaikan', 'ditolak']) 
-                                ? 'Catatan wajib diisi untuk memberikan penjelasan kepada pemohon.' 
-                                : 'Catatan ini akan dikirim sebagai notifikasi kepada pemohon.'
-                        )
-                        ->rows(4),
+                                ? 'Catatan wajib diisi untuk status ini.' 
+                                : 'Catatan opsional yang akan dilihat warga.'
+                        ),
                 ])
                 ->action(function (array $data): void {
-                    $oldStatus = $this->record->status;
-                    
-                    // Auto-assign jika belum di-assign dan bukan status yang mengindikasikan selesai
-                    if (!$this->record->isAssigned() && !in_array($data['status'], ['ditolak', 'selesai'])) {
-                        $this->record->assignTo(auth()->id());
-                    }
-                    
                     $this->record->update([
                         'status' => $data['status'],
                         'catatan_petugas' => $data['catatan_petugas'],
                     ]);
 
-                    // Send notification to user
-                    $this->sendStatusUpdateNotification($oldStatus, $data['status'], $data['catatan_petugas']);
-
-                    // Refresh the page data
-                    $this->fillForm();
+                    // Kirim notifikasi ke warga
+                    $statusLabels = [
+                        'sedang_ditinjau' => 'Sedang Ditinjau',
+                        'verifikasi_berkas' => 'Verifikasi Berkas',
+                        'diproses' => 'Sedang Diproses',
+                        'membutuhkan_revisi' => 'Membutuhkan Revisi',
+                        'butuh_perbaikan' => 'Butuh Perbaikan',
+                        'disetujui' => 'Disetujui',
+                        'ditolak' => 'Ditolak',
+                        'selesai' => 'Selesai',
+                    ];
 
                     Notification::make()
-                        ->title('Status berhasil diperbarui')
-                        ->body('Notifikasi telah dikirim kepada pemohon.')
+                        ->title('Status Permohonan Diperbarui')
+                        ->body("Status permohonan {$this->record->kode_permohonan} diubah menjadi: {$statusLabels[$data['status']]}")
+                        ->success()
+                        ->sendToDatabase($this->record->user);
+
+                    Notification::make()
+                        ->title('Status Berhasil Diperbarui!')
                         ->success()
                         ->send();
                 })
-                ->visible(fn (): bool => true) // Selalu tampil untuk semua petugas
                 ->modalHeading('Update Status Permohonan')
-                ->modalDescription('Update status akan mengirim notifikasi kepada pemohon')
-                ->modalSubmitActionLabel('Update & Kirim Notifikasi'),
+                ->modalDescription('Perbarui status permohonan dan berikan catatan kepada warga.')
+                ->modalSubmitActionLabel('Update Status'),
 
-            // =================
-            // QUICK ACTIONS
-            // =================
-            
-            Action::make('approve')
-                ->label('Setujui')
-                ->icon('heroicon-m-check-circle')
-                ->color('success')
-                ->requiresConfirmation()
-                ->modalHeading('Setujui Permohonan')
-                ->modalDescription('Apakah Anda yakin ingin menyetujui permohonan ini?')
-                ->modalSubmitActionLabel('Ya, Setujui')
-                ->form([
-                    Textarea::make('catatan_petugas')
-                        ->label('Catatan Persetujuan')
-                        ->default('Selamat! Permohonan Anda telah disetujui dan akan segera diproses lebih lanjut.')
-                        ->rows(3),
-                ])
-                ->action(function (array $data): void {
-                    $oldStatus = $this->record->status;
-                    
-                    // Auto-assign jika belum di-assign
-                    if (!$this->record->isAssigned()) {
-                        $this->record->assignTo(auth()->id());
-                    }
-                    
-                    $this->record->update([
-                        'status' => 'disetujui',
-                        'catatan_petugas' => $data['catatan_petugas'],
-                    ]);
+            // REVIEW REVISI TERBARU
+            Action::make('review_latest_revision')
+                ->label('Review Revisi')
+                ->icon('heroicon-o-eye')
+                ->color('info')
+                ->url(fn () => route('filament.petugas.resources.permohonan-revisions.index', [
+                    'tableFilters[permohonan_id][value]' => $this->record->id
+                ]))
+                ->visible(fn () => $this->record->revisions()->where('status', 'pending')->count() > 0),
 
-                    $this->sendStatusUpdateNotification($oldStatus, 'disetujui', $data['catatan_petugas']);
-                    $this->fillForm();
-
-                    Notification::make()
-                        ->title('Permohonan berhasil disetujui')
-                        ->success()
-                        ->send();
-                })
-                ->visible(fn () => !in_array($this->record->status, ['disetujui', 'selesai', 'ditolak'])),
-
-            Action::make('reject')
-                ->label('Tolak')
-                ->icon('heroicon-m-x-circle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('Tolak Permohonan')
-                ->modalDescription('Berikan alasan penolakan yang jelas kepada pemohon.')
-                ->modalSubmitActionLabel('Ya, Tolak')
-                ->form([
-                    Textarea::make('catatan_petugas')
-                        ->label('Alasan Penolakan')
-                        ->required()
-                        ->placeholder('Jelaskan alasan mengapa permohonan ditolak...')
-                        ->rows(4),
-                ])
-                ->action(function (array $data): void {
-                    $oldStatus = $this->record->status;
-                    
-                    // Auto-assign jika belum di-assign
-                    if (!$this->record->isAssigned()) {
-                        $this->record->assignTo(auth()->id());
-                    }
-                    
-                    $this->record->update([
-                        'status' => 'ditolak',
-                        'catatan_petugas' => 'Mohon maaf, permohonan Anda tidak dapat disetujui. Alasan: ' . $data['catatan_petugas'],
-                    ]);
-
-                    $this->sendStatusUpdateNotification($oldStatus, 'ditolak', $this->record->catatan_petugas);
-                    $this->fillForm();
-
-                    Notification::make()
-                        ->title('Permohonan berhasil ditolak')
-                        ->success()
-                        ->send();
-                })
-                ->visible(fn () => !in_array($this->record->status, ['disetujui', 'selesai', 'ditolak'])),
-
-            // ===================
-            // ASSIGNMENT MANAGEMENT
-            // ===================
-            
-            Action::make('alihkan_tugas')
-                ->label('Alihkan Tugas')
-                ->icon('heroicon-o-arrow-right-circle')
-                ->color('warning')
+            // ASSIGN KE PETUGAS LAIN
+            Action::make('assign_to_other')
+                ->label('Tugaskan ke Petugas Lain')
+                ->icon('heroicon-o-user-group')
+                ->color('gray')
                 ->form([
                     Select::make('assigned_to')
-                        ->label('Alihkan Ke Petugas')
+                        ->label('Pilih Petugas')
                         ->options(function () {
                             return User::role(['petugas', 'admin'])
-                                ->where('id', '!=', auth()->id())
-                                ->pluck('name', 'id');
+                                ->where('id', '!=', $this->record->assigned_to)
+                                ->pluck('name', 'id')
+                                ->toArray();
                         })
                         ->required()
-                        ->searchable()
-                        ->preload()
-                        ->helperText('Pilih petugas yang akan menangani permohonan ini'),
-                    
-                    Textarea::make('catatan_pengalihan')
-                        ->label('Catatan Pengalihan')
-                        ->placeholder('Berikan catatan khusus untuk petugas yang akan menangani...')
-                        ->rows(3)
-                        ->helperText('Catatan ini akan membantu petugas baru memahami kondisi permohonan'),
-                ])
-                ->action(function (array $data) {
-                    $newAssignee = User::find($data['assigned_to']);
-                    $oldAssignee = $this->record->assignedTo;
-                    
-                    $success = $this->record->reassignTo($data['assigned_to'], $data['catatan_pengalihan']);
-                    
-                    if ($success) {
-                        // Update catatan jika ada
-                        if (!empty($data['catatan_pengalihan'])) {
-                            $currentNote = $this->record->catatan_petugas ?? '';
-                            $newNote = $currentNote . "\n\n[PENGALIHAN] Dialihkan dari " . $oldAssignee?->name . " ke " . $newAssignee->name . " oleh " . auth()->user()->name . ":\n" . $data['catatan_pengalihan'];
-                            $this->record->update(['catatan_petugas' => $newNote]);
-                        }
+                        ->searchable(),
 
-                        // Kirim notifikasi ke petugas baru
-                        Notification::make()
-                            ->title('Tugas Baru: ' . $this->record->kode_permohonan)
-                            ->body("Anda telah ditugaskan untuk menangani permohonan ini. Catatan: " . ($data['catatan_pengalihan'] ?? 'Tidak ada catatan khusus.'))
-                            ->success()
-                            ->sendToDatabase($newAssignee);
-
-                        $this->fillForm();
-
-                        Notification::make()
-                            ->title('Tugas berhasil dialihkan')
-                            ->body("Permohonan telah dialihkan ke {$newAssignee->name}")
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title('Gagal mengalihkan tugas')
-                            ->danger()
-                            ->send();
-                    }
-                })
-                ->visible(fn (): bool => 
-                    $this->record->isAssigned() && 
-                    (auth()->user()->hasRole('admin') || $this->record->isAssignedTo(auth()->id()))
-                )
-                ->modalHeading('Alihkan Tugas Permohonan')
-                ->modalSubmitActionLabel('Alihkan Tugas'),
-
-            Action::make('batal_assignment')
-                ->label('Batalkan Assignment')
-                ->icon('heroicon-o-x-circle')
-                ->color('danger')
-                ->form([
-                    Textarea::make('reason')
-                        ->label('Alasan Pembatalan')
-                        ->required()
-                        ->placeholder('Jelaskan mengapa assignment dibatalkan...')
+                    Forms\Components\Textarea::make('assignment_note')
+                        ->label('Catatan Assignment')
+                        ->placeholder('Tambahkan catatan untuk petugas yang ditugaskan...')
                         ->rows(3),
                 ])
-                ->action(function (array $data) {
-                    $success = $this->record->unassign($data['reason']);
+                ->action(function (array $data): void {
+                    $newAssignee = User::find($data['assigned_to']);
                     
-                    if ($success) {
-                        $this->fillForm();
+                    $this->record->update([
+                        'assigned_to' => $data['assigned_to'],
+                        'catatan_petugas' => $this->record->catatan_petugas . "\n\n[Assignment] Ditugaskan ulang ke {$newAssignee->name}: " . ($data['assignment_note'] ?? ''),
+                    ]);
 
-                        Notification::make()
-                            ->title('Assignment berhasil dibatalkan')
-                            ->success()
-                            ->send();
-                    }
+                    // Notifikasi ke petugas baru
+                    Notification::make()
+                        ->title('Permohonan Baru Ditugaskan')
+                        ->body("Anda ditugaskan untuk menangani permohonan {$this->record->kode_permohonan}")
+                        ->info()
+                        ->sendToDatabase($newAssignee);
+
+                    Notification::make()
+                        ->title('Berhasil Ditugaskan!')
+                        ->body("Permohonan berhasil ditugaskan ke {$newAssignee->name}")
+                        ->success()
+                        ->send();
                 })
-                ->visible(fn (): bool => 
-                    $this->record->isAssigned() && auth()->user()->hasRole('admin')
-                )
-                ->requiresConfirmation()
-                ->modalHeading('Batalkan Assignment'),
-
-            // =================
-            // NAVIGATION ACTIONS
-            // =================
-            
-            Actions\EditAction::make()
-                ->label('Edit Detail')
-                ->icon('heroicon-o-pencil-square')
-                ->visible(fn (): bool => 
-                    $this->record->isAssignedTo(auth()->id()) || 
-                    auth()->user()->hasRole(['admin', 'kadis'])
-                ),
+                ->visible(fn () => Auth::user()->hasRole(['admin']) || $this->record->assigned_to === Auth::id())
+                ->modalHeading('Tugaskan ke Petugas Lain')
+                ->modalSubmitActionLabel('Tugaskan'),
         ];
-    }
-
-    /**
-     * Send status update notification to the user who submitted the request
-     */
-    protected function sendStatusUpdateNotification(string $oldStatus = null, string $newStatus = null, string $catatan = null): void
-    {
-        $permohonan = $this->record->fresh();
-        $user = $permohonan->user;
-        
-        if (!$user) {
-            return;
-        }
-
-        $currentStatus = $newStatus ?? $permohonan->status;
-        $statusLabels = [
-            'baru' => 'Baru Diajukan',
-            'sedang_ditinjau' => 'Sedang Ditinjau',
-            'verifikasi_berkas' => 'Verifikasi Berkas',
-            'diproses' => 'Sedang Diproses',
-            'membutuhkan_revisi' => 'Membutuhkan Revisi',
-            'butuh_perbaikan' => 'Butuh Perbaikan',
-            'disetujui' => 'Disetujui',
-            'ditolak' => 'Ditolak',
-            'selesai' => 'Selesai',
-        ];
-
-        $statusLabel = $statusLabels[$currentStatus] ?? $currentStatus;
-        $notificationIcon = match($currentStatus) {
-            'disetujui' => 'heroicon-o-check-circle',
-            'ditolak' => 'heroicon-o-x-circle',
-            'membutuhkan_revisi', 'butuh_perbaikan' => 'heroicon-o-exclamation-triangle',
-            'selesai' => 'heroicon-o-flag',
-            default => 'heroicon-o-information-circle',
-        };
-
-        $notificationColor = match($currentStatus) {
-            'disetujui', 'selesai' => 'success',
-            'ditolak' => 'danger',
-            'membutuhkan_revisi', 'butuh_perbaikan' => 'warning',
-            default => 'info',
-        };
-
-        $body = "Permohonan dengan kode {$permohonan->kode_permohonan} {$statusLabel}";
-        
-        if ($catatan ?? $permohonan->catatan_petugas) {
-            $body .= "\n\n" . ($catatan ?? $permohonan->catatan_petugas);
-        }
-
-        // Send notification to user
-        Notification::make()
-            ->title('Status Permohonan Diperbarui')
-            ->icon($notificationIcon)
-            ->body($body)
-            ->color($notificationColor)
-            ->actions([
-             NotificationAction::make('Lihat Detail')
-                    ->button()
-                    ->url(route('filament.warga.resources.permohonans.view', ['record' => $this->record->kode_permohonan]), shouldOpenInNewTab: false)
-            ])
-            ->sendToDatabase($user);
-    }
-
-    /**
-     * Get the form model
-     */
-    protected function getFormModel(): string
-    {
-        return $this->record::class;
-    }
-
-    /**
-     * Customize the view data
-     */
-    protected function getViewData(): array
-    {
-        $data = parent::getViewData();
-        
-        // Add assignment information
-        $data['assignmentInfo'] = [
-            'isAssigned' => $this->record->isAssigned(),
-            'assignedTo' => $this->record->assignedTo,
-            'assignedAt' => $this->record->assigned_at,
-            'assignedBy' => $this->record->assignedBy,
-            'assignmentDuration' => $this->record->assignment_duration ?? null,
-            'isOverdue' => method_exists($this->record, 'isAssignmentOverdue') ? $this->record->isAssignmentOverdue() : false,
-            'canBeAssigned' => $this->record->canBeAssignedTo(),
-            'currentUserWorkload' => method_exists(\App\Models\Permohonan::class, 'getPetugasWorkload') ? \App\Models\Permohonan::getPetugasWorkload(auth()->id()) : 0,
-        ];
-
-        // Add workload distribution for admins
-        if (auth()->user()->hasRole('admin')) {
-            $data['workloadDistribution'] = method_exists(\App\Models\Permohonan::class, 'getWorkloadDistribution') ? \App\Models\Permohonan::getWorkloadDistribution() : [];
-        }
-
-        return $data;
     }
 }

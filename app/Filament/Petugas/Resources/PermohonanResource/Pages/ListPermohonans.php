@@ -127,6 +127,6 @@ class ListPermohonans extends ListRecords
         }
         
         // Kadis biasa melihat belum ditugaskan terlebih dahulu
-        return 'belum_ditugaskan';
+        return 'ditugaskan';
     }
 }

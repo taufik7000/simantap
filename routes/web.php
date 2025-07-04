@@ -45,3 +45,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/download/revision', [BerkasController::class, 'downloadRevision'])
         ->name('secure.download.revision');
 });
+
+//download all berkas permohonan
+Route::middleware(['auth'])->group(function () {
+    Route::get('/berkas/download-all/{permohonan}', [BerkasController::class, 'downloadAll'])
+        ->name('berkas.download-all');
+});
