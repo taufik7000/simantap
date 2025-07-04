@@ -291,14 +291,14 @@ class ViewPermohonan extends ViewRecord
                                                         ->label('Status')
                                                         ->getStateUsing(fn () => match($latestRevision->status) {
                                                             'pending' => 'Menunggu Review',
-                                                            'approved' => 'Diterima',
+                                                            'accepted' => 'Diterima',
                                                             'rejected' => 'Ditolak',
                                                             default => $latestRevision->status
                                                         })
                                                         ->badge()
                                                         ->color(fn () => match($latestRevision->status) {
                                                             'pending' => 'warning',
-                                                            'approved' => 'success',
+                                                            'accepted' => 'success',
                                                             'rejected' => 'danger',
                                                             default => 'gray'
                                                         }),

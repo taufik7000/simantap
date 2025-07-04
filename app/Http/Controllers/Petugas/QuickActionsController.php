@@ -19,7 +19,7 @@ class QuickActionsController extends Controller
         ]);
 
         // Validasi akses menggunakan hasRole dari Spatie
-        if (!Auth::user()->hasRole(['petugas', 'kadis'])) {
+        if (!Auth::user()->hasRole(['petugas', 'admin', 'kadis'])) {
             return back()->with('error', 'Anda tidak memiliki izin untuk melakukan aksi ini.');
         }
 

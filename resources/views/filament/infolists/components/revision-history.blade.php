@@ -1,9 +1,10 @@
+{{-- resources/views/filament/infolists/components/revision-history.blade.php --}}
 <div class="space-y-4">
     @forelse($getRecord()->revisions()->orderBy('created_at', 'desc')->get() as $revision)
-        <div class="border border-gray-200 rounded-lg p-4 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'approved' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">
+                    <div class="border border-gray-200 rounded-lg p-4 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center space-x-3">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
+                                            <span class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
                         {{ $revision->revision_number }}
                     </span>
                     <div>
@@ -11,10 +12,10 @@
                         <p class="text-sm text-gray-500">{{ $revision->created_at->format('d M Y H:i') }}</p>
                     </div>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
                     @if($revision->status === 'pending')
                         Menunggu Review
-                    @elseif($revision->status === 'approved')
+                    @elseif($revision->status === 'accepted')
                         Diterima
                     @else
                         Ditolak
@@ -56,7 +57,7 @@
             @if($revision->catatan_petugas)
                 <div class="mt-3 pt-3 border-t border-gray-200">
                     <h5 class="text-sm font-medium text-gray-700 mb-1">Catatan Petugas:</h5>
-                    <p class="text-sm {{ $revision->status === 'approved' ? 'text-green-600' : 'text-red-600' }} bg-white p-3 rounded border">{{ $revision->catatan_petugas }}</p>
+                    <p class="text-sm {{ $revision->status === 'accepted' ? 'text-green-600' : 'text-red-600' }} bg-white p-3 rounded border">{{ $revision->catatan_petugas }}</p>
                 </div>
             @endif
 

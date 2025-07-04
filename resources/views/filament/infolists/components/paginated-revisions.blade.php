@@ -1,4 +1,3 @@
-
 @php
     $record = $getRecord();
     $perPage = 3; // Tampilkan 3 revisi per halaman
@@ -19,7 +18,7 @@
     <!-- Revisions Container dengan max height -->
     <div class="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         @forelse($revisions as $revision)
-            <div class="border border-gray-200 rounded-lg p-4 mb-4 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'approved' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">
+            <div class="border border-gray-200 rounded-lg p-4 mb-4 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">
                 <!-- Header Revisi -->
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center space-x-3">
@@ -31,10 +30,10 @@
                             <p class="text-sm text-gray-500">{{ $revision->created_at->format('d M Y H:i') }}</p>
                         </div>
                     </div>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
                         @if($revision->status === 'pending')
                             Menunggu Review
-                        @elseif($revision->status === 'approved')
+                        @elseif($revision->status === 'accepted')
                             Diterima
                         @else
                             Ditolak
