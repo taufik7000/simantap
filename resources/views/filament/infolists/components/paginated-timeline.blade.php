@@ -45,12 +45,12 @@
         if ($revision->reviewed_at) {
             $allLogs->push([
                 'created_at' => $revision->reviewed_at,
-                'action' => 'Revisi ' . ($revision->status === 'approved' ? 'diterima' : 'ditolak'),
+                'action' => 'Revisi ' . ($revision->status === 'accepted' ? 'diterima' : 'ditolak'),
                 'description' => $revision->catatan_petugas ?: 'Revisi telah direview oleh petugas',
                 'user' => $revision->reviewedBy->name ?? 'Petugas',
-                'type' => $revision->status === 'approved' ? 'revision_approved' : 'revision_rejected',
-                'icon' => $revision->status === 'approved' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle',
-                'color' => $revision->status === 'approved' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                'type' => $revision->status === 'accepted' ? 'revision_approved' : 'revision_rejected',
+                'icon' => $revision->status === 'accepted' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle',
+                'color' => $revision->status === 'accepted' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
             ]);
         }
     }

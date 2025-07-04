@@ -191,55 +191,135 @@
         </div>
     @endif
 
-    <!-- QUICK SUMMARY REVISI -->
+    <!-- SEMUA REVISI -->
     @if($record->revisions()->count() > 0)
-        @php
-            $revisionsCount = $record->revisions()->count();
-            $pendingCount = $record->revisions()->where('status', 'pending')->count();
-            $approvedCount = $record->revisions()->where('status', 'approved')->count();
-            $rejectedCount = $record->revisions()->where('status', 'rejected')->count();
-        @endphp
-        
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-6 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center">
                     <x-heroicon-o-arrow-path class="w-5 h-5 text-gray-500 mr-2" />
-                    <h3 class="text-lg font-semibold text-gray-900">Ringkasan Revisi</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Semua Revisi</h3>
                 </div>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    {{ $revisionsCount }} total
+                    {{ $record->revisions()->count() }} revisi
                 </span>
             </div>
             
-            <div class="grid grid-cols-3 gap-4 text-sm">
-                @if($pendingCount > 0)
-                    <div class="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <div class="text-lg font-semibold text-yellow-800">{{ $pendingCount }}</div>
-                        <div class="text-yellow-600">Menunggu</div>
+            <!-- List All Revisions -->
+            <div class="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                @foreach($record->revisions()->orderBy('revision_number', 'desc')->get() as $revision)
+                    <div class="border rounded-lg p-3 {{ $revision->status === 'pending' ? 'bg-yellow-50 border-yellow-200' : ($revision->status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') }}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
+                                    {{ $revision->revision_number }}
+                                </span>
+                                <span class="text-sm font-medium text-gray-900">Revisi ke-{{ $revision->revision_number }}</span>
+                            </div>
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $revision->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($revision->status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
+                                @if($revision->status === 'pending')
+                                    Menunggu
+                                @elseif($revision->status === 'accepted')
+                                    Diterima
+                                @else
+                                    Ditolak
+                                @endif
+                            </span>
+                        </div>
+                        
+                        <div class="text-xs text-gray-600 mb-2">
+                            {{ $revision->created_at->format('d M Y H:i') }} - {{ $revision->created_at->diffForHumans() }}
+                        </div>
+                        
+                        @if($revision->catatan_revisi)
+                            <p class="text-xs text-gray-700 mb-2 line-clamp-2">{{ $revision->catatan_revisi }}</p>
+                        @endif
+                        
+                        @if($revision->berkas_revisi && count($revision->berkas_revisi) > 0)
+                            <div class="flex items-center text-xs text-blue-600 mb-2">
+                                <x-heroicon-o-document class="w-3 h-3 mr-1" />
+                                {{ count($revision->berkas_revisi) }} file dilampirkan
+                            </div>
+                        @endif
+                        
+                        @if($revision->catatan_petugas)
+                            <div class="border-t pt-2 mt-2">
+                                <p class="text-xs {{ $revision->status === 'accepted' ? 'text-green-700' : 'text-red-700' }} font-medium">
+                                    Catatan: {{ \Illuminate\Support\Str::limit($revision->catatan_petugas, 80) }}
+                                </p>
+                            </div>
+                        @endif
+                        
+                        <!-- Quick Actions untuk Pending Revisions -->
+                        @if($revision->status === 'pending')
+                            <div class="flex space-x-2 mt-3 pt-2 border-t">
+                                <form action="{{ route('petugas.quick-revision-action') }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="revision_id" value="{{ $revision->id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit"
+                                            onclick="return confirm('Terima revisi ke-{{ $revision->revision_number }}?')"
+                                            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 transition-colors">
+                                        <x-heroicon-o-check class="w-3 h-3 mr-1" />
+                                        Terima
+                                    </button>
+                                </form>
+                                
+                                <form action="{{ route('petugas.quick-revision-action') }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="revision_id" value="{{ $revision->id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit"
+                                            onclick="return confirm('Tolak revisi ke-{{ $revision->revision_number }}?')"
+                                            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 transition-colors">
+                                        <x-heroicon-o-x-mark class="w-3 h-3 mr-1" />
+                                        Tolak
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                        
+                        <!-- Download Files -->
+                        @if($revision->berkas_revisi && count($revision->berkas_revisi) > 0)
+                            <div class="mt-2 pt-2 border-t">
+                                <button onclick="toggleFiles{{ $revision->id }}()" class="text-xs text-indigo-600 hover:text-indigo-500">
+                                    Lihat File ({{ count($revision->berkas_revisi) }})
+                                </button>
+                                <div id="files{{ $revision->id }}" class="hidden mt-2 space-y-1">
+                                    @foreach($revision->berkas_revisi as $index => $berkas)
+                                        @if(!empty($berkas['path_dokumen']))
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-600 truncate">{{ $berkas['nama_dokumen'] ?? 'File ' . ($index + 1) }}</span>
+                                                <a href="{{ route('secure.download.revision', ['revision_id' => $revision->id, 'path' => $berkas['path_dokumen']]) }}"
+                                                   target="_blank"
+                                                   class="text-indigo-600 hover:text-indigo-500 ml-2">
+                                                    <x-heroicon-o-arrow-down-tray class="w-3 h-3" />
+                                                </a>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
-                @endif
-                
-                @if($approvedCount > 0)
-                    <div class="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div class="text-lg font-semibold text-green-800">{{ $approvedCount }}</div>
-                        <div class="text-green-600">Diterima</div>
-                    </div>
-                @endif
-                
-                @if($rejectedCount > 0)
-                    <div class="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div class="text-lg font-semibold text-red-800">{{ $rejectedCount }}</div>
-                        <div class="text-red-600">Ditolak</div>
-                    </div>
-                @endif
+                @endforeach
             </div>
             
-            <!-- Lihat detail link -->
-            <div class="mt-4 text-center">
-                <button onclick="toggleRevisionDetail()" 
-                        class="text-sm text-indigo-600 hover:text-indigo-500 font-medium">
-                    Lihat Detail Semua Revisi →
-                </button>
+            <!-- Summary Footer -->
+            <div class="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-500">
+                <div class="flex justify-between">
+                    <span>Total: {{ $record->revisions()->count() }} revisi</span>
+                    <span>
+                        @php
+                            $pendingCount = $record->revisions()->where('status', 'pending')->count();
+                            $acceptedCount = $record->revisions()->where('status', 'accepted')->count();
+                            $rejectedCount = $record->revisions()->where('status', 'rejected')->count();
+                        @endphp
+                        
+                        @if($pendingCount > 0) {{ $pendingCount }} menunggu @endif
+                        @if($acceptedCount > 0) {{ $acceptedCount }} diterima @endif  
+                        @if($rejectedCount > 0) {{ $rejectedCount }} ditolak @endif
+                    </span>
+                </div>
             </div>
         </div>
     @endif
@@ -269,9 +349,12 @@
     background: #9ca3af;
 }
 
-/* Smooth scroll behavior */
-.sticky {
-    scroll-behavior: smooth;
+/* Line clamp utility */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* Ensure sticky positioning works correctly */
@@ -295,6 +378,16 @@ function toggleRevisionDetail() {
         }
     }
 }
+
+// Dynamic toggle functions for each revision's files
+@foreach($record->revisions()->orderBy('revision_number', 'desc')->get() as $revision)
+function toggleFiles{{ $revision->id }}() {
+    const filesDiv = document.getElementById('files{{ $revision->id }}');
+    if (filesDiv) {
+        filesDiv.classList.toggle('hidden');
+    }
+}
+@endforeach
 
 // Auto-expand important sections when page loads
 document.addEventListener('DOMContentLoaded', function() {

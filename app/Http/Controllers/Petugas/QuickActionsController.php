@@ -72,8 +72,9 @@ class QuickActionsController extends Controller
         $revision = PermohonanRevision::findOrFail($request->revision_id);
 
         if ($request->action === 'approve') {
+            // PERBAIKAN: Gunakan 'accepted' sesuai database enum
             $revision->update([
-                'status' => 'approved',
+                'status' => 'accepted',
                 'catatan_petugas' => 'Revisi diterima dan akan diproses lebih lanjut.',
                 'reviewed_at' => now(),
                 'reviewed_by' => Auth::id(),

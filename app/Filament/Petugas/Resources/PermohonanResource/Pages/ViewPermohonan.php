@@ -123,6 +123,8 @@ class ViewPermohonan extends ViewRecord
                                 // DATA PEMOHON SECTION
                                 InfolistSection::make('Data Pemohon')
                                     ->icon('heroicon-o-user')
+                                    ->collapsible()
+                                    ->collapsed()
                                     ->schema([
                                         InfolistGrid::make(3)
                                             ->schema([
@@ -338,15 +340,15 @@ class ViewPermohonan extends ViewRecord
                                             ]),
                                     ]),
 
-                                // TIMELINE LOG
+                                // TIMELINE LOG - MODERN VERSION
                                 InfolistSection::make('Timeline Permohonan')
                                     ->icon('heroicon-o-clock')
                                     ->collapsible()
                                     ->collapsed()
                                     ->schema([
-                                        ViewEntry::make('logs')
+                                        ViewEntry::make('modern_timeline')
                                             ->label('')
-                                            ->view('filament.infolists.components.timeline-log'),
+                                            ->view('filament.infolists.components.modern-timeline'),
                                     ]),
                             ])
                             ->columnSpan(4),
