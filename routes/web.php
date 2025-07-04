@@ -46,8 +46,15 @@ Route::middleware(['auth'])->group(function () {
         ->name('secure.download.revision');
 });
 
-//download all berkas permohonan
 Route::middleware(['auth'])->group(function () {
-    Route::get('/berkas/download-all/{permohonan}', [BerkasController::class, 'downloadAll'])
+    // Quick Actions untuk Petugas - gunakan middleware yang benar
+    Route::post('/petugas/quick-status-update', [App\Http\Controllers\Petugas\QuickActionsController::class, 'quickStatusUpdate'])
+        ->name('petugas.quick-status-update');
+        
+    Route::post('/petugas/quick-revision-action', [App\Http\Controllers\Petugas\QuickActionsController::class, 'quickRevisionAction'])
+        ->name('petugas.quick-revision-action');
+    
+    // Download semua berkas permohonan (zip)
+    Route::get('/berkas/download-all/{permohonan}', [App\Http\Controllers\BerkasController::class, 'downloadAll'])
         ->name('berkas.download-all');
 });
