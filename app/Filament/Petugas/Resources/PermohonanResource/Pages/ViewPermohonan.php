@@ -157,23 +157,6 @@ class ViewPermohonan extends ViewRecord
                                             ]),
                                     ]),
 
-                                // CATATAN PETUGAS SECTION
-                                InfolistSection::make('Catatan & Komunikasi')
-                                    ->icon('heroicon-o-chat-bubble-left-right')
-                                    ->schema([
-                                        TextEntry::make('catatan_petugas')
-                                            ->label('Catatan Petugas')
-                                            ->markdown()
-                                            ->columnSpanFull()
-                                            ->placeholder('Belum ada catatan.')
-                                            ->color(fn (Permohonan $record) => match($record->status) {
-                                                'membutuhkan_revisi', 'butuh_perbaikan', 'ditolak' => 'danger',
-                                                'disetujui', 'selesai' => 'success',
-                                                default => 'primary',
-                                            }),
-                                    ])
-                                    ->visible(fn (Permohonan $record) => !empty($record->catatan_petugas)),
-
                                 // RIWAYAT REVISI DARI WARGA
                                 InfolistSection::make('Riwayat Revisi dari Warga')
                                     ->icon('heroicon-o-arrow-path')

@@ -9,11 +9,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Http\Response;
 use ZipArchive;
 
 class BerkasController extends Controller
 {
-    public function download(Request $request): StreamedResponse|\Illuminate\Http\Response
+    public function download(Request $request): StreamedResponse|Response
     {
         // Ambil data dari query string URL
         $permohonanId = $request->query('permohonan_id');
@@ -47,7 +49,7 @@ class BerkasController extends Controller
         return Storage::disk('private')->download($filePath);
     }
 
-    public function downloadRevision(Request $request): StreamedResponse|\Illuminate\Http\Response
+    public function downloadRevision(Request $request): StreamedResponse|Response
     {
         $revisionId = $request->query('revision_id');
         $filePath = $request->query('path');
@@ -80,7 +82,13 @@ class BerkasController extends Controller
         return Storage::disk('private')->download($filePath);
     }
 
-    public function downloadAll(Permohonan $permohonan): StreamedResponse|\Illuminate\Http\Response
+    /**
+     * Download semua berkas permohonan dalam format ZIP
+     * 
+     * @param Permohonan $permohonan
+     * @return BinaryFileResponse
+     */
+    public function downloadAll(Permohonan $permohonan): BinaryFileResponse
     {
         $user = Auth::user();
 
@@ -162,7 +170,7 @@ class BerkasController extends Controller
             $zip->addFromString('info_permohonan.txt', $info);
             $zip->close();
 
-            // Download file zip
+            // Download file zip dan hapus setelah dikirim
             return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
         } else {
             abort(500, 'Gagal membuat file zip.');
