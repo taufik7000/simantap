@@ -12,9 +12,6 @@ class CreatePermohonan extends CreateRecord
 {
     protected static string $resource = PermohonanResource::class;
 
-    // Hapus baris view kustom, kita akan gunakan view default dari Filament
-    // protected static string $view = 'filament.warga.pages.create-permohonan';
-
     public function mount(): void
     {
         $layananId = request()->query('layanan_id');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\KnowledgeBaseController;
+use App\Http\Controllers\PageController;
 
 
 Route::get('/', function () {
@@ -66,3 +67,5 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/bantuan', [KnowledgeBaseController::class, 'index'])->name('kb.index');
 Route::get('/bantuan/{slug}', [KnowledgeBaseController::class, 'show'])->name('kb.show');
+Route::get('/semua-layanan', [PageController::class, 'semuaLayanan'])->name('layanan.semua');
+Route::get('/lacak-permohonan', [PageController::class, 'lacakPermohonan'])->name('lacak.permohonan');

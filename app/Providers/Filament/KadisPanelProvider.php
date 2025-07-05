@@ -39,9 +39,6 @@ class KadisPanelProvider extends PanelProvider
             )
             ->discoverResources(in: app_path('Filament/Kadis/Resources'), for: 'App\\Filament\\Kadis\\Resources')
             ->discoverPages(in: app_path('Filament/Kadis/Pages'), for: 'App\\Filament\\Kadis\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
             ->navigationGroups([
                 NavigationGroup::make()
                  ->label('Manajemen Layanan')
