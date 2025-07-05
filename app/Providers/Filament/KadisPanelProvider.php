@@ -19,6 +19,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationGroup;
 use App\Filament\Petugas\Resources\PermohonanResource;
+use App\Filament\Petugas\Resources\KartuKeluargaResource;
+use App\Filament\Petugas\Resources\UserResource;
 use Illuminate\Support\Facades\Vite;
 
 class KadisPanelProvider extends PanelProvider
@@ -47,6 +49,8 @@ class KadisPanelProvider extends PanelProvider
             ])
             ->resources([
                 PermohonanResource::class,
+                KartuKeluargaResource::class,
+                UserResource::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Kadis/Widgets'), for: 'App\\Filament\\Kadis\\Widgets')
             ->widgets([
