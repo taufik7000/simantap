@@ -1,71 +1,5 @@
-<!DOCTYPE html>
-<html lang="id" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIMANTAP - Layanan Administrasi Digital Terpadu Simalungun</title>
-
-    @vite('resources/css/app.css')
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <style>
-        /*
-        Styling kustom dan animasi.
-        Semua warna dan class utility lainnya diambil dari Tailwind CSS.
-        */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* bg-gray-50 */
-        }
-
-        .glassmorphism {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #34d399, #059669, #047857);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .floating-card {
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            33% { transform: translateY(-10px) rotate(1deg); }
-            66% { transform: translateY(5px) rotate(-1deg); }
-        }
-        
-        .grid-pattern {
-            background-image: 
-                linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
-            background-size: 60px 60px;
-        }
-        
-        .scroll-reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease-out;
-        }
-        
-        .scroll-reveal.revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
-</head>
-<body>
-
+<x-layouts.app>
+    {{-- Semua kode <section> Anda dari file lama ditempatkan di sini --}}
     <section id="home" class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-50 to-emerald-100">
         <div class="absolute inset-0 grid-pattern opacity-30"></div>
         <div class="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-emerald-300/20 to-emerald-400/20 rounded-full blur-3xl"></div>
@@ -100,8 +34,8 @@
                                 Mulai Sekarang
                             </span>
                         </a>
-                        <a href="/service" class="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-gray-200/50 hover:bg-white hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">
-                            <span class="flex items-center justify-center">
+                        <a href="/login" class="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-gray-200/50 hover:bg-white hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">
+                             <span class="flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4V8a3 3 0 013-3h6a3 3 0 013 3v2M7 21h10a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
@@ -133,7 +67,7 @@
                 </div>
                 
                 <div id="demo" class="relative">
-                    <div class="floating-card glassmorphism rounded-3xl p-8 shadow-2xl border border-white/20">
+                     <div class="floating-card glassmorphism rounded-3xl p-8 shadow-2xl border border-white/20">
                         <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center">
                                 <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -228,7 +162,7 @@
 
     <section class="py-24 bg-white scroll-reveal">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-20">
+            <div id="features" class="text-center mb-20">
                 <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-100 mb-6">
                     <span class="text-sm font-medium text-emerald-600">✨ Fitur Unggulan</span>
                 </div>
@@ -517,27 +451,4 @@
             </div>
         </div>
     </section>
-
-<script>
-    // Scroll Reveal Animation
-    function revealOnScroll() {
-        const reveals = document.querySelectorAll('.scroll-reveal');
-        
-        for (let i = 0; i < reveals.length; i++) {
-            const windowHeight = window.innerHeight;
-            const elementTop = reveals[i].getBoundingClientRect().top;
-            const elementVisible = 120; // Jarak dari bawah layar sebelum elemen muncul
-            
-            if (elementTop < windowHeight - elementVisible) {
-                reveals[i].classList.add('revealed');
-            }
-        }
-    }
-    
-    // Initialize animations on scroll and load
-    window.addEventListener('scroll', revealOnScroll);
-    window.addEventListener('load', revealOnScroll);
-</script>
-
-</body>
-</html>
+</x-layouts.app>

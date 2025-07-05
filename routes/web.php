@@ -5,6 +5,7 @@ use App\Livewire\UnifiedLoginPage;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BerkasController;
+use App\Http\Controllers\KnowledgeBaseController;
 
 
 Route::get('/', function () {
@@ -62,3 +63,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('berkas.download-all');
             
 });
+
+Route::get('/bantuan', [KnowledgeBaseController::class, 'index'])->name('kb.index');
+Route::get('/bantuan/{slug}', [KnowledgeBaseController::class, 'show'])->name('kb.show');
