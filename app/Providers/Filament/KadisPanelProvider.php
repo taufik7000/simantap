@@ -46,6 +46,9 @@ class KadisPanelProvider extends PanelProvider
                 NavigationGroup::make()
                  ->label('Manajemen Layanan')
                  ->collapsible(false),
+                NavigationGroup::make()
+                 ->label('Kependudukan')
+                 ->collapsible(false),
             ])
             ->resources([
                 PermohonanResource::class,
