@@ -19,10 +19,8 @@ class CreatePermohonan extends CreateRecord
         
         $layanan = Layanan::with('kategoriLayanan')->findOrFail($layananId);
 
-        // Teruskan data yang dibutuhkan untuk membangun form ke dalam schema
         $this->form->fill([
             'layanan_id' => $layanan->id,
-            // 'layanan_data' adalah field sementara untuk menyimpan definisi form dari Kadis
             'layanan_data' => $layanan->description, 
             'layanan_info' => [
                 'nama_layanan' => $layanan->name,
@@ -35,8 +33,7 @@ class CreatePermohonan extends CreateRecord
     {
         $data['user_id'] = Auth::id();
         $data['status'] = 'baru';
-
-        // Hapus data sementara yang tidak perlu disimpan ke database
+        
         unset($data['layanan_data']);
         unset($data['layanan_info']);
 
