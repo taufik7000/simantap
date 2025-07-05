@@ -12,6 +12,7 @@ class KnowledgeBase extends Model
 
     protected $fillable = [
         'user_id',
+        'knowledge_base_category_id',
         'title',
         'slug',
         'content',
@@ -21,5 +22,10 @@ class KnowledgeBase extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(KnowledgeBaseCategory::class, 'knowledge_base_category_id');
     }
 }
