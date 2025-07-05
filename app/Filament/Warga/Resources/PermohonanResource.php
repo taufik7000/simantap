@@ -3,6 +3,7 @@
 namespace App\Filament\Warga\Resources;
 
 use App\Filament\Warga\Resources\PermohonanResource\Pages;
+use App\Models\FormulirMaster;
 use App\Models\Permohonan;
 use App\Models\PermohonanRevision;
 use Filament\Forms;
@@ -79,7 +80,48 @@ class PermohonanResource extends Resource
                                     return [$item['nama_syarat'] => new HtmlString($item['deskripsi_syarat'])];
                                 })->all();
                             }),
+                        
+                        Section::make('Formulir untuk Diunduh')
+                            ->description('Jika ada, silakan unduh, isi, dan unggah kembali formulir berikut di langkah selanjutnya.')
+                            ->collapsible()
+                            ->collapsed(false)
+                            ->visible(function (Get $get): bool {
+                                $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                                if (!$selectedJenis) return false;
+                                
+                                $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
+                                return !empty($jenisData['formulir_master_id']);
+                            })
+                            ->schema(function (Get $get): array {
+                                $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                                if (!$selectedJenis) return [];
+
+                                $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
+                                
+                                $formulirMasterIds = (array) ($jenisData['formulir_master_id'] ?? []);
+                                $formulirs = FormulirMaster::whereIn('id', $formulirMasterIds)->get();
+
+                                if ($formulirs->isEmpty()) {
+                                    return [];
+                                }
+                                
+                                $placeholders = [];
+                                foreach ($formulirs as $formulir) {
+                                    $downloadUrl = route('formulir-master.download', $formulir);
+                                    
+                                    $placeholders[] = Placeholder::make('formulir_master_' . $formulir->id)
+                                        ->label($formulir->nama_formulir)
+                                        ->content(new HtmlString(
+                                            '<a href="' . $downloadUrl . '" target="_blank" class="flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a6 6 0 00-6 6v3.586l-1.293 1.293a1 1 0 001.414 1.414L6 12.414V8a4 4 0 118 0v4.414l-1.293-1.293a1 1 0 00-1.414 1.414L10 14.828l-2.293-2.293a1 1 0 00-1.414 1.414L10 17.657l3.707-3.707a1 1 0 00-1.414-1.414L11 13.586V8a6 6 0 00-6-6z"></path></svg>
+                                                Unduh Formulir (PDF)
+                                            </a>'
+                                        ));
+                                }
+                                return $placeholders;
+                            }),
                     ]),
+                
                 Wizard\Step::make('2. Isi Formulir')
                     ->schema(function (Get $get): array {
                         $selectedJenis = $get('data_pemohon.jenis_permohonan');
@@ -132,11 +174,10 @@ class PermohonanResource extends Resource
                                 ->label($fileReq['file_name'])
                                 ->helperText($fileReq['file_description'] ?? '')
                                 ->required((bool) ($fileReq['is_required'] ?? false))
-                                ->maxSize($fileReq['max_size'] ? $fileReq['max_size'] * 1024 : 2048) // Convert MB to KB
+                                ->maxSize($fileReq['max_size'] ? $fileReq['max_size'] * 1024 : 2048)
                                 ->disk('private')
                                 ->directory('berkas-permohonan');
-
-                            // Atur tipe file yang diterima
+                            
                             $acceptedTypes = match($fileReq['file_type'] ?? 'any') {
                                 'image' => ['image/jpeg', 'image/png'],
                                 'pdf' => ['application/pdf'],
@@ -157,7 +198,6 @@ class PermohonanResource extends Resource
         ]);
     }
 
-    // Metode table(), infolist(), dan lainnya tetap sama...
     public static function table(Table $table): Table
     {
         return $table
@@ -251,7 +291,6 @@ class PermohonanResource extends Resource
 
                         InfolistGroup::make()
                             ->schema([
-                                // --- AWAL PERBAIKAN FINAL UNTUK BERKAS ---
                                 InfolistSection::make('Berkas Permohonan Awal')
                                     ->schema(function (Permohonan $record) {
                                         $berkasFields = [];
@@ -271,7 +310,6 @@ class PermohonanResource extends Resource
                                             $fileKey = $fileReq['file_key'];
                                             $filePath = $record->berkas_pemohon[$fileKey] ?? null;
                                             
-                                            // Tampilkan field dengan cara yang benar
                                             $entry = TextEntry::make($fileKey)->label($fileReq['file_name']);
 
                                             if ($filePath) {
