@@ -47,11 +47,11 @@
                                                 <h3 class="text-xl font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
                                                     {{ $layanan->name }}
                                                 </h3>
-                                                @if(isset($layanan->description[0]['deskripsi_syarat']))
-                                                    <p class="mt-2 text-sm text-gray-600 line-clamp-3">
-                                                        {!! strip_tags($layanan->description[0]['deskripsi_syarat']) !!}
-                                                    </p>
-                                                @endif
+                                               @if($layanan->deskripsi_layanan)
+                                                    <div class="mt-2 text-sm text-gray-600 line-clamp-3 prose">
+                                                       {!! $layanan->deskripsi_layanan !!}
+                                                   </div>
+                                               @endif
                                             </div>
                                         </div>
                                     </div>

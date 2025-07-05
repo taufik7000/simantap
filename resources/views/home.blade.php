@@ -34,7 +34,7 @@
                                 Mulai Sekarang
                             </span>
                         </a>
-                        <a href="/login" class="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-gray-200/50 hover:bg-white hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">
+                        <a href="/semua-layanan" class="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-gray-200/50 hover:bg-white hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">
                              <span class="flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4V8a3 3 0 013-3h6a3 3 0 013 3v2M7 21h10a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -160,78 +160,37 @@
         </div>
     </section>
 
-    <section class="py-24 bg-white scroll-reveal">
+   <section class="py-24 bg-white scroll-reveal">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div id="features" class="text-center mb-20">
-                <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-100 mb-6">
-                    <span class="text-sm font-medium text-emerald-600">✨ Fitur Unggulan</span>
+            <div id="layanan-populer" class="text-center mb-20">
+                <div class="inline-flex items-center gap-x-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 mb-6">
+                    <svg class="w-5 h-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" /></svg>
+                    <span class="text-sm font-medium text-emerald-700">Layanan Utama</span>
                 </div>
                 <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                    Mengapa Memilih <span class="gradient-text">SIMANTAP</span>?
+                    Layanan <span class="gradient-text">Paling Dicari</span>
                 </h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                    Platform administrasi digital yang menggabungkan teknologi AI, cloud computing, dan user experience terdepan untuk pelayanan publik yang revolusioner.
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-8">
+                    Akses cepat ke layanan administrasi yang paling sering digunakan oleh masyarakat Simalungun.
                 </p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="group relative">
-                    <div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
-                        <div class="relative mb-8">
-                            <div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                            </div>
-                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div>
-                        </div>
-                        
-                        <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">
-                            Proses Cepat & Efisien
-                        </h3>
-                        <p class="text-gray-600 leading-relaxed mb-6">
-                            Ajukan permohonan dan terima dokumen dalam hitungan jam, bukan hari, berkat otomatisasi cerdas.
-                        </p>
-                    </div>
-                </div>
-                <div class="group relative">
-                    <div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
-                        <div class="relative mb-8">
-                            <div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                </svg>
-                            </div>
-                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div>
-                        </div>
-                        
-                        <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">
-                            Keamanan Data Terjamin
-                        </h3>
-                        <p class="text-gray-600 leading-relaxed mb-6">
-                            Data Anda dilindungi dengan enkripsi berlapis dan standar keamanan internasional ISO 27001.
-                        </p>
-                    </div>
-                </div>
-                <div class="group relative">
-                    <div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
-                        <div class="relative mb-8">
-                            <div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div>
-                        </div>
-                        
-                        <h3 class="text-2xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">
-                            Akses Mobile & Fleksibel
-                        </h3>
-                        <p class="text-gray-600 leading-relaxed mb-6">
-                            Urus semua keperluan administrasi kapan saja, di mana saja, langsung dari smartphone Anda.
-                        </p>
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                {{-- KARTU KTP --}}
+                <div class="group relative"><div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"><div class="relative mb-8"><div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"><x-icon name="heroicon-o-identification" class="w-8 h-8 text-white" /></div><div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div></div><h3 class="text-xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">KTP (Kartu Tanda Penduduk)</h3><p class="text-gray-600 leading-relaxed mb-6">Permohonan pembuatan, perpanjangan, dan perubahan data KTP elektronik.</p><a href="/layanan/ktp" class="inline-flex items-center text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">Ajukan Sekarang<svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a></div></div>
+                {{-- KARTU KARTU KELUARGA --}}
+                <div class="group relative"><div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"><div class="relative mb-8"><div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"><x-icon name="heroicon-o-user-group" class="w-8 h-8 text-white" /></div><div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div></div><h3 class="text-xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">Kartu Keluarga (KK)</h3><p class="text-gray-600 leading-relaxed mb-6">Pembuatan, perubahan, dan penambahan anggota keluarga dalam Kartu Keluarga.</p><a href="/layanan/kartu-keluarga" class="inline-flex items-center text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">Ajukan Sekarang<svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a></div></div>
+                {{-- KARTU AKTA KELAHIRAN --}}
+                <div class="group relative"><div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"><div class="relative mb-8"><div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"><x-icon name="heroicon-o-document-text" class="w-8 h-8 text-white" /></div><div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div></div><h3 class="text-xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">Akta Kelahiran</h3><p class="text-gray-600 leading-relaxed mb-6">Penerbitan akta kelahiran untuk bayi baru lahir dan duplikat akta kelahiran.</p><a href="/layanan/akta-kelahiran" class="inline-flex items-center text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">Ajukan Sekarang<svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a></div></div>
+                {{-- KARTU KIA --}}
+                <div class="group relative"><div class="h-full bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-emerald-200 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"><div class="relative mb-8"><div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"><x-icon name="heroicon-o-identification" class="w-8 h-8 text-white" /></div><div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-70 group-hover:scale-125 transition-transform duration-300"></div></div><h3 class="text-xl font-bold text-gray-900 mb-4 group-hover:text-emerald-600 transition-colors duration-300">Kartu Identitas Anak</h3><p class="text-gray-600 leading-relaxed mb-6">Pembuatan Kartu Identitas Anak (KIA) untuk anak di bawah 17 tahun.</p><a href="/layanan/kartu-identitas-anak" class="inline-flex items-center text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">Ajukan Sekarang<svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a></div></div>
+            </div>
+            
+            <div class="text-center mt-16">
+                <a href="{{ route('layanan.semua') }}" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2"/></svg>
+                    Lihat Semua Layanan
+                </a>
             </div>
         </div>
     </section>

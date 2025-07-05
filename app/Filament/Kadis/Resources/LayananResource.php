@@ -52,6 +52,10 @@ class LayananResource extends Resource
                             ->required()
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
+                        RichEditor::make('deskripsi_layanan')
+                        ->label('Deskripsi Singkat Layanan (untuk Tampilan Publik)')
+                        ->helperText('Deskripsi ini akan muncul di halaman "Semua Layanan".')
+                        ->columnSpanFull(),
                         TextInput::make('slug')
                             ->required()
                             ->unique(ignoreRecord: true),

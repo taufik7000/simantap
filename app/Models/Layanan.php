@@ -17,6 +17,7 @@ class Layanan extends Model
         'kategori_layanan_id', 
         'name', 
         'slug', 
+        'deskripsi_layanan',
         'description', 
         'is_active', 
         'icon'
