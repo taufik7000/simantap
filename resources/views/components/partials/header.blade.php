@@ -10,8 +10,8 @@
 
             {{-- Menu Navigasi (Desktop) --}}
             <div class="hidden md:flex md:items-center md:space-x-8">
-                <a href="#home" class="font-medium text-gray-600 hover:text-emerald-600 transition">Home</a>
-                <a href="#features" class="font-medium text-gray-600 hover:text-emerald-600 transition">Fitur</a>
+                <a href="/" class="font-medium text-gray-600 hover:text-emerald-600 transition">Home</a>
+                <a href="/features" class="font-medium text-gray-600 hover:text-emerald-600 transition">Fitur</a>
                 <a href="{{ route('kb.index') }}" class="font-medium text-gray-600 hover:text-emerald-600 transition">Pusat Bantuan</a>
             </div>
 
