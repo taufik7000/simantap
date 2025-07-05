@@ -267,6 +267,7 @@ class PermohonanResource extends Resource
                         InfolistGroup::make()
                             ->schema([
                                 InfolistSection::make('Data Isian Formulir')
+                                    ->collapsible()
                                     ->icon('heroicon-o-pencil-square')
                                     ->schema(function (Permohonan $record) {
                                         $fields = [];
