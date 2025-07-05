@@ -8,16 +8,13 @@ use App\Models\Layanan;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection; // Mengimpor Collection untuk kejelasan
 
 class CreatePermohonan extends CreateRecord
 {
     protected static string $resource = PermohonanResource::class;
     
-    // 1. Tunjuk ke view custom kita
     protected static string $view = 'filament.warga.pages.create-permohonan';
 
-    // Properti ini akan kita kirim ke view
     public Layanan $layanan;
     public array $jenisPermohonanData = [];
 
@@ -28,34 +25,26 @@ class CreatePermohonan extends CreateRecord
         
         $this->layanan = Layanan::findOrFail($layananId);
 
-        // Siapkan data untuk dikirim ke view Blade
         if ($this->layanan->description && is_array($this->layanan->description)) {
             foreach ($this->layanan->description as $syarat) {
-                // 'formulir_master_id' sekarang bisa berupa array ID atau ID tunggal
                 $formulirIds = $syarat['formulir_master_id'] ?? null; 
-
                 $namaFormulirList = [];
-                // PERBAIKAN UTAMA: Periksa apakah ada ID formulir dan proses sebagai array
-                if (!empty($formulirIds)) {
-                    // Pastikan $formulirIds adalah array untuk whereIn(), bahkan jika hanya 1 ID
-                    $formulirIds = (array) $formulirIds; 
-                    
-                    // Ambil semua formulir master yang terkait dalam satu query efisien
-                    $formulirs = FormulirMaster::whereIn('id', $formulirIds)->get();
 
-                    // Kumpulkan nama-nama formulir yang ditemukan
+                if (!empty($formulirIds)) {
+                    $formulirIds = (array) $formulirIds; 
+                    $formulirs = FormulirMaster::whereIn('id', $formulirIds)->get();
                     foreach ($formulirs as $formulir) {
                         $namaFormulirList[] = $formulir->nama_formulir;
                     }
                 }
 
+                // [PERUBAHAN KUNCI] Menambahkan 'form_fields' ke data yang dikirim ke view
                 $this->jenisPermohonanData[] = [
                     'nama' => $syarat['nama_syarat'],
                     'deskripsi' => $syarat['deskripsi_syarat'],
-                    // Simpan ID formulir yang dipilih (bisa array atau null)
                     'formulir_master_id' => $formulirIds, 
-                    // Kirim juga array nama formulir ke view (jika ada)
                     'nama_formulir' => !empty($namaFormulirList) ? $namaFormulirList : null,
+                    'form_fields' => $syarat['form_fields'] ?? [], // <-- TAMBAHKAN INI
                 ];
             }
         }
@@ -63,12 +52,23 @@ class CreatePermohonan extends CreateRecord
         $this->form->fill();
     }
 
-    // Metode ini tetap diperlukan untuk menambahkan user_id & layanan_id
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = Auth::id();
         $data['layanan_id'] = $this->layanan->id;
         $data['status'] = 'baru';
+
+        // [PERUBAHAN KUNCI] Menggabungkan data dari form dinamis ke dalam 'data_pemohon'
+        // Data isian dari form dinamis akan tersimpan di $data['data_pemohon_dinamis']
+        if (isset($data['data_pemohon_dinamis']) && is_array($data['data_pemohon_dinamis'])) {
+            foreach ($data['data_pemohon_dinamis'] as $key => $value) {
+                // Semua data isian digabungkan ke 'data_pemohon' agar tersimpan dalam satu kolom JSON
+                $data['data_pemohon'][$key] = $value;
+            }
+        }
+        // Hapus key sementara agar tidak menyebabkan error
+        unset($data['data_pemohon_dinamis']);
+
         return $data;
     }
     

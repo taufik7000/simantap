@@ -7,17 +7,19 @@ use App\Models\Permohonan;
 use App\Models\PermohonanRevision;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\View;
+use Filament\Forms\Components\KeyValue;
+use Filament\Infolists;
 use Filament\Infolists\Components\Grid as InfolistGrid;
 use Filament\Infolists\Components\Group as InfolistGroup;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder; // Pastikan use statement ini ada
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class PermohonanResource extends Resource
@@ -27,10 +29,6 @@ class PermohonanResource extends Resource
     protected static ?string $navigationLabel = 'Permohonan Saya';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    /**
-     * INI ADALAH METHOD KUNCI YANG HILANG
-     * Method ini memfilter data agar warga hanya melihat permohonan miliknya.
-     */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('user_id', auth()->id());
@@ -38,34 +36,42 @@ class PermohonanResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // ... (Tidak ada perubahan di sini)
         return $form
             ->schema([
+                // Komponen tersembunyi untuk menyimpan data internal
                 Forms\Components\Hidden::make('data_pemohon.jenis_permohonan')->required(),
-                Forms\Components\Repeater::make('berkas_pemohon')
-                    ->label(false)
-                    ->addActionLabel('Tambah Dokumen')
+                KeyValue::make('data_pemohon_dinamis')->hidden(),
+
+                // Memuat seluruh tampilan interaktif sebagai bagian dari skema form
+                View::make('filament.warga.components.permohonan-warga-form-fields')
+                    ->columnSpanFull(),
+
+                // Bagian untuk mengunggah dokumen wajib
+                Forms\Components\Section::make('Unggah Dokumen Wajib')
+                    ->collapsible()
                     ->schema([
-                        Forms\Components\TextInput::make('nama_dokumen')
-                            ->label('Nama Dokumen')
-                            ->required(),
-                        Forms\Components\FileUpload::make('path_dokumen')
-                            ->label('Pilih File')
-                            ->disk('private')
-                            ->directory('berkas-permohonan')
-                            ->required(),
+                        Forms\Components\Repeater::make('berkas_pemohon')
+                            ->label(false)
+                            ->addActionLabel('Tambah Dokumen')
+                            ->schema([
+                                Forms\Components\TextInput::make('nama_dokumen')
+                                    ->label('Nama Dokumen')
+                                    ->required(),
+                                Forms\Components\FileUpload::make('path_dokumen')
+                                    ->label('Pilih File')
+                                    ->disk('private')
+                                    ->directory('berkas-permohonan')
+                                    ->required(),
+                            ])
+                            ->defaultItems(1)
+                            ->columnSpanFull(),
                     ])
-                    ->columns(1)
-                    ->defaultItems(1)
-                    ->columnSpanFull()
-                    ->required()
-                    ->hidden(fn ($get) => !$get('data_pemohon.jenis_permohonan')),
+                    ->hidden(fn ($get) => !$get('data_pemohon.jenis_permohonan'))
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        // ... (Tidak ada perubahan di sini)
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode_permohonan')->label('Kode')->searchable(),
@@ -94,59 +100,13 @@ class PermohonanResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\Action::make('perbaiki_permohonan')
-                    ->label('Perbaiki Permohonan')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->visible(fn (Permohonan $record): bool => $record->canBeRevised())
-                    ->form([
-                        Forms\Components\Textarea::make('catatan_revisi')
-                            ->label('Catatan Perbaikan')
-                            ->placeholder('Jelaskan perbaikan yang Anda lakukan...')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                        Forms\Components\Repeater::make('berkas_revisi')
-                            ->label('Unggah Dokumen Perbaikan')
-                            ->schema([
-                                Forms\Components\TextInput::make('nama_dokumen')
-                                    ->label('Nama Dokumen')
-                                    ->required(),
-                                Forms\Components\FileUpload::make('path_dokumen')
-                                    ->label('Pilih File Revisi')
-                                    ->disk('private')
-                                    ->directory('berkas-revisi')
-                                    ->required(),
-                            ])
-                            ->addActionLabel('Tambah Dokumen')
-                            ->columnSpanFull()
-                            ->minItems(1),
-                    ])
-                    ->action(function (Permohonan $record, array $data): void {
-                        PermohonanRevision::create([
-                            'permohonan_id' => $record->id,
-                            'user_id' => Auth::id(),
-                            'catatan_revisi' => $data['catatan_revisi'],
-                            'berkas_revisi' => $data['berkas_revisi'],
-                            'status' => 'pending',
-                        ]);
-                        $record->update([
-                            'status' => 'sedang_ditinjau',
-                            'catatan_petugas' => 'Warga telah mengirimkan revisi. Menunggu review petugas.',
-                        ]);
-                        Notification::make()
-                            ->title('Revisi Berhasil Dikirim!')
-                            ->success()
-                            ->sendToDatabase(Auth::user());
-                    })
-                    ->modalHeading('Kirim Perbaikan Permohonan')
-                    ->modalSubmitActionLabel('Kirim'),
                 Tables\Actions\ViewAction::make(),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Infolists\Infolist $infolist): Infolists\Infolist
     {
-        // ... (Tidak ada perubahan di sini)
         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')
@@ -157,7 +117,7 @@ class PermohonanResource extends Resource
                         TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
                         TextEntry::make('status')
                             ->badge()
-                             ->color(fn (string $state): string => match ($state) {
+                            ->color(fn (string $state): string => match ($state) {
                                 'baru' => 'gray',
                                 'sedang_ditinjau' => 'info',
                                 'diproses' => 'primary',
@@ -178,6 +138,30 @@ class PermohonanResource extends Resource
                     ->schema([
                         InfolistGroup::make()
                             ->schema([
+                                InfolistSection::make('Data Isian Formulir')
+                                    ->icon('heroicon-o-pencil-square')
+                                    ->schema(function (Permohonan $record) {
+                                        $fields = [];
+                                        $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
+                                        
+                                        if ($jenisPermohonan && $record->layanan->description) {
+                                            $formDefinition = collect($record->layanan->description)
+                                                ->firstWhere('nama_syarat', $jenisPermohonan);
+
+                                            if ($formDefinition && !empty($formDefinition['form_fields'])) {
+                                                foreach ($formDefinition['form_fields'] as $fieldDef) {
+                                                    $fieldName = $fieldDef['field_name'];
+                                                    $fieldLabel = $fieldDef['field_label'];
+                                                    
+                                                    if (isset($record->data_pemohon[$fieldName])) {
+                                                        $fields[] = TextEntry::make("data_pemohon.{$fieldName}")
+                                                            ->label($fieldLabel);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        return $fields;
+                                    })->columns(2),
                                 InfolistSection::make('Riwayat Permohonan')
                                     ->icon('heroicon-o-clock')
                                     ->schema([

@@ -60,4 +60,5 @@ Route::middleware(['auth'])->group(function () {
     // Download semua berkas permohonan (zip)
     Route::get('/berkas/download-all/{permohonan}', [App\Http\Controllers\BerkasController::class, 'downloadAll'])
         ->name('berkas.download-all');
+            
 });
