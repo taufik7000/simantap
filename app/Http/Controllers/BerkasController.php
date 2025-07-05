@@ -15,39 +15,52 @@ use ZipArchive;
 
 class BerkasController extends Controller
 {
-    public function download(Request $request): StreamedResponse|Response
-    {
-        // Ambil data dari query string URL
-        $permohonanId = $request->query('permohonan_id');
-        $filePath = $request->query('path');
+public function download(Request $request): StreamedResponse|Response
+{
+    $permohonanId = $request->query('permohonan_id');
+    $filePath = $request->query('path');
 
-        if (!$permohonanId || !$filePath) {
-            abort(404, 'Permintaan tidak valid.');
-        }
-
-        $permohonan = Permohonan::findOrFail($permohonanId);
-
-        // Memastikan apakah pengguna login atau tidak.
-        // Jika pengguna login, maka lanjut ke logika berikutnya.
-        $user = Auth::user();
-
-        // Cek apakah user adalah pemilik permohonan ATAU seorang petugas.
-        // Jika bukan, maka link download akan direct ke halaman login
-        if ($user->id !== $permohonan->user_id && !$user->hasRole(['petugas', 'kadis', 'admin'])) {
-            abort(403, 'Anda tidak memiliki hak akses untuk berkas ini.');
-        }
-
-        // Keamanan tambahan: Pastikan path file yang diminta benar-benar ada di record permohonan ini
-        $berkasPemohon = collect($permohonan->berkas_pemohon);
-        $berkasValid = $berkasPemohon->firstWhere('path_dokumen', $filePath);
-
-        if (!$berkasValid) {
-            abort(404, 'Berkas tidak ditemukan pada permohonan ini.');
-        }
-
-        // Jika semua aman, kirim file untuk diunduh
-        return Storage::disk('private')->download($filePath);
+    if (!$permohonanId || !$filePath) {
+        abort(404, 'Permintaan tidak valid.');
     }
+
+    $permohonan = Permohonan::findOrFail($permohonanId);
+    $user = Auth::user();
+
+    if ($user->id !== $permohonan->user_id && !$user->hasRole(['petugas', 'kadis', 'admin'])) {
+        abort(403, 'Anda tidak memiliki hak akses untuk berkas ini.');
+    }
+
+    // Keamanan tambahan: Pastikan path file yang diminta benar-benar ada di record permohonan ini
+    $berkasPemohon = $permohonan->berkas_pemohon;
+    $pathIsValid = false;
+
+    if (is_array($berkasPemohon)) {
+        // Cek untuk struktur baru: ['file_key' => 'path/to/file.pdf']
+        if (in_array($filePath, $berkasPemohon, true)) {
+            $pathIsValid = true;
+        } 
+        // Cek untuk struktur lama (fallback): [['path_dokumen' => 'path/to/file.pdf']]
+        else {
+            foreach ($berkasPemohon as $berkas) {
+                if (is_array($berkas) && isset($berkas['path_dokumen']) && $berkas['path_dokumen'] === $filePath) {
+                    $pathIsValid = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!$pathIsValid) {
+        abort(404, 'Berkas tidak ditemukan pada permohonan ini.');
+    }
+
+    if (!Storage::disk('private')->exists($filePath)) {
+        abort(404, 'File tidak ditemukan di server.');
+    }
+
+    return Storage::disk('private')->download($filePath);
+}
 
     public function downloadRevision(Request $request): StreamedResponse|Response
     {

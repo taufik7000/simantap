@@ -7,20 +7,32 @@ use App\Models\Permohonan;
 use App\Models\PermohonanRevision;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Components\View;
-use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Get;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Infolists;
 use Filament\Infolists\Components\Grid as InfolistGrid;
 use Filament\Infolists\Components\Group as InfolistGroup;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Notifications\Notification;
+use Filament\Forms\Components\ViewField;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class PermohonanResource extends Resource
 {
@@ -36,40 +48,116 @@ class PermohonanResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                // Komponen tersembunyi untuk menyimpan data internal
-                Forms\Components\Hidden::make('data_pemohon.jenis_permohonan')->required(),
-                KeyValue::make('data_pemohon_dinamis')->hidden(),
+        return $form->schema([
+            // Field tersembunyi untuk data sementara
+            Hidden::make('layanan_data'),
+            Hidden::make('layanan_info'),
+            Hidden::make('layanan_id')->required(),
 
-                // Memuat seluruh tampilan interaktif sebagai bagian dari skema form
-                View::make('filament.warga.components.permohonan-warga-form-fields')
-                    ->columnSpanFull(),
-
-                // Bagian untuk mengunggah dokumen wajib
-                Forms\Components\Section::make('Unggah Dokumen Wajib')
-                    ->collapsible()
+            Wizard::make([
+                Wizard\Step::make('1. Pilih Jenis Permohonan')
                     ->schema([
-                        Forms\Components\Repeater::make('berkas_pemohon')
-                            ->label(false)
-                            ->addActionLabel('Tambah Dokumen')
-                            ->schema([
-                                Forms\Components\TextInput::make('nama_dokumen')
-                                    ->label('Nama Dokumen')
-                                    ->required(),
-                                Forms\Components\FileUpload::make('path_dokumen')
-                                    ->label('Pilih File')
-                                    ->disk('private')
-                                    ->directory('berkas-permohonan')
-                                    ->required(),
-                            ])
-                            ->defaultItems(1)
-                            ->columnSpanFull(),
-                    ])
-                    ->hidden(fn ($get) => !$get('data_pemohon.jenis_permohonan'))
-            ]);
+                        Placeholder::make('info_layanan')
+                            ->label('Anda sedang mengajukan permohonan untuk layanan:')
+                            ->content(fn (Get $get): string => 
+                                $get('layanan_info.nama_kategori') . ' / ' . $get('layanan_info.nama_layanan')
+                            ),
+                        Radio::make('data_pemohon.jenis_permohonan')
+                            ->label('Pilih Jenis Permohonan yang Sesuai')
+                            ->required()
+                            ->live()
+                            ->options(function (Get $get) {
+                                $layananData = $get('layanan_data');
+                                return $layananData ? collect($layananData)->pluck('nama_syarat', 'nama_syarat') : [];
+                            })
+                            ->descriptions(function (Get $get) {
+                                $layananData = $get('layanan_data');
+                                if (!$layananData) {
+                                    return [];
+                                }
+                                return collect($layananData)->mapWithKeys(function ($item) {
+                                    return [$item['nama_syarat'] => new HtmlString($item['deskripsi_syarat'])];
+                                })->all();
+                            }),
+                    ]),
+                Wizard\Step::make('2. Isi Formulir')
+                    ->schema(function (Get $get): array {
+                        $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                        $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
+
+                        if (empty($jenisData['form_fields'])) {
+                             return [
+                                Placeholder::make('no_form_placeholder')
+                                    ->label('')
+                                    ->content('Tidak ada data tambahan yang perlu diisi. Silakan lanjut ke langkah berikutnya.')
+                            ];
+                        }
+                        
+                        $formFieldsSchema = [];
+                        foreach($jenisData['form_fields'] as $field) {
+                            $fieldName = 'data_pemohon.' . $field['field_name'];
+                            $fieldComponent = match ($field['field_type']) {
+                                'textarea' => Textarea::make($fieldName),
+                                'select' => Select::make($fieldName)->options(collect($field['field_options'])->pluck('label', 'value')),
+                                'radio' => Radio::make($fieldName)->options(collect($field['field_options'])->pluck('label', 'value')),
+                                'checkbox' => Checkbox::make($fieldName),
+                                'date' => DatePicker::make($fieldName),
+                                default => TextInput::make($fieldName)->type($field['field_type']),
+                            };
+                            
+                            $formFieldsSchema[] = $fieldComponent
+                                ->label($field['field_label'])
+                                ->required((bool) ($field['is_required'] ?? false));
+                        }
+                        return [Section::make('Data Isian')->schema($formFieldsSchema)];
+                    }),
+                
+                Wizard\Step::make('3. Unggah Dokumen')
+                    ->schema(function (Get $get): array {
+                        $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                        $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
+
+                        if (empty($jenisData['file_requirements'])) {
+                            return [
+                                Placeholder::make('no_files_placeholder')
+                                    ->label('')
+                                    ->content('Tidak ada dokumen yang perlu diunggah untuk jenis permohonan ini.')
+                            ];
+                        }
+
+                        $fileFieldsSchema = [];
+                        foreach($jenisData['file_requirements'] as $fileReq) {
+                            $fileKey = 'berkas_pemohon.' . $fileReq['file_key'];
+                            $fileUpload = FileUpload::make($fileKey)
+                                ->label($fileReq['file_name'])
+                                ->helperText($fileReq['file_description'] ?? '')
+                                ->required((bool) ($fileReq['is_required'] ?? false))
+                                ->maxSize($fileReq['max_size'] ? $fileReq['max_size'] * 1024 : 2048) // Convert MB to KB
+                                ->disk('private')
+                                ->directory('berkas-permohonan');
+
+                            // Atur tipe file yang diterima
+                            $acceptedTypes = match($fileReq['file_type'] ?? 'any') {
+                                'image' => ['image/jpeg', 'image/png'],
+                                'pdf' => ['application/pdf'],
+                                'document' => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                                default => [],
+                            };
+                            
+                            if (!empty($acceptedTypes)) {
+                                $fileUpload->acceptedFileTypes($acceptedTypes);
+                            }
+
+                            $fileFieldsSchema[] = $fileUpload;
+                        }
+
+                        return [Section::make('Unggah Dokumen Wajib')->schema($fileFieldsSchema)];
+                    })
+            ])->columnSpanFull(),
+        ]);
     }
 
+    // Metode table(), infolist(), dan lainnya tetap sama...
     public static function table(Table $table): Table
     {
         return $table
@@ -105,9 +193,9 @@ class PermohonanResource extends Resource
             ->defaultSort('created_at', 'desc');
     }
 
-    public static function infolist(Infolists\Infolist $infolist): Infolists\Infolist
+ public static function infolist(Infolists\Infolist $infolist): Infolists\Infolist
     {
-        return $infolist
+         return $infolist
             ->schema([
                 InfolistSection::make('Informasi Permohonan')
                     ->columns(3)
@@ -143,47 +231,60 @@ class PermohonanResource extends Resource
                                     ->schema(function (Permohonan $record) {
                                         $fields = [];
                                         $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
-                                        
-                                        if ($jenisPermohonan && $record->layanan->description) {
-                                            $formDefinition = collect($record->layanan->description)
-                                                ->firstWhere('nama_syarat', $jenisPermohonan);
-
-                                            if ($formDefinition && !empty($formDefinition['form_fields'])) {
+                                        if ($jenisPermohonan && $record->layanan?->description) {
+                                            $formDefinition = collect($record->layanan->description)->firstWhere('nama_syarat', $jenisPermohonan);
+                                            if (!empty($formDefinition['form_fields'])) {
                                                 foreach ($formDefinition['form_fields'] as $fieldDef) {
                                                     $fieldName = $fieldDef['field_name'];
-                                                    $fieldLabel = $fieldDef['field_label'];
-                                                    
                                                     if (isset($record->data_pemohon[$fieldName])) {
-                                                        $fields[] = TextEntry::make("data_pemohon.{$fieldName}")
-                                                            ->label($fieldLabel);
+                                                        $fields[] = TextEntry::make("data_pemohon.{$fieldName}")->label($fieldDef['field_label']);
                                                     }
                                                 }
                                             }
                                         }
-                                        return $fields;
+                                        return empty($fields) ? [TextEntry::make('no_data_isian')->state('Tidak ada data isian tambahan untuk permohonan ini.')] : $fields;
                                     })->columns(2),
                                 InfolistSection::make('Riwayat Permohonan')
                                     ->icon('heroicon-o-clock')
-                                    ->schema([
-                                        ViewEntry::make('logs')
-                                            ->label('')
-                                            ->view('filament.infolists.components.timeline-log'),
-                                    ]),
+                                    ->schema([ViewEntry::make('logs')->label('')->view('filament.infolists.components.timeline-log')]),
                             ])->columnSpan(2),
+
                         InfolistGroup::make()
                             ->schema([
+                                // --- AWAL PERBAIKAN FINAL UNTUK BERKAS ---
                                 InfolistSection::make('Berkas Permohonan Awal')
                                     ->schema(function (Permohonan $record) {
                                         $berkasFields = [];
-                                        if (is_array($record->berkas_pemohon)) {
-                                            foreach ($record->berkas_pemohon as $index => $berkas) {
-                                                if (empty($berkas['path_dokumen'])) continue;
-                                                $berkasFields[] = TextEntry::make("berkas_pemohon.{$index}.nama_dokumen")
-                                                    ->label(false)
-                                                    ->url(fn() => route('secure.download', ['permohonan_id' => $record->id, 'path' => $berkas['path_dokumen']]), true)
-                                                    ->formatStateUsing(fn() => $berkas['nama_dokumen'] . ' (Unduh)')
-                                                    ->icon('heroicon-m-arrow-down-tray');
+                                        $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
+                                        
+                                        if (!$jenisPermohonan || !$record->layanan?->description) {
+                                            return [TextEntry::make('no_berkas')->state('Definisi layanan tidak ditemukan.')];
+                                        }
+                                        
+                                        $jenisData = collect($record->layanan->description)->firstWhere('nama_syarat', $jenisPermohonan);
+
+                                        if (empty($jenisData['file_requirements'])) {
+                                            return [TextEntry::make('no_berkas')->state('Tidak ada syarat berkas untuk permohonan ini.')];
+                                        }
+
+                                        foreach ($jenisData['file_requirements'] as $fileReq) {
+                                            $fileKey = $fileReq['file_key'];
+                                            $filePath = $record->berkas_pemohon[$fileKey] ?? null;
+                                            
+                                            // Tampilkan field dengan cara yang benar
+                                            $entry = TextEntry::make($fileKey)->label($fileReq['file_name']);
+
+                                            if ($filePath) {
+                                                $entry->state('Unduh Berkas')
+                                                      ->color('primary')
+                                                      ->url(route('secure.download', ['permohonan_id' => $record->id, 'path' => $filePath]), true)
+                                                      ->icon('heroicon-m-arrow-down-tray');
+                                            } else {
+                                                $entry->state('Tidak diunggah')
+                                                      ->color('danger')
+                                                      ->icon('heroicon-o-x-circle');
                                             }
+                                            $berkasFields[] = $entry;
                                         }
                                         return $berkasFields;
                                     }),
