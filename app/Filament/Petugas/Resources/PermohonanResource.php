@@ -21,7 +21,7 @@ class PermohonanResource extends Resource
     protected static ?string $navigationGroup = 'Manajemen Pelayanan';
     protected static ?string $navigationLabel = 'Permohonan Warga';
     protected static ?string $modelLabel = 'Permohonan';
-    protected static ?string $pluralModelLabel = 'Permohonan-Permohonan';
+    protected static ?string $pluralModelLabel = 'Permohonan';
 
     public static function form(Form $form): Form
     { 

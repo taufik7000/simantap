@@ -123,8 +123,6 @@ class ViewPermohonan extends ViewRecord
                                 // DATA PEMOHON SECTION
                                 InfolistSection::make('Data Pemohon')
                                     ->icon('heroicon-o-user')
-                                    ->collapsible()
-                                    ->collapsed()
                                     ->schema([
                                         InfolistGrid::make(3)
                                             ->schema([
@@ -145,8 +143,8 @@ class ViewPermohonan extends ViewRecord
                                                     ->icon('heroicon-s-envelope')
                                                     ->copyable(),
 
-                                                TextEntry::make('user.nomor_telepon')
-                                                    ->label('No. Telepon')
+                                                TextEntry::make('user.nomor_whatsapp')
+                                                    ->label('No. WA')
                                                     ->icon('heroicon-s-phone')
                                                     ->copyable(),
 
@@ -154,8 +152,63 @@ class ViewPermohonan extends ViewRecord
                                                     ->label('Alamat')
                                                     ->icon('heroicon-s-map-pin')
                                                     ->columnSpan(1),
+
+                                                TextEntry::make('user.jenis_kelamin')
+                                                    ->label('Jenis Kelamin')
+                                                    ->icon('heroicon-s-map-pin')
+                                                    ->columnSpan(1),
+
+                                                TextEntry::make('user.desa_kelurahan')
+                                                    ->label('Desa/Kelurahan')
+                                                    ->icon('heroicon-s-map-pin')
+                                                    ->columnSpan(1),
+                                                
+                                                TextEntry::make('user.kecamatan')
+                                                    ->label('Kecamatan')
+                                                    ->icon('heroicon-s-map-pin')
+                                                    ->columnSpan(1),
+                                                
+                                                TextEntry::make('user.kabupaten')
+                                                    ->label('Kabupaten')
+                                                    ->icon('heroicon-s-map-pin')
+                                                    ->columnSpan(1),
                                             ]),
                                     ]),
+
+                                // TAMBAHAN: DATA ISIAN FORMULIR SECTION
+                                InfolistSection::make('Data Isian Formulir')
+                                    ->icon('heroicon-o-pencil-square')
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->schema(function (Permohonan $record) {
+                                        $fields = [];
+                                        $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
+                                        
+                                        if ($jenisPermohonan && $record->layanan?->description) {
+                                            $formDefinition = collect($record->layanan->description)->firstWhere('nama_syarat', $jenisPermohonan);
+                                            
+                                            if (!empty($formDefinition['form_fields'])) {
+                                                foreach ($formDefinition['form_fields'] as $fieldDef) {
+                                                    $fieldName = $fieldDef['field_name'];
+                                                    if (isset($record->data_pemohon[$fieldName])) {
+                                                        $fields[] = TextEntry::make("data_pemohon.{$fieldName}")
+                                                            ->label($fieldDef['field_label'])
+                                                            ->copyable()
+                                                            ->icon('heroicon-s-pencil');
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                        return empty($fields) ? [
+                                            TextEntry::make('no_data_isian')
+                                                ->label('')
+                                                ->getStateUsing(fn () => 'Tidak ada data isian tambahan untuk permohonan ini.')
+                                                ->color('gray')
+                                                ->icon('heroicon-s-information-circle')
+                                        ] : $fields;
+                                    })
+                                    ->columns(2),
 
                                 // RIWAYAT REVISI DARI WARGA
                                 InfolistSection::make('Riwayat Revisi dari Warga')
@@ -211,40 +264,41 @@ class ViewPermohonan extends ViewRecord
                                             ->icon('heroicon-s-arrow-path'),
                                     ]),
 
-                                // BERKAS PERMOHONAN AWAL
+                                // BERKAS PERMOHONAN
                                 InfolistSection::make('Berkas Permohonan Awal')
-                                    ->icon('heroicon-o-document-arrow-down')
-                                    ->collapsible()
                                     ->schema(function (Permohonan $record) {
                                         $berkasFields = [];
-                                        if (is_array($record->berkas_pemohon)) {
-                                            foreach ($record->berkas_pemohon as $index => $berkas) {
-                                                if (empty($berkas['path_dokumen'])) continue;
-                                                $berkasFields[] = TextEntry::make("berkas_awal_{$index}")
-                                                    ->label($berkas['nama_dokumen'] ?? "Dokumen " . ($index + 1))
-                                                    ->getStateUsing(function () use ($berkas, $record) {
-                                                        $downloadUrl = route('secure.download', [
-                                                            'permohonan_id' => $record->id,
-                                                            'path' => $berkas['path_dokumen']
-                                                        ]);
-                                                        return view('filament.infolists.components.download-link', [
-                                                            'url' => $downloadUrl,
-                                                            'filename' => basename($berkas['path_dokumen']),
-                                                            'filePath' => $berkas['path_dokumen'],
-                                                            'label' => 'Unduh',
-                                                            'icon' => 'heroicon-o-arrow-down-tray'
-                                                        ])->render();
-                                                    })
-                                                    ->html()
-                                                    ->columnSpanFull();
-                                            }
+                                        $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
+                                        
+                                        if (!$jenisPermohonan || !$record->layanan?->description) {
+                                            return [TextEntry::make('no_berkas')->state('Definisi layanan tidak ditemukan.')];
                                         }
-                                        return $berkasFields ?: [
-                                            TextEntry::make('no_files')
-                                                ->label('')
-                                                ->getStateUsing(fn () => 'Tidak ada berkas yang diupload.')
-                                                ->color('warning')
-                                        ];
+                                        
+                                        $jenisData = collect($record->layanan->description)->firstWhere('nama_syarat', $jenisPermohonan);
+
+                                        if (empty($jenisData['file_requirements'])) {
+                                            return [TextEntry::make('no_berkas')->state('Tidak ada syarat berkas untuk permohonan ini.')];
+                                        }
+
+                                        foreach ($jenisData['file_requirements'] as $fileReq) {
+                                            $fileKey = $fileReq['file_key'];
+                                            $filePath = $record->berkas_pemohon[$fileKey] ?? null;
+                                            
+                                            $entry = TextEntry::make($fileKey)->label($fileReq['file_name']);
+
+                                            if ($filePath) {
+                                                $entry->state('Unduh Berkas')
+                                                      ->color('primary')
+                                                      ->url(route('secure.download', ['permohonan_id' => $record->id, 'path' => $filePath]), true)
+                                                      ->icon('heroicon-m-arrow-down-tray');
+                                            } else {
+                                                $entry->state('Tidak diunggah')
+                                                      ->color('danger')
+                                                      ->icon('heroicon-o-x-circle');
+                                            }
+                                            $berkasFields[] = $entry;
+                                        }
+                                        return $berkasFields;
                                     }),
 
                                 // DETAIL REVISI TERBARU
