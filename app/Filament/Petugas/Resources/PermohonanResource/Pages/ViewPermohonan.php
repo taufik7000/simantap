@@ -23,6 +23,13 @@ use Illuminate\Support\Str;
 class ViewPermohonan extends ViewRecord
 {
     protected static string $resource = PermohonanResource::class;
+    public function getTitle(): string
+    {
+    $kodePermohonan = $this->record->kode_permohonan;
+    $jenisPermohonan = $this->record->data_pemohon['jenis_permohonan'] ?? 'Tidak Diketahui';
+    
+    return "#{$kodePermohonan} - Permohonan {$jenisPermohonan}";
+    }
 
     public function infolist(Infolist $infolist): Infolist
     {
