@@ -65,19 +65,38 @@ class Permohonan extends Model
      */
     protected static function booted(): void
     {
-        // Membuat kode permohonan unik saat data baru dibuat
-    static::creating(function (Permohonan $permohonan) {
-        if (empty($permohonan->kode_permohonan)) {
-        // Format: SP + Base36 encoded timestamp
-        $timestamp = now()->timestamp;
-        $encoded = strtoupper(base_convert($timestamp, 10, 36));
-        
-        // Tambahkan random 2 karakter untuk keunikan ekstra
-        $randomChars = strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 2));
-        
-        $permohonan->kode_permohonan = 'SP' . $encoded . $randomChars;
-    }
-    });
+        static::creating(function (Permohonan $permohonan) {
+            if (empty($permohonan->kode_permohonan)) {
+                // Terus buat kode baru untuk menjamin keunikan jika terjadi duplikasi (sangat jarang terjadi)
+                do {
+                    // 1. Prefix Statis
+                    $prefix = 'SP';
+
+                    // 2. ID Layanan (Layanan ID)
+                    // Mengambil layanan_id langsung dari model permohonan yang sedang dibuat.
+                    // Diberi padding '0' di depan jika ID kurang dari 2 digit (misal: 1 -> 01, 15 -> 15)
+                    $layananId = str_pad($permohonan->layanan_id, 2, '0', STR_PAD_LEFT);
+
+                    // 3. Tanggal, Bulan, dan Tahun
+                    // Format: ddmmyyyy (contoh: 07072024)
+                    $dateComponent = now()->format('dmy');
+
+                    // 4. ID Pengguna (User ID)
+                    // Mengambil user_id dari model permohonan. Diasumsikan user_id selalu ada.
+                    $userId = $permohonan->user_id;
+
+                    // 5. Dua Huruf Acak (A-Z)
+                    $randomChars = Str::upper(Str::random(2));
+
+                    // 6. Gabungkan semua komponen menjadi satu kode
+                    $kode = $prefix . $layananId . $dateComponent . $userId . $randomChars;
+
+                } while (self::where('kode_permohonan', $kode)->exists());
+
+                // 7. Tetapkan kode unik ke model
+                $permohonan->kode_permohonan = $kode;
+            }
+        });
 
         // Membuat log pertama saat permohonan berhasil dibuat
         static::created(function (Permohonan $permohonan) {
