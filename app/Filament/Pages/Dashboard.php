@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Warga\Pages;
+namespace App\Filament\Pages;
 
 use App\Models\Layanan;
 use Filament\Pages\Page;
@@ -9,11 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class Dashboard extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-home';
-    protected static ?string $navigationGroup = 'Menu Utama';
-    protected static ?string $navigationLabel = 'Dashboard';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.warga.pages.dashboard';
+    protected static string $view = 'filament.pages.dashboard';
 
     public ?Collection $availableServices;
     public int $unreadMessagesCount = 0;
@@ -24,6 +22,7 @@ class Dashboard extends Page
             ->take(6)
             ->get();
         
-        $this->unreadMessagesCount = Auth::user()->getUnreadMessagesCount();
+        // Panggil metode yang sudah kita buat di model User
+        $this->unreadMessagesCount = Auth::user()->getUnreadMessagesCount(); // <-- Tambahkan ini
     }
 }

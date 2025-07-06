@@ -50,15 +50,55 @@ class Permohonan extends Model
      */
     public const STATUS_OPTIONS = [
         'baru' => 'Baru Diajukan',
-        'sedang_ditinjau' => 'Sedang Ditinjau',
-        'verifikasi_berkas' => 'Verifikasi Berkas',
-        'diproses' => 'Sedang Diproses',
-        'membutuhkan_revisi' => 'Membutuhkan Revisi',
-        'butuh_perbaikan' => 'Butuh Perbaikan',
+        'menunggu_verifikasi' => 'Menunggu Verifikasi Berkas',
+        'proses_verifikasi' => 'Proses Verifikasi Berkas',
+        'proses_entri' => 'Dalam Proses Entri Data',
+        'entri_data_selesai' => 'Entri Data Selesai',
+        'menunggu_persetujuan' => 'Menunggu Persetujuan',
         'disetujui' => 'Disetujui',
+        'dokumen_diterbitkan' => 'Dokumen Diterbitkan',
+        'proses_pengiriman' => 'Dokumen Dalam Proses Pengiriman',
+        'selesai' => 'Selesai (Siap Diambil/Diunduh)',
+        'butuh_revisi' => 'Membutuhkan Revisi',
         'ditolak' => 'Ditolak',
-        'selesai' => 'Selesai',
+        'dibatalkan' => 'Dibatalkan',
     ];
+
+    public function getAllowedTransitions(): array
+    {
+        $transitions = [
+            'baru' => ['menunggu_verifikasi'],
+            'menunggu_verifikasi' => ['proses_verifikasi'],
+            'proses_verifikasi' => ['proses_entri', 'butuh_revisi', 'ditolak'],
+            'proses_entri' => ['entri_data_selesai', 'butuh_revisi', 'ditolak'],
+            'entri_data_selesai' => ['menunggu_persetujuan'],
+            'menunggu_persetujuan' => ['disetujui', 'ditolak'],
+            'disetujui' => ['dokumen_diterbitkan'],
+            'dokumen_diterbitkan' => ['proses_pengiriman', 'selesai'],
+            'proses_pengiriman' => ['selesai'],
+            'butuh_revisi' => ['proses_verifikasi'], // Setelah warga submit revisi, kembali ke verifikasi
+            
+            // Status Final (tidak bisa diubah lagi)
+            'selesai' => [],
+            'ditolak' => [],
+            'dibatalkan' => [],
+        ];
+
+        // Admin atau Kadis bisa mengubah ke status manapun jika diperlukan
+        if (Auth::user()?->hasAnyRole(['admin', 'kadis'])) {
+            return array_diff(array_keys(self::STATUS_OPTIONS), [$this->status]);
+        }
+        
+        return $transitions[$this->status] ?? [];
+    }
+
+    public function getNextStatusOptions(): array
+    {
+        $allowed = $this->getAllowedTransitions();
+        return collect(self::STATUS_OPTIONS)
+            ->filter(fn($value, $key) => in_array($key, $allowed))
+            ->toArray();
+    }
 
     /**
      * The "booted" method of the model.
