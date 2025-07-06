@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use App\Models\TicketMessage;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -395,5 +396,13 @@ class User extends Authenticatable implements FilamentUser
         // Placeholder untuk sistem rating di masa depan
         // Bisa dihitung berdasarkan feedback, waktu proses, dll
         return null;
+    }
+
+    public function getUnreadMessagesCount(): int
+    {
+        return TicketMessage::whereIn('ticket_id', $this->tickets()->pluck('id'))
+            ->where('user_id', '!=', $this->id) // Pesan dari orang lain (petugas)
+            ->whereNull('read_at') // Yang belum dibaca
+            ->count();
     }
 }
