@@ -28,6 +28,7 @@
     {{-- Memanggil Komponen Header --}}
     <x-partials.header />
 
+
     <main>
         {{-- Di sinilah konten halaman (seperti home) akan ditempatkan --}}
         {{ $slot }}
