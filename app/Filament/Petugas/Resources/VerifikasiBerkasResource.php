@@ -24,7 +24,7 @@ class VerifikasiBerkasResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('assigned_to', Auth::id())
-            ->whereIn('status', ['verifikasi_berkas', 'diperbaiki_warga']);
+            ->whereIn('status', ['verifikasi_berkas', 'diperbaiki_warga', 'butuh_perbaikan']);
     }
 
     // Kita tidak ingin ada tombol "Create" di halaman ini

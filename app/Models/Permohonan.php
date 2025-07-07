@@ -60,7 +60,7 @@ class Permohonan extends Model
         'dokumen_diterbitkan' => 'Dokumen Diterbitkan',
         'proses_pengiriman' => 'Dokumen Dalam Proses Pengiriman',
         'selesai' => 'Selesai (Siap Diambil/Diunduh)',
-        'butuh_revisi' => 'Membutuhkan Revisi',
+        'butuh_perbaikan' => 'Membutuhkan Revisi',
         'ditolak' => 'Ditolak',
         'dibatalkan' => 'Dibatalkan',
         'diperbaiki_warga' => 'Diperbaiki oleh Warga',
@@ -68,23 +68,7 @@ class Permohonan extends Model
 
     public function getAllowedTransitions(): array
     {
-        $transitions = [
-            'baru' => ['menunggu_verifikasi'],
-            'menunggu_verifikasi' => ['proses_verifikasi'],
-            'proses_verifikasi' => ['proses_entri', 'butuh_revisi', 'ditolak'],
-            'proses_entri' => ['entri_data_selesai', 'butuh_revisi', 'ditolak'],
-            'entri_data_selesai' => ['menunggu_persetujuan'],
-            'menunggu_persetujuan' => ['disetujui', 'ditolak'],
-            'disetujui' => ['dokumen_diterbitkan'],
-            'dokumen_diterbitkan' => ['proses_pengiriman', 'selesai'],
-            'proses_pengiriman' => ['selesai'],
-            'butuh_revisi' => ['proses_verifikasi'], // Setelah warga submit revisi, kembali ke verifikasi
-            
-            // Status Final (tidak bisa diubah lagi)
-            'selesai' => [],
-            'ditolak' => [],
-            'dibatalkan' => [],
-        ];
+        
 
         // Admin atau Kadis bisa mengubah ke status manapun jika diperlukan
         if (Auth::user()?->hasAnyRole(['admin', 'kadis'])) {

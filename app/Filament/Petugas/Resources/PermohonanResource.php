@@ -123,7 +123,7 @@ class PermohonanResource extends Resource
                         'proses_entri', 'entri_data_selesai' => 'warning',
                         'menunggu_persetujuan', 'proses_pengiriman' => 'primary',
                         'disetujui', 'dokumen_diterbitkan', 'selesai' => 'success',
-                        'butuh_revisi', 'ditolak' => 'danger',
+                        'butuh_perbaikan', 'ditolak' => 'danger',
                         default => 'secondary',
                     })
                     ->formatStateUsing(fn(string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state)
