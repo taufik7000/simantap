@@ -51,37 +51,55 @@ class PermohonanResource extends Resource
     {
         return $form->schema([
             // Field tersembunyi untuk data sementara
-            Hidden::make('layanan_data'),
-            Hidden::make('layanan_info'),
-            Hidden::make('layanan_id')->required(),
+            Forms\Components\Hidden::make('layanan_data'),
+            Forms\Components\Hidden::make('layanan_info'),
+            Forms\Components\Hidden::make('layanan_id')->required(),
 
-            Wizard::make([
-                Wizard\Step::make('1. Pilih Jenis Permohonan')
+            Forms\Components\Wizard::make([
+
+                // WIZARD 1: PILIH JENIS PERMOHONAN
+                Forms\Components\Wizard\Step::make('Pilih Jenis Permohonan')
                     ->schema([
-                        Placeholder::make('info_layanan')
+                        Forms\Components\Placeholder::make('info_layanan')
                             ->label('Anda sedang mengajukan permohonan untuk layanan:')
                             ->content(fn (Get $get): string => 
                                 $get('layanan_info.nama_kategori') . ' / ' . $get('layanan_info.nama_layanan')
                             ),
-                        Radio::make('data_pemohon.jenis_permohonan')
-                            ->label('Pilih Jenis Permohonan yang Sesuai')
-                            ->required()
-                            ->live()
-                            ->options(function (Get $get) {
-                                $layananData = $get('layanan_data');
-                                return $layananData ? collect($layananData)->pluck('nama_syarat', 'nama_syarat') : [];
-                            })
-                            ->descriptions(function (Get $get) {
-                                $layananData = $get('layanan_data');
-                                if (!$layananData) {
-                                    return [];
-                                }
-                                return collect($layananData)->mapWithKeys(function ($item) {
-                                    return [$item['nama_syarat'] => new HtmlString($item['deskripsi_syarat'])];
-                                })->all();
-                            }),
                         
-                        Section::make('Formulir untuk Diunduh')
+                        ViewField::make('data_pemohon.jenis_permohonan')
+                            ->label('Pilih jenis permohonan yang sesuai')
+                            ->view('filament.forms.components.card-radio')
+                            ->viewData(function (Get $get) {
+                                $options = [];
+                                if ($layananData = $get('layanan_data')) {
+                                    $options = collect($layananData)->pluck('nama_syarat', 'nama_syarat');
+                                }
+                                return ['options' => $options];
+                            })
+                            ->required()
+                            ->live(),
+                    ]),
+
+                // WIZARD 2: KETERANGAN & FORMULIR UNDUH
+                Forms\Components\Wizard\Step::make('Keterangan & Formulir')
+                    ->schema([
+                        Forms\Components\Placeholder::make('deskripsi_jenis_permohonan')
+                            ->label('Keterangan')
+                            ->content(function (Get $get): HtmlString {
+                                $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                                $layananData = $get('layanan_data');
+                                $description = 'Pilih jenis permohonan terlebih dahulu untuk melihat keterangan.';
+
+                                if ($selectedJenis && $layananData) {
+                                    $jenisData = collect($layananData)->firstWhere('nama_syarat', $selectedJenis);
+                                    if ($jenisData && !empty($jenisData['deskripsi_syarat'])) {
+                                        $description = $jenisData['deskripsi_syarat'];
+                                    }
+                                }
+                                return new HtmlString($description);
+                            }),
+
+                        Forms\Components\Section::make('Formulir untuk Diunduh')
                             ->description('Jika ada, silakan unduh, isi, dan unggah kembali formulir berikut di langkah selanjutnya.')
                             ->collapsible()
                             ->collapsed(false)
@@ -97,23 +115,19 @@ class PermohonanResource extends Resource
                                 if (!$selectedJenis) return [];
 
                                 $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
-                                
                                 $formulirMasterIds = (array) ($jenisData['formulir_master_id'] ?? []);
                                 $formulirs = FormulirMaster::whereIn('id', $formulirMasterIds)->get();
 
-                                if ($formulirs->isEmpty()) {
-                                    return [];
-                                }
+                                if ($formulirs->isEmpty()) return [];
                                 
                                 $placeholders = [];
                                 foreach ($formulirs as $formulir) {
                                     $downloadUrl = route('formulir-master.download', $formulir);
-                                    
-                                    $placeholders[] = Placeholder::make('formulir_master_' . $formulir->id)
+                                    $placeholders[] = Forms\Components\Placeholder::make('formulir_master_' . $formulir->id)
                                         ->label($formulir->nama_formulir)
                                         ->content(new HtmlString(
                                             '<a href="' . $downloadUrl . '" target="_blank" class="flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
-                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a6 6 0 00-6 6v3.586l-1.293 1.293a1 1 0 001.414 1.414L6 12.414V8a4 4 0 118 0v4.414l-1.293-1.293a1 1 0 00-1.414 1.414L10 14.828l-2.293-2.293a1 1 0 00-1.414 1.414L10 17.657l3.707-3.707a1 1 0 00-1.414-1.414L11 13.586V8a6 6 0 00-6-6z"></path></svg>
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
                                                 Unduh Formulir (PDF)
                                             </a>'
                                         ));
@@ -121,79 +135,71 @@ class PermohonanResource extends Resource
                                 return $placeholders;
                             }),
                     ]),
-                
-                Wizard\Step::make('2. Isi Formulir')
+
+                // WIZARD 3: ISI FORMULIR
+                Forms\Components\Wizard\Step::make('Isi Formulir')
                     ->schema(function (Get $get): array {
                         $selectedJenis = $get('data_pemohon.jenis_permohonan');
                         $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
 
                         if (empty($jenisData['form_fields'])) {
-                             return [
-                                Placeholder::make('no_form_placeholder')
-                                    ->label('')
-                                    ->content('Tidak ada data tambahan yang perlu diisi. Silakan lanjut ke langkah berikutnya.')
-                            ];
+                             return [Forms\Components\Placeholder::make('no_form_placeholder')->content('Tidak ada data tambahan yang perlu diisi. Silakan lanjut ke langkah berikutnya.')];
                         }
                         
                         $formFieldsSchema = [];
                         foreach($jenisData['form_fields'] as $field) {
                             $fieldName = 'data_pemohon.' . $field['field_name'];
                             $fieldComponent = match ($field['field_type']) {
-                                'textarea' => Textarea::make($fieldName),
-                                'select' => Select::make($fieldName)->options(collect($field['field_options'])->pluck('label', 'value')),
-                                'radio' => Radio::make($fieldName)->options(collect($field['field_options'])->pluck('label', 'value')),
-                                'checkbox' => Checkbox::make($fieldName),
-                                'date' => DatePicker::make($fieldName),
-                                default => TextInput::make($fieldName)->type($field['field_type']),
+                                'textarea' => Forms\Components\Textarea::make($fieldName),
+                                'select' => Forms\Components\Select::make($fieldName)->options(collect($field['field_options'])->pluck('label', 'value')),
+                                'radio' => Forms\Components\Radio::make($fieldName)->options(collect($field['field_options'])->pluck('label', 'value')),
+                                'checkbox' => Forms\Components\Checkbox::make($fieldName),
+                                'date' => Forms\Components\DatePicker::make($fieldName),
+                                default => Forms\Components\TextInput::make($fieldName)->type($field['field_type']),
                             };
                             
-                            $formFieldsSchema[] = $fieldComponent
-                                ->label($field['field_label'])
-                                ->required((bool) ($field['is_required'] ?? false));
+                            $formFieldsSchema[] = $fieldComponent->label($field['field_label'])->required((bool) ($field['is_required'] ?? false));
                         }
-                        return [Section::make('Data Isian')->schema($formFieldsSchema)];
+                        return [Forms\Components\Section::make('Data Isian')->schema($formFieldsSchema)];
                     }),
-                
-                Wizard\Step::make('3. Unggah Dokumen')
-                    ->schema(function (Get $get): array {
-                        $selectedJenis = $get('data_pemohon.jenis_permohonan');
-                        $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
 
-                        if (empty($jenisData['file_requirements'])) {
-                            return [
-                                Placeholder::make('no_files_placeholder')
-                                    ->label('')
-                                    ->content('Tidak ada dokumen yang perlu diunggah untuk jenis permohonan ini.')
-                            ];
-                        }
+                // WIZARD 4: UNGGAH DOKUMEN
+                Forms\Components\Wizard\Step::make('Unggah Dokumen')
+                ->schema(function (Get $get): array {
+                    $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                    $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
 
+                    if (empty($jenisData['file_requirements'])) {
+                        $schema = [Forms\Components\Placeholder::make('no_files_placeholder')->content('Tidak ada dokumen yang perlu diunggah untuk jenis permohonan ini.')];
+                    } else {
                         $fileFieldsSchema = [];
-                        foreach($jenisData['file_requirements'] as $fileReq) {
+                        foreach ($jenisData['file_requirements'] as $fileReq) {
                             $fileKey = 'berkas_pemohon.' . $fileReq['file_key'];
-                            $fileUpload = FileUpload::make($fileKey)
+                            $fileFieldsSchema[] = Forms\Components\FileUpload::make($fileKey)
                                 ->label($fileReq['file_name'])
                                 ->helperText($fileReq['file_description'] ?? '')
                                 ->required((bool) ($fileReq['is_required'] ?? false))
                                 ->maxSize($fileReq['max_size'] ? $fileReq['max_size'] * 1024 : 2048)
                                 ->disk('private')
                                 ->directory('berkas-permohonan');
-                            
-                            $acceptedTypes = match($fileReq['file_type'] ?? 'any') {
-                                'image' => ['image/jpeg', 'image/png'],
-                                'pdf' => ['application/pdf'],
-                                'document' => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-                                default => [],
-                            };
-                            
-                            if (!empty($acceptedTypes)) {
-                                $fileUpload->acceptedFileTypes($acceptedTypes);
-                            }
-
-                            $fileFieldsSchema[] = $fileUpload;
                         }
+                        $schema = [Forms\Components\Section::make('Unggah Dokumen Wajib')->schema($fileFieldsSchema)];
+                    }
 
-                        return [Section::make('Unggah Dokumen Wajib')->schema($fileFieldsSchema)];
-                    })
+                    // --- TAMBAHKAN KODE INI UNTUK TOMBOL kirim ---
+                    $schema[] = Forms\Components\Actions::make([
+                        Forms\Components\Actions\Action::make('submit')
+                            ->label('Ajukan Permohonan')
+                            ->icon('heroicon-o-paper-airplane')
+                            ->color('primary')
+                            ->size('lg')
+                            ->action('create')
+                            ->keyBindings(['mod+s']),
+                    ])->alignRight();
+                    
+                    return $schema;
+                }),
+
             ])->columnSpanFull(),
         ]);
     }
@@ -209,23 +215,22 @@ class PermohonanResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'baru' => 'gray',
-                        'sedang_ditinjau' => 'primary',
-                        'diproses' => 'primary',
-                        'verifikasi_berkas' => 'warning',
-                        'membutuhkan_revisi' => 'danger',
-                        'butuh_perbaikan' => 'danger',
-                        'disetujui' => 'success',
-                        'ditolak' => 'danger',
-                        'selesai' => 'success',
-                        default => 'gray',
+                        'baru', 'dibatalkan' => 'gray',
+                        'menunggu_verifikasi', 'proses_verifikasi' => 'info',
+                        'proses_entri', 'entri_data_selesai' => 'warning',
+                        'menunggu_persetujuan', 'proses_pengiriman' => 'primary',
+                        'disetujui', 'dokumen_diterbitkan', 'selesai' => 'success',
+                        'butuh_revisi', 'ditolak' => 'danger',
+                        default => 'secondary',
                     })
                     ->formatStateUsing(fn (string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state),
                 Tables\Columns\TextColumn::make('created_at')->label('Tanggal Diajukan')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Update Terakhir')->since()->sortable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->options(Permohonan::STATUS_OPTIONS)
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -233,7 +238,7 @@ class PermohonanResource extends Resource
             ->defaultSort('created_at', 'desc');
     }
 
- public static function infolist(Infolists\Infolist $infolist): Infolists\Infolist
+    public static function infolist(Infolists\Infolist $infolist): Infolists\Infolist
     {
          return $infolist
             ->schema([
@@ -246,16 +251,13 @@ class PermohonanResource extends Resource
                         TextEntry::make('status')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
-                                'baru' => 'gray',
-                                'sedang_ditinjau' => 'info',
-                                'diproses' => 'primary',
-                                'verifikasi_berkas' => 'warning',
-                                'membutuhkan_revisi' => 'danger',
-                                'butuh_perbaikan' => 'danger',
-                                'disetujui' => 'success',
-                                'ditolak' => 'danger',
-                                'selesai' => 'success',
-                                default => 'gray',
+                                'baru', 'dibatalkan' => 'gray',
+                                'menunggu_verifikasi', 'proses_verifikasi' => 'info',
+                                'proses_entri', 'entri_data_selesai' => 'warning',
+                                'menunggu_persetujuan', 'proses_pengiriman' => 'primary',
+                                'disetujui', 'dokumen_diterbitkan', 'selesai' => 'success',
+                                'butuh_revisi', 'ditolak' => 'danger',
+                                default => 'secondary',
                             })
                             ->formatStateUsing(fn (string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state),
                         TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull()->visible(fn ($state) => !empty($state)),
