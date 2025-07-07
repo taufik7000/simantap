@@ -132,7 +132,6 @@ class PermohonanResource extends Resource
                             }),
                     ]),
 
-                // WIZARD 3: ISI FORMULIR
                 Forms\Components\Wizard\Step::make('Isi Formulir')
                     ->schema(function (Get $get): array {
                         $selectedJenis = $get('data_pemohon.jenis_permohonan');
@@ -159,7 +158,7 @@ class PermohonanResource extends Resource
                         return [Forms\Components\Section::make('Data Isian')->schema($formFieldsSchema)];
                     }),
 
-                // WIZARD 4: UNGGAH DOKUMEN
+
                 Forms\Components\Wizard\Step::make('Unggah Dokumen')
                     ->schema(function (Get $get): array {
                         $selectedJenis = $get('data_pemohon.jenis_permohonan');
@@ -182,7 +181,6 @@ class PermohonanResource extends Resource
                             $schema = [Forms\Components\Section::make('Unggah Dokumen Wajib')->schema($fileFieldsSchema)];
                         }
 
-                        // --- TAMBAHKAN KODE INI UNTUK TOMBOL kirim ---
                         $schema[] = Forms\Components\Actions::make([
                             Forms\Components\Actions\Action::make('submit')
                                 ->label('Ajukan Permohonan')

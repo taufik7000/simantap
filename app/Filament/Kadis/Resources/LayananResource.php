@@ -51,11 +51,11 @@ class LayananResource extends Resource
                             ->label('Nama Layanan Utama')
                             ->required()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
+                            ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state))),
                         RichEditor::make('deskripsi_layanan')
-                        ->label('Deskripsi Singkat Layanan (untuk Tampilan Publik)')
-                        ->helperText('Deskripsi ini akan muncul di halaman "Semua Layanan".')
-                        ->columnSpanFull(),
+                            ->label('Deskripsi Singkat Layanan (untuk Tampilan Publik)')
+                            ->helperText('Deskripsi ini akan muncul di halaman "Semua Layanan".')
+                            ->toolbarButtons(),
                         TextInput::make('slug')
                             ->required()
                             ->unique(ignoreRecord: true),
@@ -74,7 +74,7 @@ class LayananResource extends Resource
                             ->addActionLabel('Tambah Jenis Permohonan')
                             ->collapsible()
                             ->collapsed()
-                            ->itemLabel(fn (array $state): ?string => $state['nama_syarat'] ?? 'Jenis Permohonan Baru')
+                            ->itemLabel(fn(array $state): ?string => $state['nama_syarat'] ?? 'Jenis Permohonan Baru')
                             ->schema([
                                 Tabs::make('Tabs')->tabs([
                                     Tabs\Tab::make('Detail Permohonan')
@@ -87,7 +87,16 @@ class LayananResource extends Resource
                                                 ->columnSpanFull(),
                                             RichEditor::make('deskripsi_syarat')
                                                 ->label('Deskripsi & Keterangan untuk Warga')
-                                                ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link'])
+                                                ->toolbarButtons([
+                                                    'h1', 
+                                                    'h2',
+                                                    'h3',
+                                                    'bold',
+                                                    'italic',
+                                                    'bulletList',
+                                                    'orderedList',
+                                                    'link'
+                                                ])
                                                 ->required(),
                                             Select::make('formulir_master_id')
                                                 ->label('Lampirkan Formulir Master (PDF)')
@@ -99,7 +108,7 @@ class LayananResource extends Resource
 
                                     Tabs\Tab::make('Form Builder Dinamis')
                                         ->icon('heroicon-o-pencil-square')
-                                        ->badge(fn ($get) => count($get('form_fields') ?? []))
+                                        ->badge(fn($get) => count($get('form_fields') ?? []))
                                         ->schema([
                                             Repeater::make('form_fields')
                                                 ->label('Field Formulir untuk Diisi Warga')
@@ -119,7 +128,7 @@ class LayananResource extends Resource
 
                                     Tabs\Tab::make('Syarat Berkas Upload')
                                         ->icon('heroicon-o-document-arrow-up')
-                                        ->badge(fn ($get) => count($get('file_requirements') ?? []))
+                                        ->badge(fn($get) => count($get('file_requirements') ?? []))
                                         ->schema([
                                             Repeater::make('file_requirements')
                                                 ->label('Berkas yang Wajib Di-upload Warga')
@@ -127,7 +136,7 @@ class LayananResource extends Resource
                                                 ->addActionLabel('Tambah Syarat Berkas')
                                                 ->reorderableWithButtons()
                                                 ->collapsible()
-                                                ->itemLabel(fn (array $state): ?string => $state['file_name'] ?? 'Berkas Baru'),
+                                                ->itemLabel(fn(array $state): ?string => $state['file_name'] ?? 'Berkas Baru'),
                                         ]),
                                 ])->columnSpanFull(),
                             ])->columnSpanFull(),
@@ -153,10 +162,14 @@ class LayananResource extends Resource
                 Select::make('field_type')
                     ->label('Tipe Field')
                     ->options([
-                        'text' => 'Teks Pendek', 'textarea' => 'Teks Panjang',
-                        'select' => 'Pilihan Dropdown', 'checkbox' => 'Checkbox',
-                        'radio' => 'Radio Button', 'date' => 'Tanggal',
-                        'number' => 'Angka', 'email' => 'Email',
+                        'text' => 'Teks Pendek',
+                        'textarea' => 'Teks Panjang',
+                        'select' => 'Pilihan Dropdown',
+                        'checkbox' => 'Checkbox',
+                        'radio' => 'Radio Button',
+                        'date' => 'Tanggal',
+                        'number' => 'Angka',
+                        'email' => 'Email',
                     ])
                     ->reactive()
                     ->required()
@@ -176,7 +189,7 @@ class LayananResource extends Resource
                 ->description('Tambahkan opsi untuk tipe field Pilihan Dropdown, Radio, atau Checkbox.')
                 ->collapsible()
                 ->collapsed()
-                ->visible(fn ($get) => in_array($get('field_type'), ['select', 'radio', 'checkbox']))
+                ->visible(fn($get) => in_array($get('field_type'), ['select', 'radio', 'checkbox']))
                 ->schema([
                     Repeater::make('field_options')
                         ->label(false)
@@ -206,7 +219,7 @@ class LayananResource extends Resource
             Textarea::make('file_description')->label('Keterangan Tambahan')->placeholder('Petunjuk untuk warga...'),
         ];
     }
-    
+
     public static function table(Table $table): Table
     {
         return $table
