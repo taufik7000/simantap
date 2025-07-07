@@ -25,32 +25,6 @@
                             Ditolak
                         @endif
                     </span>
-
-                    <!-- Action Buttons - Hanya tampil untuk status pending dan user yang memiliki akses -->
-                    @if($revision->status === 'pending' && auth()->user()->hasRole(['petugas', 'admin', 'kadis']))
-                        <div class="flex space-x-1">
-                            <!-- Tombol Terima -->
-                            <form action="{{ route('petugas.quick-revision-action') }}" method="POST" class="inline">
-                                @csrf
-                                <input type="hidden" name="revision_id" value="{{ $revision->id }}">
-                                <input type="hidden" name="action" value="approve">
-                                <button type="submit"
-                                        onclick="return confirm('Apakah Anda yakin ingin menerima revisi ke-{{ $revision->revision_number }}? \n\nRevisi akan diterima dan permohonan akan dilanjutkan ke proses berikutnya.')"
-                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm">
-                                    <x-heroicon-o-check-circle class="w-4 h-4 mr-1" />
-                                    Terima Revisi
-                                </button>
-                            </form>
-
-                            <!-- Tombol Tolak -->
-                            <button type="button"
-                                    onclick="showRejectModal('{{ $revision->id }}', '{{ $revision->revision_number }}')"
-                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm">
-                                <x-heroicon-o-x-circle class="w-4 h-4 mr-1" />
-                                Tolak Revisi
-                            </button>
-                        </div>
-                    @endif
                 </div>
             </div>
 

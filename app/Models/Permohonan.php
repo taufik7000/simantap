@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class Permohonan extends Model
 {
@@ -62,6 +63,7 @@ class Permohonan extends Model
         'butuh_revisi' => 'Membutuhkan Revisi',
         'ditolak' => 'Ditolak',
         'dibatalkan' => 'Dibatalkan',
+        'diperbaiki_warga' => 'Diperbaiki oleh Warga',
     ];
 
     public function getAllowedTransitions(): array

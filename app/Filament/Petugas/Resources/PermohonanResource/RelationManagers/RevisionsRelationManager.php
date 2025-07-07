@@ -117,7 +117,7 @@ class RevisionsRelationManager extends RelationManager
 
                         // Update status permohonan induk
                         $record->permohonan->update([
-                            'status' => 'diproses',
+                            'status' => 'verifikasi_berkas',
                             'catatan_petugas' => "Revisi ke-{$record->revision_number} diterima. Permohonan akan diproses lebih lanjut.",
                         ]);
 

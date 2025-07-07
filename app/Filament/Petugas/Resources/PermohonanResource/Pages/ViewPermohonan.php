@@ -217,11 +217,44 @@ class ViewPermohonan extends ViewRecord
                                     })
                                     ->columns(2),
 
-                                // RIWAYAT REVISI DARI WARGA
+                                InfolistSection::make('Berkas Permohonan Awal')
+                                    ->schema(function (Permohonan $record) {
+                                        $berkasFields = [];
+                                        $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
+
+                                        if (!$jenisPermohonan || !$record->layanan?->description) {
+                                            return [TextEntry::make('no_berkas')->state('Definisi layanan tidak ditemukan.')];
+                                        }
+
+                                        $jenisData = collect($record->layanan->description)->firstWhere('nama_syarat', $jenisPermohonan);
+
+                                        if (empty($jenisData['file_requirements'])) {
+                                            return [TextEntry::make('no_berkas')->state('Tidak ada syarat berkas untuk permohonan ini.')];
+                                        }
+
+                                        foreach ($jenisData['file_requirements'] as $fileReq) {
+                                            $fileKey = $fileReq['file_key'];
+                                            $filePath = $record->berkas_pemohon[$fileKey] ?? null;
+
+                                            $entry = TextEntry::make($fileKey)->label($fileReq['file_name']);
+
+                                            if ($filePath) {
+                                                $entry->state('Unduh Berkas')
+                                                    ->color('primary')
+                                                    ->url(route('secure.download', ['permohonan_id' => $record->id, 'path' => $filePath]), true)
+                                                    ->icon('heroicon-m-arrow-down-tray');
+                                            } else {
+                                                $entry->state('Tidak diunggah')
+                                                    ->color('danger')
+                                                    ->icon('heroicon-o-x-circle');
+                                            }
+                                            $berkasFields[] = $entry;
+                                        }
+                                        return $berkasFields;
+                                    })->columns(3),
+
                                 InfolistSection::make('Riwayat Revisi dari Warga')
                                     ->icon('heroicon-o-arrow-path')
-                                    ->collapsible()
-                                    ->collapsed()
                                     ->schema([
                                         ViewEntry::make('revisions')
                                             ->label('')
@@ -270,106 +303,6 @@ class ViewPermohonan extends ViewRecord
                                             })
                                             ->icon('heroicon-s-arrow-path'),
                                     ]),
-
-                                // BERKAS PERMOHONAN
-                                InfolistSection::make('Berkas Permohonan Awal')
-                                    ->schema(function (Permohonan $record) {
-                                        $berkasFields = [];
-                                        $jenisPermohonan = $record->data_pemohon['jenis_permohonan'] ?? null;
-                                        
-                                        if (!$jenisPermohonan || !$record->layanan?->description) {
-                                            return [TextEntry::make('no_berkas')->state('Definisi layanan tidak ditemukan.')];
-                                        }
-                                        
-                                        $jenisData = collect($record->layanan->description)->firstWhere('nama_syarat', $jenisPermohonan);
-
-                                        if (empty($jenisData['file_requirements'])) {
-                                            return [TextEntry::make('no_berkas')->state('Tidak ada syarat berkas untuk permohonan ini.')];
-                                        }
-
-                                        foreach ($jenisData['file_requirements'] as $fileReq) {
-                                            $fileKey = $fileReq['file_key'];
-                                            $filePath = $record->berkas_pemohon[$fileKey] ?? null;
-                                            
-                                            $entry = TextEntry::make($fileKey)->label($fileReq['file_name']);
-
-                                            if ($filePath) {
-                                                $entry->state('Unduh Berkas')
-                                                      ->color('primary')
-                                                      ->url(route('secure.download', ['permohonan_id' => $record->id, 'path' => $filePath]), true)
-                                                      ->icon('heroicon-m-arrow-down-tray');
-                                            } else {
-                                                $entry->state('Tidak diunggah')
-                                                      ->color('danger')
-                                                      ->icon('heroicon-o-x-circle');
-                                            }
-                                            $berkasFields[] = $entry;
-                                        }
-                                        return $berkasFields;
-                                    }),
-
-                                // DETAIL REVISI TERBARU
-                                InfolistSection::make('Revisi Terbaru')
-                                    ->icon('heroicon-o-document-plus')
-                                    ->collapsible()
-                                    ->collapsed()
-                                    ->schema(function (Permohonan $record) {
-                                        $latestRevision = $record->revisions()->latest()->first();
-                                        if (!$latestRevision) {
-                                            return [
-                                                TextEntry::make('no_revision')
-                                                    ->label('')
-                                                    ->getStateUsing(fn () => 'Belum ada revisi yang diajukan.')
-                                                    ->color('gray')
-                                            ];
-                                        }
-
-                                        $schema = [
-                                            InfolistGrid::make(2)
-                                                ->schema([
-                                                    TextEntry::make('revision_number')
-                                                        ->label('Revisi ke-')
-                                                        ->getStateUsing(fn () => $latestRevision->revision_number)
-                                                        ->badge()
-                                                        ->color('info'),
-
-                                                    TextEntry::make('revision_status')
-                                                        ->label('Status')
-                                                        ->getStateUsing(fn () => match($latestRevision->status) {
-                                                            'pending' => 'Menunggu Review',
-                                                            'accepted' => 'Diterima',
-                                                            'rejected' => 'Ditolak',
-                                                            default => $latestRevision->status
-                                                        })
-                                                        ->badge()
-                                                        ->color(fn () => match($latestRevision->status) {
-                                                            'pending' => 'warning',
-                                                            'accepted' => 'success',
-                                                            'rejected' => 'danger',
-                                                            default => 'gray'
-                                                        }),
-                                                ]),
-
-                                            TextEntry::make('revision_notes')
-                                                ->label('Catatan Warga')
-                                                ->getStateUsing(fn () => $latestRevision->catatan_revisi ?: 'Tidak ada catatan.')
-                                                ->markdown()
-                                                ->columnSpanFull(),
-                                        ];
-
-                                        // Tampilkan berkas revisi (ringkas)
-                                        if (is_array($latestRevision->berkas_revisi) && count($latestRevision->berkas_revisi) > 0) {
-                                            $schema[] = TextEntry::make('revision_files_count')
-                                                ->label('Berkas Revisi')
-                                                ->getStateUsing(fn () => count($latestRevision->berkas_revisi) . ' file diupload')
-                                                ->badge()
-                                                ->color('warning')
-                                                ->columnSpanFull();
-                                        }
-
-                                        return $schema;
-                                    })
-                                    ->visible(fn (Permohonan $record) => $record->revisions()->count() > 0),
 
                                 // QUICK ACTIONS
                                 InfolistSection::make('Aksi Cepat')
@@ -519,16 +452,6 @@ class ViewPermohonan extends ViewRecord
                 ->modalHeading('Update Status Permohonan')
                 ->modalDescription('Perbarui status permohonan dan berikan catatan kepada warga.')
                 ->modalSubmitActionLabel('Update Status'),
-
-            // REVIEW REVISI TERBARU
-            Action::make('review_latest_revision')
-                ->label('Review Revisi')
-                ->icon('heroicon-o-eye')
-                ->color('info')
-                ->url(fn () => route('filament.petugas.resources.permohonan-revisions.index', [
-                    'tableFilters[permohonan_id][value]' => $this->record->id
-                ]))
-                ->visible(fn () => $this->record->revisions()->where('status', 'pending')->count() > 0),
 
             // ASSIGN KE PETUGAS LAIN
             Action::make('assign_to_other')

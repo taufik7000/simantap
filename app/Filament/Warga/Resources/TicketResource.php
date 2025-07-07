@@ -108,7 +108,8 @@ class TicketResource extends Resource
                     ->required()
                     ->rows(5)
                     ->placeholder('Jelaskan masalah atau pertanyaan Anda secara detail...')
-                    ->helperText('Semakin detail penjelasan Anda, semakin cepat kami dapat membantu'),
+                    ->helperText('Semakin detail penjelasan Anda, semakin cepat kami dapat membantu')
+                    ->columnSpanFull(),
 
                 Forms\Components\Select::make('priority')
                     ->label('Prioritas')

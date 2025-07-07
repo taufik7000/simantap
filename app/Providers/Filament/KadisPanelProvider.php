@@ -41,11 +41,17 @@ class KadisPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Kadis/Pages'), for: 'App\\Filament\\Kadis\\Pages')
             ->navigationGroups([
                 NavigationGroup::make()
-                 ->label('Manajemen Layanan')
-                 ->collapsible(false),
+                    ->label('Manajemen Permohonan')
+                    ->collapsible(false),
                 NavigationGroup::make()
-                 ->label('Kependudukan')
-                 ->collapsible(false),
+                    ->label('Kependudukan')
+                    ->collapsible(false),
+                NavigationGroup::make()
+                    ->label('Kependudukan')
+                    ->collapsible(false),
+                NavigationGroup::make()
+                    ->label('Pusat Bantuan')
+                    ->collapsible(false),
             ])
             ->resources([
                 PermohonanResource::class,
