@@ -78,20 +78,23 @@ class PermohonanResource extends Resource
                             ->collapsed(false)
                             ->visible(function (Get $get): bool {
                                 $selectedJenis = $get('data_pemohon.jenis_permohonan');
-                                if (!$selectedJenis) return false;
+                                if (!$selectedJenis)
+                                    return false;
 
                                 $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
                                 return !empty($jenisData['formulir_master_id']);
                             })
                             ->schema(function (Get $get): array {
                                 $selectedJenis = $get('data_pemohon.jenis_permohonan');
-                                if (!$selectedJenis) return [];
+                                if (!$selectedJenis)
+                                    return [];
 
                                 $jenisData = collect($get('layanan_data'))->firstWhere('nama_syarat', $selectedJenis);
                                 $formulirMasterIds = (array) ($jenisData['formulir_master_id'] ?? []);
                                 $formulirs = FormulirMaster::whereIn('id', $formulirMasterIds)->get();
 
-                                if ($formulirs->isEmpty()) return [];
+                                if ($formulirs->isEmpty())
+                                    return [];
 
                                 $placeholders = [];
                                 foreach ($formulirs as $formulir) {
@@ -343,7 +346,8 @@ class PermohonanResource extends Resource
                                                         ->columnSpanFull()
                                                         ->visible(fn() => !empty($revision->catatan_petugas)),
                                                     ...array_map(function ($berkas, $index) use ($revision) {
-                                                        if (empty($berkas['path_dokumen'])) return null;
+                                                        if (empty($berkas['path_dokumen']))
+                                                            return null;
                                                         return TextEntry::make("revisi_{$revision->id}_berkas_{$index}")
                                                             ->label(false)
                                                             ->url(fn() => route('secure.download.revision', ['revision_id' => $revision->id, 'path' => $berkas['path_dokumen']]), true)
