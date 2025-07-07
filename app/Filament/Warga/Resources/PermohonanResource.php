@@ -81,26 +81,11 @@ class PermohonanResource extends Resource
                     ]),
 
                 // WIZARD 2: KETERANGAN & FORMULIR UNDUH
+                
                 Forms\Components\Wizard\Step::make('Keterangan & Formulir')
                     ->schema([
-                        Forms\Components\Placeholder::make('deskripsi_jenis_permohonan')
-                            ->label('Keterangan')
-                            ->content(function (Get $get): HtmlString {
-                                $selectedJenis = $get('data_pemohon.jenis_permohonan');
-                                $layananData = $get('layanan_data');
-                                $description = 'Pilih jenis permohonan terlebih dahulu untuk melihat keterangan.';
-
-                                if ($selectedJenis && $layananData) {
-                                    $jenisData = collect($layananData)->firstWhere('nama_syarat', $selectedJenis);
-                                    if ($jenisData && !empty($jenisData['deskripsi_syarat'])) {
-                                        $description = $jenisData['deskripsi_syarat'];
-                                    }
-                                }
-                                return new HtmlString($description);
-                            }),
-
-                        Forms\Components\Section::make('Formulir untuk Diunduh')
-                            ->description('Jika ada, silakan unduh, isi, dan unggah kembali formulir berikut di langkah selanjutnya.')
+                        Forms\Components\Section::make('Download Formulir')
+                            ->description('Layanan ini mewajibkan anda mengunduh dan mengisi formulir berikut sebelum melanjutkan.')
                             ->collapsible()
                             ->collapsed(false)
                             ->visible(function (Get $get): bool {
@@ -133,6 +118,22 @@ class PermohonanResource extends Resource
                                         ));
                                 }
                                 return $placeholders;
+                            }),
+
+                        Forms\Components\Placeholder::make('deskripsi_jenis_permohonan')
+                            ->label('Baca Aturan & Keterangan')
+                            ->content(function (Get $get): HtmlString {
+                                $selectedJenis = $get('data_pemohon.jenis_permohonan');
+                                $layananData = $get('layanan_data');
+                                $description = 'Pilih jenis permohonan terlebih dahulu untuk melihat keterangan.';
+
+                                if ($selectedJenis && $layananData) {
+                                    $jenisData = collect($layananData)->firstWhere('nama_syarat', $selectedJenis);
+                                    if ($jenisData && !empty($jenisData['deskripsi_syarat'])) {
+                                        $description = $jenisData['deskripsi_syarat'];
+                                    }
+                                }
+                                return new HtmlString($description);
                             }),
                     ]),
 
