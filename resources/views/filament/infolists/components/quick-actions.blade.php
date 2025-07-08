@@ -2,7 +2,7 @@
 
     {{-- Communication Actions --}}
     <div class="space-y-2 pt-3 border-t border-gray-200">
-        <h4 class="text-sm font-medium text-gray-700">Komunikasi:</h4>
+        <h4 class="text-sm font-medium text-gray-700">Hubungi Pemohon:</h4>
 
         {{-- Menggunakan $getRecord() untuk mengakses data --}}
         <a href="mailto:{{ $getRecord()->user->email }}?subject=Permohonan {{ $getRecord()->kode_permohonan }}"

@@ -110,7 +110,7 @@ class PermohonanResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('kode_permohonan')->label('Kode')->searchable()->sortable()->copyable(),
                 Tables\Columns\TextColumn::make('user.name')->label('Warga')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('layanan.name')->label('Layanan')->searchable()->sortable()->wrap(),
+                Tables\Columns\TextColumn::make('data_pemohon.jenis_permohonan')->label('Layanan')->searchable()->sortable()->wrap(),
                 Tables\Columns\TextColumn::make('assignedTo.name')->label('Ditugaskan Ke')->default('Belum ditugaskan')->badge()->sortable(),
                 
                 // --- PERUBAHAN Tampilan Badge Status ---

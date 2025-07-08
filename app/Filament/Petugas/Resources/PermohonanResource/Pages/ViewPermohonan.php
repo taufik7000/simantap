@@ -320,8 +320,6 @@ class ViewPermohonan extends ViewRecord
                                 // TIMELINE LOG - MODERN VERSION
                                 InfolistSection::make('Timeline Permohonan')
                                     ->icon('heroicon-o-clock')
-                                    ->collapsible()
-                                    ->collapsed()
                                     ->schema([
                                         ViewEntry::make('modern_timeline')
                                             ->label('')
