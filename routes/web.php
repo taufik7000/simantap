@@ -36,6 +36,8 @@ Route::post('/register', [RegisterController::class, 'store'])->middleware('gues
 Route::get('/whatsapp/verify', [WhatsAppVerificationController::class, 'show'])->name('whatsapp.verification.notice');
 // Route untuk memproses OTP yang dimasukkan pengguna
 Route::post('/whatsapp/verify', [WhatsAppVerificationController::class, 'verify'])->name('whatsapp.verification.verify');
+// kirim ulang OTP
+Route::post('/whatsapp/resend', [WhatsAppVerificationController::class, 'resend'])->name('whatsapp.verification.resend');
 
 //Route Download Berkas
 Route::get('/secure-download', [BerkasController::class, 'download'])

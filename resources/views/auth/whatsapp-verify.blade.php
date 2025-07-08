@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifikasi WhatsApp - SIMANTAP</title>
     @vite('resources/css/app.css')
+    {{-- Import Alpine.js (jika belum ada di layout utama Anda) --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
@@ -51,6 +53,24 @@
                     Verifikasi Akun
                 </button>
             </form>
+
+            <div 
+                x-data="{ timer: 60, canResend: false, startTimer() { this.canResend = false; let interval = setInterval(() => { this.timer--; if (this.timer === 0) { clearInterval(interval); this.canResend = true; this.timer = 60; }}, 1000); } }" 
+                x-init="startTimer()" 
+                class="text-center mt-6"
+            >
+                <form x-show="canResend" action="{{ route('whatsapp.verification.resend') }}" method="POST">
+                    @csrf
+                    <button type="submit" @click="startTimer()" class="font-semibold text-primary-600 hover:text-primary-500 text-sm transition-colors">
+                        Kirim Ulang Kode Verifikasi
+                    </button>
+                </form>
+
+                <p x-show="!canResend" class="text-sm text-gray-500">
+                    Tidak menerima kode? Kirim ulang dalam <span x-text="timer" class="font-bold"></span> detik.
+                </p>
+            </div>
+
         </div>
     </div>
 </body>
