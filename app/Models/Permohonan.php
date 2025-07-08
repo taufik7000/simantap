@@ -49,24 +49,33 @@ class Permohonan extends Model
     /**
      * Status yang tersedia untuk permohonan.
      */
+/**
+     * Status yang tersedia untuk permohonan, diurutkan berdasarkan alur kerja.
+     */
     public const STATUS_OPTIONS = [
-        'baru' => 'Baru Diajukan',
-        'menunggu_verifikasi' => 'Menunggu Verifikasi Berkas',
-        'proses_verifikasi' => 'Proses Verifikasi Berkas',
-        'menunggu_entri_data' => 'Menunggu Entri Data',
-        'proses_entri' => 'Dalam Proses Entri Data',
-        'entri_data_selesai' => 'Entri Data Selesai',
-        'menunggu_persetujuan' => 'Menunggu Persetujuan',
-        'disetujui' => 'Disetujui',
-        'dokumen_diterbitkan' => 'Dokumen Diterbitkan',
-        'proses_pengiriman' => 'Dokumen Dalam Proses Pengiriman',
-        'selesai' => 'Selesai (Siap Diambil/Diunduh)',
-        'butuh_perbaikan' => 'Membutuhkan Revisi',
-        'ditolak' => 'Ditolak',
-        'dibatalkan' => 'Dibatalkan',
-        'diperbaiki_warga' => 'Diperbaiki oleh Warga',
-    ];
+        // --- Tahap Awal Pengajuan ---
+        'baru'                  => 'Baru Diajukan (Antrean)',
+        
+        // --- Tahap Verifikasi oleh Petugas ---
+        'verifikasi_berkas'     => 'Proses Verifikasi Berkas',
+        'diperbaiki_warga'      => 'Telah Diperbaiki Warga',
 
+        // --- Tahap Pengerjaan oleh Petugas ---
+        'menunggu_entri_data'   => 'Menunggu Entri Data',
+        'proses_entri'          => 'Dalam Proses Entri Data',
+        'entri_data_selesai'    => 'Entri Data Selesai',
+        
+        // --- Tahap Persetujuan & Penyelesaian ---
+        'menunggu_persetujuan'  => 'Menunggu Persetujuan',
+        'disetujui'             => 'Disetujui',
+        'dokumen_diterbitkan'   => 'Dokumen Diterbitkan',
+        'selesai'               => 'Selesai (Siap Diambil/Diunduh)',
+
+        // --- Status Khusus (Loop atau Final) ---
+        'butuh_perbaikan'       => 'Butuh Perbaikan (Menunggu Warga)',
+        'ditolak'               => 'Ditolak',
+        'dibatalkan'            => 'Dibatalkan',
+    ];
     public function getAllowedTransitions(): array
     {
         

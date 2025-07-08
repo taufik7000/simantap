@@ -168,7 +168,6 @@ class TicketResource extends Resource
                         'secondary' => 'low',
                         'warning' => 'medium',
                         'danger' => 'high',
-                        'danger' => 'urgent',
                     ]),
 
                 Tables\Columns\TextColumn::make('assignedTo.name')
