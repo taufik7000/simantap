@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Auth\WhatsAppVerificationController;
 
 
 Route::get('/', function () {
@@ -30,6 +31,11 @@ Route::post('/logout', [LoginController::class, 'destroy'])
 
 Route::get('/register', [RegisterController::class, 'create'])->middleware('guest')->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->middleware('guest')->name('register.store');
+
+// Halaman untuk menampilkan form input OTP
+Route::get('/whatsapp/verify', [WhatsAppVerificationController::class, 'show'])->name('whatsapp.verification.notice');
+// Route untuk memproses OTP yang dimasukkan pengguna
+Route::post('/whatsapp/verify', [WhatsAppVerificationController::class, 'verify'])->name('whatsapp.verification.verify');
 
 //Route Download Berkas
 Route::get('/secure-download', [BerkasController::class, 'download'])

@@ -4,67 +4,97 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\WhatsAppSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
+use Netflie\WhatsAppCloudApi\WhatsAppCloudApi; // <-- Import package baru
 
 class RegisterController extends Controller
 {
-    /**
-     * Menampilkan form registrasi.
-     */
     public function create()
     {
         return view('auth.register');
     }
 
-    /**
-     * Menyimpan pengguna baru.
-     */
     public function store(Request $request)
     {
-        // 1. Sesuaikan validasi: 'name' dan 'email' wajib, lainnya opsional.
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            'alamat' => ['nullable', 'string'],
-            'nik' => ['nullable', 'string', 'digits:16', 'unique:users,nik'],
-            'nomor_kk' => ['nullable', 'string', 'digits:16'],
-            'nomor_whatsapp' => ['nullable', 'string', 'max:15'],
-            'foto_ktp' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'foto_kk' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'foto_tanda_tangan' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'foto_selfie_ktp' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'nomor_whatsapp' => ['required', 'string', 'max:15'],
         ]);
 
-        // 2. Proses penyimpanan file hanya jika file diunggah
-        $paths = [];
-        $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
-        foreach ($fileFields as $field) {
-            if ($request->hasFile($field)) {
-                $paths[$field] = $request->file($field)->store('dokumen_warga', 'public');
-            }
-        }
+        $formattedPhoneNumber = $this->formatPhoneNumber($validated['nomor_whatsapp']);
 
-        // 3. Buat pengguna baru dengan data yang benar
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'alamat' => $validated['alamat'] ?? null,
-            'nik' => $validated['nik'] ?? null,
-            'nomor_kk' => $validated['nomor_kk'] ?? null,
-            'nomor_whatsapp' => $validated['nomor_whatsapp'] ?? null,
-            'foto_ktp' => $paths['foto_ktp'] ?? null,
-            'foto_kk' => $paths['foto_kk'] ?? null,
-            'foto_tanda_tangan' => $paths['foto_tanda_tangan'] ?? null,
-            'foto_selfie_ktp' => $paths['foto_selfie_ktp'] ?? null,
+            'nomor_whatsapp' => $formattedPhoneNumber,
         ]);
-
         $user->assignRole('warga');
-        auth()->login($user);
 
-        return redirect($user->getDashboardUrl());
+        $settings = WhatsAppSetting::first();
+
+        if ($settings && $settings->verification_enabled) {
+            $otp_code = rand(100000, 999999);
+            $user->whatsapp_verification_code = $otp_code;
+            $user->whatsapp_code_expires_at = now()->addMinutes(10);
+            $user->save();
+
+            try {
+
+                $settings = WhatsAppSetting::first();
+                if (!$settings) {
+                    Log::error('Pengaturan WhatsApp tidak ditemukan di database.');
+                    return back()->withErrors(['nomor_whatsapp' => 'Layanan WhatsApp belum dikonfigurasi oleh admin.']);
+                }
+
+                // 2. Inisialisasi API dengan kredensial dari database
+                $whatsapp_cloud_api = new WhatsAppCloudApi([
+                    'from_phone_number_id' => $settings->phone_number_id,
+                    'access_token' => $settings->access_token,
+                ]);
+
+                // 2. Kirim pesan template
+                $whatsapp_cloud_api->sendTemplate(
+                    $user->nomor_whatsapp,
+                    $settings->otp_template_name,
+                    'id', // Kode bahasa 'id' untuk Bahasa Indonesia
+                    [$otp_code] // Kirim kode OTP sebagai parameter
+                );
+
+                // ===============================================
+                // AKHIR BLOK PENGIRIMAN PESAN YANG BARU
+                // ===============================================
+
+            } catch (\Exception $e) {
+                Log::error('WhatsApp Exception via Package: ' . $e->getMessage());
+                return back()->withErrors(['nomor_whatsapp' => 'Gagal mengirim kode verifikasi.']);
+            }
+
+            $request->session()->put('user_id_for_verification', $user->id);
+            return redirect()->route('whatsapp.verification.notice')
+                ->with('success', 'Pendaftaran berhasil! Silakan periksa WhatsApp Anda untuk kode verifikasi.');
+        } else {
+            Auth::login($user);
+            return redirect($user->getDashboardUrl());
+        }
+    }
+
+    private function formatPhoneNumber($number)
+    {
+        $number = preg_replace('/[^0-9]/', '', $number);
+        if (substr($number, 0, 1) == '0') {
+            return '62' . substr($number, 1);
+        }
+        if (substr($number, 0, 2) == '62') {
+            return $number;
+        }
+        return '62' . $number;
     }
 }
