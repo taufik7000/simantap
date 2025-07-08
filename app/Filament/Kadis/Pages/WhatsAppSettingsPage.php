@@ -7,6 +7,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle; // <-- Import Toggle
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -36,11 +37,22 @@ class WhatsAppSettingsPage extends Page implements HasForms
         }
     }
 
-    // Mendefinisikan struktur formulir yang lebih sederhana
     public function form(Form $form): Form
     {
         return $form
             ->schema([
+                // ===== BAGIAN YANG DITAMBAHKAN KEMBALI =====
+                Section::make('Status Verifikasi')
+                    ->description('Aktifkan atau nonaktifkan verifikasi nomor WhatsApp untuk semua pendaftar baru.')
+                    ->schema([
+                        Toggle::make('verification_enabled')
+                            ->label('Aktifkan Verifikasi WhatsApp')
+                            ->inline(false)
+                            ->onColor('success')
+                            ->offColor('danger'),
+                    ]),
+                // ===========================================
+
                 Section::make('Kredensial Wajib API WhatsApp')
                     ->description('Masukkan kredensial yang diperlukan untuk mengirim pesan verifikasi.')
                     ->schema([
@@ -67,7 +79,6 @@ class WhatsAppSettingsPage extends Page implements HasForms
             ->statePath('data');
     }
 
-    // Tombol "Simpan" tetap sama
     protected function getFormActions(): array
     {
         return [
@@ -77,7 +88,6 @@ class WhatsAppSettingsPage extends Page implements HasForms
         ];
     }
 
-    // Logika penyimpanan tetap sama
     public function save(): void
     {
         try {
