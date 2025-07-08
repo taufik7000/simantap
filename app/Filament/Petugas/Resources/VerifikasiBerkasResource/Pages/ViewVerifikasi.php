@@ -58,12 +58,24 @@ class ViewVerifikasi extends ViewRecord
                 ->color('success')->icon('heroicon-o-check-circle')
                 ->requiresConfirmation()
                 ->action(function () {
+
+                    $revisionToUpdate = $this->record->revisions()->where('status', 'pending')->latest()->first();
+
+
+                    if ($revisionToUpdate) {
+                        $revisionToUpdate->update([
+                            'status' => 'accepted',
+                            'reviewed_at' => now(),
+                            'reviewed_by' => Auth::id(),
+                        ]);
+                    }
+
                     $this->record->update([
                         'status' => 'verifikasi_berkas',
                         'catatan_petugas' => 'Revisi diterima. Berkas akan diverifikasi ulang oleh petugas.',
                     ]);
                     Notification::make()->title('Revisi Diterima')->success()->send();
-                    $this->refreshRecord(); 
+                    return redirect($this->getResource()::getUrl('view', ['record' => $this->record]));
                 })
                 ->visible($recordStatus === 'diperbaiki_warga'),
 

@@ -412,7 +412,7 @@ class ViewPermohonan extends ViewRecord
                         ->success()
                         ->send();
                 })
-                ->visible(fn () => Auth::user()->hasRole(['admin']) || $this->record->assigned_to === Auth::id())
+                ->visible(fn (): bool => Auth::user()->hasRole('kadis'))
                 ->modalHeading('Tugaskan ke Petugas Lain')
                 ->modalSubmitActionLabel('Tugaskan'),
         ];
