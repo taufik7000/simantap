@@ -32,8 +32,8 @@ class ViewVerifikasi extends ViewRecord
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update([
-                        'status' => 'diproses',
-                        'catatan_petugas' => 'Berkas telah diverifikasi dan permohonan sedang dalam proses pengerjaan.',
+                        'status' => 'menunggu_entri_data',
+                        'catatan_petugas' => 'Berkas telah diverifikasi. Permohonan kini masuk antrean untuk entri data.',
                     ]);
                     Notification::make()->title('Verifikasi Berhasil')->success()->send();
                     $this->redirect($this->getResource()::getUrl('index'));

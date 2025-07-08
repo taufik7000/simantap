@@ -19,6 +19,18 @@ class VerifikasiBerkasResource extends Resource
     protected static ?string $modelLabel = 'Menunggu Verifikasi Berkas';
     protected static ?string $pluralModelLabel = 'Verifikasi Berkas';
 
+    public static function getNavigationBadge(): ?string
+    {
+        // Panggil query yang sama dengan yang digunakan di halaman list
+        return static::getEloquentQuery()->count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        // Tampilkan badge dengan warna 'warning' jika ada tugas
+        return static::getEloquentQuery()->count() > 0 ? 'warning' : null;
+    }
+
 
     public static function getEloquentQuery(): Builder
     {

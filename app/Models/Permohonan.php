@@ -53,6 +53,7 @@ class Permohonan extends Model
         'baru' => 'Baru Diajukan',
         'menunggu_verifikasi' => 'Menunggu Verifikasi Berkas',
         'proses_verifikasi' => 'Proses Verifikasi Berkas',
+        'menunggu_entri_data' => 'Menunggu Entri Data',
         'proses_entri' => 'Dalam Proses Entri Data',
         'entri_data_selesai' => 'Entri Data Selesai',
         'menunggu_persetujuan' => 'Menunggu Persetujuan',
