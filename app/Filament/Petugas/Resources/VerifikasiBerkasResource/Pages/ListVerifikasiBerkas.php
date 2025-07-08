@@ -70,7 +70,7 @@ class ListVerifikasiBerkas extends ListRecords
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'verifikasi_berkas' => 'Menunggu Verifikasi',
                         'diperbaiki_warga' => 'Telah Diperbaiki Warga',
-                        'butuh_perbaikan' => 'Menunggu Warga',
+                        'butuh_perbaikan' => 'Menunggu Revisi',
                         default => $state,
                     })
                     ->sortable(),

@@ -146,8 +146,6 @@ class PermohonanResource extends Resource
                 // Aksi lain tidak berubah
                 Tables\Actions\Action::make('quick_assign')->label('Ambil')->icon('heroicon-o-hand-raised')->color('primary')->action(function (Permohonan $record) { if ($record->assignTo(Auth::id())) { if ($record->status === 'baru') { $record->update(['status' => 'menunggu_verifikasi', 'catatan_petugas' => 'Permohonan telah diambil oleh ' . Auth::user()->name]); } \Filament\Notifications\Notification::make()->title('Tugas berhasil diambil')->success()->send(); } })->visible(fn(Permohonan $record) => $record->canBeAssignedTo())->requiresConfirmation(),
                 Tables\Actions\ViewAction::make(),
-                // --- PERUBAHAN Logika Visibilitas Tombol Edit ---
-                Tables\Actions\EditAction::make()->visible(fn(Permohonan $record) => (Auth::user()->hasRole('admin') || $record->isAssignedTo(Auth::id())) && !in_array($record->status, ['selesai', 'ditolak', 'dibatalkan'])),
             ])
             ->bulkActions([
                 // Bulk Actions tidak berubah
@@ -173,7 +171,6 @@ class PermohonanResource extends Resource
         return [
             'index' => Pages\ListPermohonans::route('/'),
             'view' => Pages\ViewPermohonan::route('/{record}'),
-            'edit' => Pages\EditPermohonan::route('/{record}/edit'),
         ];
     }
 
