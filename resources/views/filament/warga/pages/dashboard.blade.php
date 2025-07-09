@@ -19,7 +19,7 @@
                 <div class="flex items-start space-x-4">
                     <div class="flex-shrink-0"><div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg></div></div>
                     <div class="flex-1">
-                        <h3 class="text-lg font-bold text-amber-900">Akun Belum Terverifikasi</h3>
+                        <h3 class="text-lg font-bold text-amber-900">Akun Belum Lengkap</h3>
                         <p class="text-amber-700 mt-1">Lengkapi profil Anda untuk dapat mengajukan permohonan dan mengakses semua layanan.</p>
                         <div class="mt-4"><a href="{{ route('filament.warga.pages.profile') }}" class="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Lengkapi Profil Sekarang</a></div>
                     </div>

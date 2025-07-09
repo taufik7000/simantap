@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\WhatsAppSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -25,31 +27,45 @@ class LoginController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi kredensial login
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+        // 1. Validasi input umum
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required',
         ]);
 
-        // 2. Lakukan otentikasi
+        // 2. Tentukan tipe login (email atau nik)
+        $loginType = filter_var($request->input('login'), FILTER_VALIDATE_EMAIL)
+            ? 'email'
+            : 'nik';
+
+        // 3. Siapkan kredensial untuk otentikasi
+        $credentials = [
+            $loginType => $request->input('login'),
+            'password' => $request->input('password')
+        ];
+
+        // 4. Lakukan otentikasi
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
 
-            // ===============================================
-            // AWAL BLOK PEMERIKSAAN VERIFIKASI WHATSAPP
-            // ===============================================
+            // 5. Pemeriksaan Peran (Role-based check)
+            if ($loginType === 'nik' && !$user->hasRole('warga')) {
+                Auth::logout();
+                return back()->withErrors(['login' => 'Login dengan NIK hanya untuk warga.'])->onlyInput('login');
+            }
+            if ($loginType === 'email' && $user->hasRole('warga')) {
+                Auth::logout();
+                return back()->withErrors(['login' => 'Warga harus login menggunakan NIK.'])->onlyInput('login');
+            }
 
-            // 3. Cek jika user adalah 'warga' dan belum terverifikasi
+            // =======================================================
+            // AWAL BLOK PEMERIKSAAN & PENGIRIMAN ULANG OTP (YANG HILANG)
+            // =======================================================
             if ($user->hasRole('warga') && is_null($user->whatsapp_verified_at)) {
-                
-                // Ambil pengaturan WhatsApp
                 $settings = WhatsAppSetting::first();
-                
-                // Hanya kirim ulang OTP jika fitur verifikasi diaktifkan oleh Kadis
                 if ($settings && $settings->verification_enabled) {
-                    
-                    // Buat OTP baru
+                    // Buat OTP baru dan simpan
                     $otp_code = rand(100000, 999999);
                     $user->whatsapp_verification_code = $otp_code;
                     $user->whatsapp_code_expires_at = now()->addMinutes(10);
@@ -60,12 +76,9 @@ class LoginController extends Controller
                         Http::withToken($settings->access_token)->post(
                             'https://graph.facebook.com/v19.0/' . $settings->phone_number_id . '/messages',
                             [
-                                'messaging_product' => 'whatsapp',
-                                'to' => $user->nomor_whatsapp,
-                                'type' => 'template',
+                                'messaging_product' => 'whatsapp', 'to' => $user->nomor_whatsapp, 'type' => 'template',
                                 'template' => [
-                                    'name' => $settings->otp_template_name,
-                                    'language' => ['code' => 'id'],
+                                    'name' => $settings->otp_template_name, 'language' => ['code' => 'id'],
                                     'components' => [
                                         ['type' => 'body', 'parameters' => [['type' => 'text', 'text' => (string) $otp_code]]],
                                         ['type' => 'button', 'sub_type' => 'url', 'index' => '0', 'parameters' => [['type' => 'text', 'text' => 'verify-code']]],
@@ -78,23 +91,20 @@ class LoginController extends Controller
                         Log::error('WhatsApp Resend on Login Exception: ' . $e->getMessage());
                     }
 
-                    // Logout pengguna agar tidak masuk ke dasbor
+                    // Logout pengguna dan arahkan ke halaman verifikasi
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
-
-                    // Simpan ID pengguna di session dan arahkan ke halaman verifikasi
                     $request->session()->put('user_id_for_verification', $user->id);
                     return redirect()->route('whatsapp.verification.notice')
                         ->with('success', 'Akun Anda belum terverifikasi. Kami telah mengirimkan ulang kode OTP ke WhatsApp Anda.');
                 }
             }
-
-            // ===============================================
+            // =======================================================
             // AKHIR BLOK PEMERIKSAAN
-            // ===============================================
+            // =======================================================
 
-            // 4. Jika bukan warga yang belum terverifikasi, lanjutkan login seperti biasa
+            // Jika semua pemeriksaan berhasil, lanjutkan login
             $user->update([
                  'last_login_at' => Carbon::now(),
                  'last_login_ip' => $request->ip(),
@@ -102,10 +112,8 @@ class LoginController extends Controller
             return redirect()->to($user->getDashboardUrl());
         }
 
-        // 5. Jika otentikasi gagal
-        return back()->withErrors([
-            'email' => 'Kombinasi email dan password tidak cocok.',
-        ])->onlyInput('email');
+        // Jika otentikasi gagal
+        return back()->withErrors(['login' => 'Kombinasi kredensial dan password tidak cocok.'])->onlyInput('login');
     }
 
     /**
