@@ -4,59 +4,63 @@ namespace App\Filament\Petugas\Resources\UserResource\Pages;
 
 use App\Filament\Petugas\Resources\UserResource;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\FileUpload;
+use App\Models\User;
+
+// Menggunakan Infolist dan komponen-komponennya
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\Grid;
+use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Forms\Form;
 
 class ViewUser extends ViewRecord
 {
     protected static string $resource = UserResource::class;
 
-    public function form(Form $form): Form
+    // Menggunakan method infolist() yang benar, bukan form()
+    public function infolist(Infolist $infolist): Infolist
     {
-        return $form->schema([
+        return $infolist->schema([
+            // Menggunakan Grid dari Infolist
             Grid::make(2)->schema([
+                // Menggunakan Section dari Infolist
                 Section::make('Informasi Identitas')
                     ->schema([
-                        TextInput::make('name')->label('Nama Lengkap'),
-                        TextInput::make('email')->label('Alamat Email'),
-                        TextInput::make('nik')->label('NIK'),
-                        TextInput::make('nomor_kk')->label('Nomor Kartu Keluarga'),
-                        TextInput::make('jenis_kelamin')->label('Jenis Kelamin'),
-                        TextInput::make('agama')->label('Agama'),
+                        // Menggunakan TextEntry untuk menampilkan data
+                        TextEntry::make('name')->label('Nama Lengkap'),
+                        TextEntry::make('email')->label('Alamat Email'),
+                        TextEntry::make('nik')->label('NIK'),
+                        TextEntry::make('nomor_kk')->label('Nomor Kartu Keluarga'),
+                        TextEntry::make('jenis_kelamin')->label('Jenis Kelamin'),
+                        TextEntry::make('agama')->label('Agama'),
                     ])->columns(2),
                 
                 Section::make('Data Kelahiran')
                     ->schema([
-                        TextInput::make('tempat_lahir')->label('Tempat Lahir'),
-                        TextInput::make('tanggal_lahir')->label('Tanggal Lahir'),
-                        TextInput::make('gol_darah')->label('Golongan Darah'),
+                        TextEntry::make('tempat_lahir')->label('Tempat Lahir'),
+                        TextEntry::make('tanggal_lahir')->label('Tanggal Lahir')->date(),
+                        TextEntry::make('gol_darah')->label('Golongan Darah'),
                     ])->columns(3),
 
                 Section::make('Alamat & Kontak')
                     ->schema([
-                        Textarea::make('alamat')->label('Alamat Lengkap')->rows(2)->columnSpanFull(),
-                        TextInput::make('rt_rw')->label('RT/RW'),
-                        TextInput::make('desa_kelurahan')->label('Desa/Kelurahan'),
-                        TextInput::make('kecamatan')->label('Kecamatan'),
-                        TextInput::make('kabupaten')->label('Kabupaten'),
-                        TextInput::make('nomor_whatsapp')->label('Nomor Whatsapp')->columnSpan(2),
+                        TextEntry::make('alamat')->label('Alamat Lengkap')->columnSpanFull(),
+                        TextEntry::make('rt_rw')->label('RT/RW'),
+                        TextEntry::make('desa_kelurahan')->label('Desa/Kelurahan'),
+                        TextEntry::make('kecamatan')->label('Kecamatan'),
+                        TextEntry::make('kabupaten')->label('Kabupaten'),
+                        TextEntry::make('nomor_whatsapp')->label('Nomor Whatsapp')->columnSpan(2),
                     ])->columns(3),
                 
                 Section::make('Informasi Tambahan')
                     ->schema([
-                        TextInput::make('status_keluarga')->label('Status dalam Keluarga'),
-                        TextInput::make('status_perkawinan')->label('Status Perkawinan'),
-                        TextInput::make('pekerjaan')->label('Pekerjaan'),
-                        TextInput::make('pendidikan')->label('Pendidikan Terakhir'),
+                        TextEntry::make('status_keluarga')->label('Status dalam Keluarga'),
+                        TextEntry::make('status_perkawinan')->label('Status Perkawinan'),
+                        TextEntry::make('pekerjaan')->label('Pekerjaan'),
+                        TextEntry::make('pendidikan')->label('Pendidikan Terakhir'),
                     ])->columns(2),
 
                 Section::make('Dokumen Terunggah')
-                    ->schema(function (Model $record): array {
+                    ->schema(function (User $record): array {
                         $fields = [];
                         $documentFields = [
                             'foto_ktp' => 'Foto KTP',
@@ -71,19 +75,19 @@ class ViewUser extends ViewRecord
 
                             if ($filePath) {
                                 $entry->state('Unduh Dokumen')
-                                    ->color('primary')
-                                    ->url(route('secure.download.profile', ['user_id' => $record->id, 'field' => $field]), true)
-                                    ->icon('heroicon-m-arrow-down-tray');
+                                      ->color('primary')
+                                      ->url(route('secure.download.profile', ['user_id' => $record->id, 'field' => $field]), true)
+                                      ->icon('heroicon-m-arrow-down-tray');
                             } else {
                                 $entry->state('Belum diunggah')
-                                    ->color('danger')
-                                    ->icon('heroicon-o-x-circle');
+                                      ->color('danger')
+                                      ->icon('heroicon-o-x-circle');
                             }
                             $fields[] = $entry;
                         }
                         return $fields;
                     })->columns(2),
             ]),
-        ])->disabled();
+        ]);
     }
 }

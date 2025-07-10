@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Permohonan;
 use App\Models\FormulirMaster;
+use App\Models\User; 
 use App\Models\PermohonanRevision;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -266,32 +267,37 @@ public function download(Request $request): StreamedResponse|Response
     /**
  * Download dokumen profil warga dengan aman.
  */
-public function downloadProfileDocument(Request $request): StreamedResponse|Response
-{
-    $userId = $request->query('user_id');
-    $field = $request->query('field');
-    $validFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
+    public function downloadProfileDocument(Request $request): StreamedResponse|Response
+    {
+        $userId = $request->query('user_id');
+        $field = $request->query('field');
+        $validFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
 
-    if (!$userId || !$field || !in_array($field, $validFields)) {
-        abort(404, 'Permintaan tidak valid.');
+        if (!$userId || !$field || !in_array($field, $validFields)) {
+            abort(404, 'Permintaan tidak valid.');
+        }
+
+        $owner = User::findOrFail($userId);
+        $filePath = $owner->{$field};
+
+        if (!$filePath) {
+            abort(404, 'File tidak ditemukan untuk pengguna ini.');
+        }
+
+        // =======================================================
+        // AWAL BLOK PEMERIKSAAN HAK AKSES YANG DIPERBAIKI
+        // =======================================================
+        if (Auth::id() !== $owner->id && !Auth::user()->hasAnyRole(['petugas', 'admin', 'kadis'])) {
+            abort(403, 'Anda tidak memiliki hak akses untuk berkas ini.');
+        }
+        // =======================================================
+        // AKHIR BLOK PEMERIKSAAN HAK AKSES
+        // =======================================================
+
+        if (!Storage::disk('private')->exists($filePath)) {
+            abort(404, 'File tidak ditemukan di server.');
+        }
+
+        return Storage::disk('private')->download($filePath);
     }
-
-    $owner = User::findOrFail($userId);
-    $filePath = $owner->{$field};
-
-    if (!$filePath) {
-        abort(404, 'File tidak ditemukan untuk pengguna ini.');
-    }
-
-    // Hanya admin/petugas yang bisa mengunduh
-    if (!Auth::user()->hasAnyRole(['petugas', 'admin', 'kadis'])) {
-        abort(403, 'Anda tidak memiliki hak akses.');
-    }
-
-    if (!Storage::disk('private')->exists($filePath)) {
-        abort(404, 'File tidak ditemukan di server.');
-    }
-
-    return Storage::disk('private')->download($filePath);
-}
 }

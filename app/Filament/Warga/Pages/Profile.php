@@ -17,6 +17,9 @@ use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Kecamatan;
+use App\Models\Desa;
+use App\Models\Kelurahan;
 use Illuminate\Support\Arr;
 
 class Profile extends Page implements HasForms
@@ -33,14 +36,14 @@ class Profile extends Page implements HasForms
     public function mount(): void
     {
         $userData = auth()->user()->attributesToArray();
-        
+
         // Hapus password dari data yang akan diisi ke form
         unset($userData['password']);
-        
+
         $this->form->fill($userData);
     }
 
-    protected function getFormModel(): Model 
+    protected function getFormModel(): Model
     {
         return auth()->user();
     }
@@ -58,7 +61,7 @@ class Profile extends Page implements HasForms
                                     ->schema([
                                         TextInput::make('name')->label('Nama Lengkap')->required(),
                                         TextInput::make('email')->label('Alamat Email')->email()->required(),
-                                        TextInput::make('nik')->label('NIK')->disabled(fn (): bool => $this->getFormModel()->verified_at !== null)->helperText(fn (): ?string => $this->getFormModel()->verified_at !== null ? 'NIK tidak bisa diubah setelah akun terverifikasi.' : null),
+                                        TextInput::make('nik')->label('NIK')->disabled(fn(): bool => $this->getFormModel()->verified_at !== null)->helperText(fn(): ?string => $this->getFormModel()->verified_at !== null ? 'NIK tidak bisa diubah setelah akun terverifikasi.' : null),
                                         TextInput::make('nomor_kk')->label('Nomor Kartu Keluarga'),
                                         Select::make('jenis_kelamin')->options(['Laki-laki' => 'Laki-laki', 'Perempuan' => 'Perempuan']),
                                         Select::make('agama')->options(['Islam' => 'Islam', 'Kristen Protestan' => 'Kristen Protestan', 'Kristen Katolik' => 'Kristen Katolik', 'Hindu' => 'Hindu', 'Buddha' => 'Buddha', 'Khonghucu' => 'Khonghucu']),
@@ -80,7 +83,7 @@ class Profile extends Page implements HasForms
                                         TextInput::make('kabupaten')->label('Kabupaten'),
                                         TextInput::make('nomor_whatsapp')->label('Nomor Whatsapp')->required()->columnSpan(2),
                                     ])->columns(3),
-                                
+
                                 Section::make('Informasi Tambahan')
                                     ->schema([
                                         Select::make('status_keluarga')->options(['Kepala Keluarga' => 'Kepala Keluarga', 'Anggota Keluarga' => 'Anggota Keluarga']),
@@ -92,17 +95,24 @@ class Profile extends Page implements HasForms
                                 Section::make('Dokumen Pendukung')
                                     ->schema([
                                         FileUpload::make('foto_ktp')->label('Foto KTP')
-                                            ->directory('dokumen_warga')
-                                            ->disk('private'),
+                                            ->disk('private')
+                                            ->downloadable()
+                                            ->previewable(false),
+
                                         FileUpload::make('foto_kk')->label('Foto Kartu Keluarga')
-                                            ->directory('dokumen_warga')
-                                            ->disk('private'), 
+                                            ->disk('private')
+                                            ->downloadable()
+                                            ->previewable(false),
+
                                         FileUpload::make('foto_tanda_tangan')->label('Foto Tanda Tangan')
-                                            ->directory('dokumen_warga')
-                                            ->disk('private'), 
+                                            ->disk('private')
+                                            ->downloadable()
+                                            ->previewable(false),
+
                                         FileUpload::make('foto_selfie_ktp')->label('Foto Selfie dengan KTP')
-                                            ->directory('dokumen_warga')
-                                            ->disk('private'),
+                                            ->disk('private')
+                                            ->downloadable()
+                                            ->previewable(false),
                                     ])->columns(2),
                             ]),
 
@@ -127,7 +137,7 @@ class Profile extends Page implements HasForms
             ->statePath('data');
     }
 
-      public function updateProfile(): void
+    public function updateProfile(): void
     {
         $user = $this->getFormModel();
         $data = $this->form->getState();
@@ -135,7 +145,7 @@ class Profile extends Page implements HasForms
         // Pisahkan data file dari data non-file
         $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
         $nonFileUpdateData = Arr::except($data, $fileFields);
-        
+
         // Logika untuk update password - hanya update jika ada input password baru
         if (!empty($nonFileUpdateData['password'])) {
             $nonFileUpdateData['password'] = Hash::make($nonFileUpdateData['password']);
