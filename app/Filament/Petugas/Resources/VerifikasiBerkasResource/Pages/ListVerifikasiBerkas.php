@@ -61,18 +61,6 @@ class ListVerifikasiBerkas extends ListRecords
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status Verifikasi')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'verifikasi_berkas' => 'warning',
-                        'diperbaiki_warga' => 'info',
-                        'butuh_perbaikan' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'verifikasi_berkas' => 'Menunggu Verifikasi',
-                        'diperbaiki_warga' => 'Telah Diperbaiki Warga',
-                        'butuh_perbaikan' => 'Menunggu Revisi',
-                        default => $state,
-                    })
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('layanan.name')->label('Jenis Layanan')->wrap(),

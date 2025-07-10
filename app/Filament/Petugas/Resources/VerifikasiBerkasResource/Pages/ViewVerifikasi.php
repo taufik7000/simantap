@@ -13,6 +13,7 @@ use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
+use app\Enums\StatusPermohonan;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewVerifikasi extends ViewRecord
@@ -37,8 +38,7 @@ class ViewVerifikasi extends ViewRecord
                     ]);
                     Notification::make()->title('Verifikasi Berhasil')->success()->send();
                     $this->redirect($this->getResource()::getUrl('index'));
-                })
-                ->visible($recordStatus === 'verifikasi_berkas'),
+                }),
 
             Action::make('request_initial_revision')
                 ->label('Butuh Perbaikan')
@@ -49,7 +49,7 @@ class ViewVerifikasi extends ViewRecord
                     Notification::make()->title('Permohonan dikembalikan ke warga')->warning()->send();
                     $this->redirect($this->getResource()::getUrl('index'));
                 })
-                ->visible($recordStatus === 'verifikasi_berkas'),
+                ->visible(StatusPermohonan::class === 'verifikasi_berkas'),
         ];
 
         $revisionReviewActions = [
