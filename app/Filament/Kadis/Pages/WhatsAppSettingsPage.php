@@ -75,6 +75,14 @@ class WhatsAppSettingsPage extends Page implements HasForms
                             ->required()
                             ->helperText('Masukkan nama template yang sudah disetujui oleh Meta.'),
                     ]),
+                
+                Section::make('Template Status')
+                    ->schema([
+                        TextInput::make('status_template_name')
+                            ->label('Nama Template Pesan Status')
+                            ->required()
+                            ->helperText('Masukkan nama template untuk pesan status yang akan dikirim ke pengguna.'),
+                    ]),
             ])
             ->statePath('data');
     }

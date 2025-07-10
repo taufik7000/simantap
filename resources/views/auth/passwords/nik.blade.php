@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SIMANTAP</title>
+    <title>Lupa Kata Sandi - SIMANTAP</title>
     @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
@@ -17,13 +17,13 @@
                 <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
             </div>
             
-            <!-- Content - Fixed positioning for perfect centering -->
+            <!-- Content -->
             <div class="relative z-10 flex-1 flex flex-col justify-center items-center p-8">
                 <div class="max-w-md w-full text-center text-white">
                     <!-- Logo/Icon -->
                     <div class="mb-8 w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm mx-auto">
                         <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                     
@@ -33,28 +33,29 @@
                     
                     <!-- Description -->
                     <div class="space-y-4">
+                        <h2 class="text-2xl font-semibold text-white">Pemulihan Akun</h2>
                         <p class="text-lg text-primary-100">
-                            Sistem informasi terpadu untuk pelayanan administrasi yang efisien dan modern
+                            Jangan khawatir! Kami akan membantu Anda memulihkan akses ke akun dengan mudah dan aman
                         </p>
                         
-                        <div class="flex items-center justify-center space-x-6 text-primary-200 mt-6">
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="space-y-3 text-primary-200 mt-6">
+                            <div class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-3 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="text-sm">Aman</span>
+                                <span class="text-sm">Verifikasi melalui WhatsApp</span>
                             </div>
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-3 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                <span class="text-sm">Proses aman dan terpercaya</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-3 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
-                                <span class="text-sm">Cepat</span>
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
-                                </svg>
-                                <span class="text-sm">Terpadu</span>
+                                <span class="text-sm">Akses kembali dalam hitungan menit</span>
                             </div>
                         </div>
                     </div>
@@ -62,55 +63,59 @@
             </div>
         </div>
 
-        <!-- Right Side - Login Form -->
+        <!-- Right Side - Forgot Password Form -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
                 <!-- Mobile Logo -->
                 <div class="lg:hidden text-center mb-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900">SIMANTAP</h1>
                     <p class="text-sm text-gray-600">Simalungun Administrasi Terpadu</p>
                 </div>
 
-                <!-- Login Card -->
+                <!-- Forgot Password Card -->
                 <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
                     <!-- Header -->
                     <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Selamat Datang</h2>
-                        <p class="text-gray-600">Silakan masuk ke akun Anda</p>
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+                            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Lupa Kata Sandi?</h2>
+                        <p class="text-gray-600">Masukkan NIK Anda. Kami akan mengirimkan kode verifikasi ke nomor WhatsApp yang terdaftar.</p>
                     </div>
 
                     <!-- Form -->
-                    <form method="POST" action="{{ route('login.store') }}" class="space-y-6">
+                    <form method="POST" action="{{ route('password.nik') }}" class="space-y-6">
                         @csrf
                         
                         <!-- NIK Field -->
                         <div>
-                            <label for="login" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <label for="nik" class="block text-sm font-semibold text-gray-700 mb-2">
                                 NIK
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
                                     </svg>
                                 </div>
                                 <input 
-                                    id="login" 
+                                    id="nik" 
                                     type="text" 
-                                    name="login" 
-                                    value="{{ old('login') }}" 
+                                    name="nik" 
                                     required 
                                     autofocus
                                     class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                                    placeholder="Masukkan NIK Anda"
+                                    placeholder="Masukkan 16 digit NIK Anda"
                                 >
                             </div>
-                            @error('login')
+                            @error('nik')
                             <p class="text-red-500 text-sm mt-2 flex items-center">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -120,44 +125,6 @@
                             @enderror
                         </div>
 
-                        <!-- Password Field -->
-                        <div>
-                            <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
-                                Kata Sandi
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                </div>
-                                <input 
-                                    id="password" 
-                                    type="password" 
-                                    name="password" 
-                                    required
-                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                                    placeholder="Masukkan kata sandi"
-                                >
-                            </div>
-                        </div>
-
-                        <!-- Remember Me & Forgot Password -->
-                        <div class="flex items-center justify-between">
-                            <label for="remember" class="flex items-center">
-                                <input 
-                                    id="remember" 
-                                    type="checkbox" 
-                                    name="remember" 
-                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                >
-                                <span class="ml-2 text-sm text-gray-700">Ingat saya</span>
-                            </label>
-                            <a href="{{ route('password.request') }}" class="text-sm text-primary-600 hover:text-primary-500 font-medium">
-                                Lupa kata sandi?
-                            </a>
-                        </div>
-
                         <!-- Submit Button -->
                         <button 
                             type="submit" 
@@ -165,21 +132,34 @@
                         >
                             <span class="flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                                 </svg>
-                                Masuk
+                                Kirim Kode Verifikasi
                             </span>
                         </button>
                     </form>
 
-                    <!-- Register Link -->
+                    <!-- Back to Login Link -->
                     <div class="mt-8 text-center">
                         <p class="text-gray-600">
-                            Belum punya akun?
-                            <a href="{{ route('register') }}" class="font-semibold text-primary-600 hover:text-primary-500 transition-colors duration-200">
-                                Daftar di sini
+                            Sudah ingat kata sandi?
+                            <a href="{{ route('login') }}" class="font-semibold text-primary-600 hover:text-primary-500 transition-colors duration-200">
+                                Kembali ke halaman masuk
                             </a>
                         </p>
+                    </div>
+
+                    <!-- Help Section -->
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-blue-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="text-sm text-gray-600">
+                                <p class="font-medium text-gray-900 mb-1">Bantuan</p>
+                                <p>Pastikan NIK yang Anda masukkan sesuai dengan yang terdaftar di sistem. Kode verifikasi akan dikirim ke nomor WhatsApp yang terdaftar.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

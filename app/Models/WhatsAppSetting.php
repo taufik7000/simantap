@@ -15,6 +15,7 @@ class WhatsAppSetting extends Model
         'phone_number_id',
         'app_id',
         'app_secret',
+        'status_template_name',
         'otp_template_name',
         'verification_enabled',
     ];

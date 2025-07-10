@@ -8,6 +8,7 @@ use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Auth\WhatsAppVerificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
 
 Route::get('/', function () {
@@ -38,6 +39,18 @@ Route::get('/whatsapp/verify', [WhatsAppVerificationController::class, 'show'])-
 Route::post('/whatsapp/verify', [WhatsAppVerificationController::class, 'verify'])->name('whatsapp.verification.verify');
 // kirim ulang OTP
 Route::post('/whatsapp/resend', [WhatsAppVerificationController::class, 'resend'])->name('whatsapp.verification.resend');
+
+// Grup Route untuk Lupa Kata Sandi
+Route::get('/lupa-kata-sandi', [ForgotPasswordController::class, 'showNikRequestForm'])->name('password.request');
+Route::post('/lupa-kata-sandi', [ForgotPasswordController::class, 'sendOtp'])->name('password.nik');
+
+// Tahap 1: Verifikasi OTP
+Route::get('/verifikasi-otp/{token}', [ForgotPasswordController::class, 'showOtpForm'])->name('password.verify_otp_form');
+Route::post('/verifikasi-otp', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify_otp');
+
+// Tahap 2: Reset Password
+Route::get('/reset-kata-sandi/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset_form');
+Route::post('/reset-kata-sandi', [ForgotPasswordController::class, 'updatePassword'])->name('password.update');
 
 //Route Download Berkas
 Route::get('/secure-download', [BerkasController::class, 'download'])

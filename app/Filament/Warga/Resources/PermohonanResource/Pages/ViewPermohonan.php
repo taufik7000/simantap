@@ -65,7 +65,7 @@ class ViewPermohonan extends ViewRecord
 
                     $this->record->update([
                         'status' => 'diperbaiki_warga',
-                        'catatan_petugas' => 'Warga telah mengajukan perbaikan. Mohon periksa kembali berkas yang baru.',
+                        'catatan_petugas' => 'Warga telah mengajukan revisi. Menunggu peninjauan petugas.',
                     ]);
 
                     Notification::make()

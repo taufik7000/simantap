@@ -5,56 +5,56 @@
         {{-- Header dengan Quick Stats --}}
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {{-- Total Tiket --}}
-            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 hover:shadow-md transition-shadow duration-200">
+            <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-4 border border-primary-200 hover:shadow-md transition-shadow duration-200">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-600 text-sm font-medium">Total Tiket</p>
-                        <p class="text-2xl font-bold text-blue-900">{{ auth()->user()->tickets()->count() }}</p>
-                        <p class="text-xs text-blue-600 mt-1">Semua waktu</p>
+                        <p class="text-primary-600 text-sm font-medium">Total Tiket</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ auth()->user()->tickets()->count() }}</p>
+                        <p class="text-xs text-primary-600 mt-1">Semua waktu</p>
                     </div>
-                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
                         <x-heroicon-s-ticket class="w-5 h-5 text-white" />
                     </div>
                 </div>
             </div>
 
             {{-- Tiket Aktif --}}
-            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200 hover:shadow-md transition-shadow duration-200">
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200 hover:shadow-md transition-shadow duration-200">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-yellow-600 text-sm font-medium">Aktif</p>
-                        <p class="text-2xl font-bold text-yellow-900">{{ auth()->user()->tickets()->whereIn('status', ['open', 'in_progress'])->count() }}</p>
-                        <p class="text-xs text-yellow-600 mt-1">Butuh tindakan</p>
+                        <p class="text-amber-600 text-sm font-medium">Aktif</p>
+                        <p class="text-2xl font-bold text-amber-900">{{ auth()->user()->tickets()->whereIn('status', ['open', 'in_progress'])->count() }}</p>
+                        <p class="text-xs text-amber-600 mt-1">Butuh tindakan</p>
                     </div>
-                    <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
                         <x-heroicon-s-clock class="w-5 h-5 text-white" />
                     </div>
                 </div>
             </div>
 
             {{-- Tiket Selesai --}}
-            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200 hover:shadow-md transition-shadow duration-200">
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200 hover:shadow-md transition-shadow duration-200">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-green-600 text-sm font-medium">Selesai</p>
-                        <p class="text-2xl font-bold text-green-900">{{ auth()->user()->tickets()->whereIn('status', ['resolved', 'closed'])->count() }}</p>
-                        <p class="text-xs text-green-600 mt-1">Terselesaikan</p>
+                        <p class="text-emerald-600 text-sm font-medium">Selesai</p>
+                        <p class="text-2xl font-bold text-emerald-900">{{ auth()->user()->tickets()->whereIn('status', ['resolved', 'closed'])->count() }}</p>
+                        <p class="text-xs text-emerald-600 mt-1">Terselesaikan</p>
                     </div>
-                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
                         <x-heroicon-s-check-circle class="w-5 h-5 text-white" />
                     </div>
                 </div>
             </div>
 
             {{-- Pesan Belum Dibaca --}}
-            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 hover:shadow-md transition-shadow duration-200">
+            <div class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200 hover:shadow-md transition-shadow duration-200">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-purple-600 text-sm font-medium">Pesan Baru</p>
-                        <p class="text-2xl font-bold text-purple-900">{{ auth()->user()->getUnreadMessagesCount() }}</p>
-                        <p class="text-xs text-purple-600 mt-1">Belum dibaca</p>
+                        <p class="text-violet-600 text-sm font-medium">Pesan Baru</p>
+                        <p class="text-2xl font-bold text-violet-900">{{ auth()->user()->getUnreadMessagesCount() }}</p>
+                        <p class="text-xs text-violet-600 mt-1">Belum dibaca</p>
                     </div>
-                    <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
                         <x-heroicon-s-envelope class="w-5 h-5 text-white" />
                     </div>
                 </div>
@@ -81,7 +81,7 @@
                         <span class="flex items-center">
                             <x-heroicon-o-clock class="w-4 h-4 mr-2" />
                             Aktif
-                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ request('status') == 'active' ? 'bg-primary-100 text-primary-800' : 'bg-yellow-100 text-yellow-600' }}">
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ request('status') == 'active' ? 'bg-primary-100 text-primary-800' : 'bg-amber-100 text-amber-600' }}">
                                 {{ auth()->user()->tickets()->whereIn('status', ['open', 'in_progress'])->count() }}
                             </span>
                         </span>
@@ -92,7 +92,7 @@
                         <span class="flex items-center">
                             <x-heroicon-o-check-circle class="w-4 h-4 mr-2" />
                             Selesai
-                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ request('status') == 'resolved' ? 'bg-primary-100 text-primary-800' : 'bg-green-100 text-green-600' }}">
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ request('status') == 'resolved' ? 'bg-primary-100 text-primary-800' : 'bg-emerald-100 text-emerald-600' }}">
                                 {{ auth()->user()->tickets()->whereIn('status', ['resolved', 'closed'])->count() }}
                             </span>
                         </span>
@@ -284,7 +284,7 @@
         
         /* Focus styles untuk accessibility */
         .focus\:ring-2:focus {
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 2px rgba(var(--primary-500), 0.5);
         }
     </style>
 
@@ -463,10 +463,10 @@
                 toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
                 
                 const bgColors = {
-                    success: 'bg-green-500 text-white',
+                    success: 'bg-emerald-500 text-white',
                     error: 'bg-red-500 text-white',
-                    warning: 'bg-yellow-500 text-black',
-                    info: 'bg-blue-500 text-white'
+                    warning: 'bg-amber-500 text-black',
+                    info: 'bg-primary-500 text-white'
                 };
                 
                 toast.className += ` ${bgColors[type]}`;
@@ -559,7 +559,7 @@
         
         /* Custom focus styles */
         .focus-visible:focus-visible {
-            outline: 2px solid #3b82f6;
+            outline: 2px solid rgb(var(--primary-500));
             outline-offset: 2px;
         }
         

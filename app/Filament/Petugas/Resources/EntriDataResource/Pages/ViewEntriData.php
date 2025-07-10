@@ -22,8 +22,8 @@ class ViewEntriData extends ViewRecord
                 ->modalDescription('Pastikan semua data sudah diinput dengan benar sebelum melanjutkan.')
                 ->action(function () {
                     $this->record->update([
-                        'status' => 'entri_data_selesai',
-                        'catatan_petugas' => 'Proses entri data telah selesai. Menunggu persetujuan.',
+                        'status' => 'menunggu_persetujuan',
+                        'catatan_petugas' => 'Proses entri data telah selesai dan sekarang menunggu persetujuan akhir.',
                     ]);
                     Notification::make()->title('Entri Data Selesai')->success()->send();
                     $this->redirect($this->getResource()::getUrl('index'));

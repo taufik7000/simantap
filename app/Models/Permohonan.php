@@ -54,7 +54,7 @@ class Permohonan extends Model
      */
     public const STATUS_OPTIONS = [
         // --- Tahap Awal Pengajuan ---
-        'baru'                  => 'Baru Diajukan (Antrean)',
+        'baru'                  => 'Baru Diajukan',
         
         // --- Tahap Verifikasi oleh Petugas ---
         'verifikasi_berkas'     => 'Proses Verifikasi Berkas',
@@ -101,35 +101,17 @@ class Permohonan extends Model
      */
     protected static function booted(): void
     {
+        // Logika `creating` Anda tetap sama, tidak perlu diubah.
         static::creating(function (Permohonan $permohonan) {
             if (empty($permohonan->kode_permohonan)) {
-                // Terus buat kode baru untuk menjamin keunikan jika terjadi duplikasi (sangat jarang terjadi)
                 do {
-                    // 1. Prefix Statis
                     $prefix = 'SP';
-
-                    // 2. ID Layanan (Layanan ID)
-                    // Mengambil layanan_id langsung dari model permohonan yang sedang dibuat.
-                    // Diberi padding '0' di depan jika ID kurang dari 2 digit (misal: 1 -> 01, 15 -> 15)
                     $layananId = str_pad($permohonan->layanan_id, 2, '0', STR_PAD_LEFT);
-
-                    // 3. Tanggal, Bulan, dan Tahun
-                    // Format: ddmmyyyy (contoh: 07072024)
                     $dateComponent = now()->format('dmy');
-
-                    // 4. ID Pengguna (User ID)
-                    // Mengambil user_id dari model permohonan. Diasumsikan user_id selalu ada.
                     $userId = $permohonan->user_id;
-
-                    // 5. Dua Huruf Acak (A-Z)
-                    $randomChars = Str::upper(Str::random(2));
-
-                    // 6. Gabungkan semua komponen menjadi satu kode
+                    $randomChars = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(2));
                     $kode = $prefix . $layananId . $dateComponent . $userId . $randomChars;
-
                 } while (self::where('kode_permohonan', $kode)->exists());
-
-                // 7. Tetapkan kode unik ke model
                 $permohonan->kode_permohonan = $kode;
             }
         });
@@ -143,14 +125,71 @@ class Permohonan extends Model
             ]);
         });
 
-        // Membuat log setiap kali status permohonan diubah
+
+        // ===============================================
+        // AWAL BLOK UPDATING YANG DIPERBARUI
+        // ===============================================
         static::updating(function (Permohonan $permohonan) {
+            // Cek jika kolom 'status' benar-benar berubah
             if ($permohonan->isDirty('status')) {
+                
+                // 1. Membuat log aktivitas (logika lama Anda yang sudah benar)
                 $permohonan->logs()->create([
                     'status' => $permohonan->getDirty()['status'],
                     'catatan' => $permohonan->catatan_petugas ?? 'Status diperbarui.',
-                    'user_id' => Auth::id(),
+                    'user_id' => \Illuminate\Support\Facades\Auth::id() ?? $permohonan->user_id,
                 ]);
+
+                // 2. Kirim Notifikasi WhatsApp
+                $settings = \App\Models\WhatsAppSetting::first();
+                $user = $permohonan->user;
+
+                // Kirim notifikasi hanya jika fitur diaktifkan dan template status ada
+                if ($settings && $settings->verification_enabled && $settings->status_template_name && $user->nomor_whatsapp) {
+                    try {
+                        $statusLabel = self::STATUS_OPTIONS[$permohonan->status] ?? $permohonan->status;
+                        $note = $permohonan->catatan_petugas ?: 'Tidak ada catatan tambahan dari petugas.';
+
+                        \Illuminate\Support\Facades\Http::withToken($settings->access_token)->post(
+                            'https://graph.facebook.com/v19.0/' . $settings->phone_number_id . '/messages',
+                            [
+                                'messaging_product' => 'whatsapp',
+                                'to' => $user->nomor_whatsapp,
+                                'type' => 'template',
+                                'template' => [
+                                    'name' => $settings->status_template_name,
+                                    'language' => ['code' => 'id'],
+                                    'components' => [
+                                        // Komponen header dengan gambar
+                                        [
+                                            'type' => 'header',
+                                            'parameters' => [
+                                                [
+                                                    'type' => 'image',
+                                                    'image' => [
+                                                        'id' => '24163273539958957' 
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        // Komponen body
+                                        [
+                                            'type' => 'body',
+                                            'parameters' => [
+                                                ['type' => 'text', 'text' => $user->name],
+                                                ['type' => 'text', 'text' => $permohonan->kode_permohonan],
+                                                ['type' => 'text', 'text' => $statusLabel],
+                                                ['type' => 'text', 'text' => $note]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        );
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Status Update WhatsApp Gagal Terkirim: ' . $e->getMessage());
+                    }
+                }
             }
         });
     }
