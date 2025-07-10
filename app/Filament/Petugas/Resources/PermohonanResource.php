@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusPermohonan;
 use Illuminate\Support\Facades\Auth;
 
 class PermohonanResource extends Resource
@@ -64,7 +65,7 @@ class PermohonanResource extends Resource
                                 Forms\Components\Select::make('status')
                                     ->label('Ubah Status Permohonan')
                                     // Menggunakan logika transisi dari model Permohonan
-                                    ->options(fn(?Permohonan $record) => $record ? $record->getNextStatusOptions() : [])
+                                    ->options(StatusPermohonan::class)
                                     ->placeholder('Pilih status berikutnya...')
                                     ->required()
                                     ->native(false)
@@ -122,16 +123,6 @@ class PermohonanResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'baru', 'dibatalkan' => 'gray',
-                        'menunggu_verifikasi', 'proses_verifikasi' => 'info',
-                        'proses_entri', 'entri_data_selesai' => 'warning',
-                        'menunggu_persetujuan', 'proses_pengiriman' => 'primary',
-                        'disetujui', 'dokumen_diterbitkan', 'selesai' => 'success',
-                        'butuh_perbaikan', 'ditolak' => 'danger',
-                        default => 'secondary',
-                    })
-                    ->formatStateUsing(fn(string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state)
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('updated_at')->label('Terakhir Diupdate')->since()->sortable()->toggleable(isToggledHiddenByDefault: true),
@@ -139,7 +130,7 @@ class PermohonanResource extends Resource
             ->filters([
                 // --- PERUBAHAN Filter Status ---
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(Permohonan::STATUS_OPTIONS)
+                    ->options(StatusPermohonan::class)
                     ->native(false),
 
                 // Filter lain tidak berubah
@@ -150,11 +141,6 @@ class PermohonanResource extends Resource
                 Tables\Filters\SelectFilter::make('assigned_to')->label('Ditugaskan Kepada')->options(fn() => User::role(['petugas', 'admin', 'kadis'])->pluck('name', 'id'))->native(false)->visible(fn() => Auth::user()->hasRole(['admin', 'kadis'])),
             ])
             ->actions([
-                // Aksi lain tidak berubah
-                Tables\Actions\Action::make('quick_assign')->label('Ambil')->icon('heroicon-o-hand-raised')->color('primary')->action(function (Permohonan $record) {
-                    if ($record->assignTo(Auth::id())) {
-                        if ($record->status === 'baru') {
-                            $record->update(['status' => 'verifikasi_berkas', 'catatan_petugas' => 'Permohonan telah diambil oleh ' . Auth::user()->name]); }\Filament\Notifications\Notification::make()->title('Tugas berhasil diambil')->success()->send(); } })->visible(fn(Permohonan $record) => $record->canBeAssignedTo())->requiresConfirmation(),
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusPermohonan;
 use Illuminate\Support\Str;
 
 class Permohonan extends Model
@@ -44,6 +45,7 @@ class Permohonan extends Model
     protected $casts = [
         'data_pemohon' => 'array',
         'berkas_pemohon' => 'array',
+        'status' => StatusPermohonan::class,
         'status_updated_at' => 'datetime',
         'assigned_at' => 'datetime',
         'dokumen_diterbitkan_at' => 'datetime',
@@ -55,31 +57,6 @@ class Permohonan extends Model
 /**
      * Status yang tersedia untuk permohonan, diurutkan berdasarkan alur kerja.
      */
-    public const STATUS_OPTIONS = [
-        // --- Tahap Awal Pengajuan ---
-        'baru'                  => 'Baru Diajukan',
-        'sedang_ditinjau'       => 'Dalam Peninjauan',
-        
-        // --- Tahap Verifikasi oleh Petugas ---
-        'verifikasi_berkas'     => 'Proses Verifikasi Berkas',
-        'diperbaiki_warga'      => 'Telah Diperbaiki Warga',
-
-        // --- Tahap Pengerjaan oleh Petugas ---
-        'menunggu_entri_data'   => 'Menunggu Entri Data',
-        'proses_entri'          => 'Dalam Proses Entri Data',
-        'entri_data_selesai'    => 'Entri Data Selesai',
-        
-        // --- Tahap Persetujuan & Penyelesaian ---
-        'menunggu_persetujuan'  => 'Menunggu Persetujuan',
-        'disetujui'             => 'Disetujui',
-        'dokumen_diterbitkan'   => 'Dokumen Diterbitkan',
-        'selesai'               => 'Selesai (Siap Diambil/Diunduh)',
-
-        // --- Status Khusus (Loop atau Final) ---
-        'butuh_perbaikan'       => 'Butuh Perbaikan (Menunggu Warga)',
-        'ditolak'               => 'Ditolak',
-        'dibatalkan'            => 'Dibatalkan',
-    ];
     public function getAllowedTransitions(): array
     {
         
@@ -151,7 +128,7 @@ class Permohonan extends Model
                 // Kirim notifikasi hanya jika fitur diaktifkan dan template status ada
                 if ($settings && $settings->verification_enabled && $settings->status_template_name && $user->nomor_whatsapp) {
                     try {
-                        $statusLabel = self::STATUS_OPTIONS[$permohonan->status] ?? $permohonan->status;
+                        $statusLabel = $permohonan->status->getLabel();
                         $note = $permohonan->catatan_petugas ?: 'Tidak ada catatan tambahan dari petugas.';
 
                         \Illuminate\Support\Facades\Http::withToken($settings->access_token)->post(

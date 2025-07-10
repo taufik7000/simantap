@@ -20,6 +20,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusPermohonan;
 use Illuminate\Support\HtmlString;
 
 class PermohonanResource extends Resource
@@ -207,23 +208,13 @@ class PermohonanResource extends Resource
                     ->label('Jenis Permohonan')
                     ->wrap(),
                 Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'baru', 'dibatalkan' => 'gray',
-                        'menunggu_verifikasi', 'proses_verifikasi' => 'info',
-                        'proses_entri', 'entri_data_selesai' => 'warning',
-                        'menunggu_persetujuan', 'proses_pengiriman' => 'primary',
-                        'disetujui', 'dokumen_diterbitkan', 'selesai' => 'success',
-                        'butuh_revisi', 'ditolak' => 'danger',
-                        default => 'secondary',
-                    })
-                    ->formatStateUsing(fn(string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state),
+                    ->badge(),
                 Tables\Columns\TextColumn::make('created_at')->label('Tanggal Diajukan')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Update Terakhir')->since()->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(Permohonan::STATUS_OPTIONS)
+                    ->options(StatusPermohonan::class)
                     ->native(false),
             ])
             ->actions([
@@ -243,17 +234,7 @@ class PermohonanResource extends Resource
                         TextEntry::make('Layanan.name')->label('Kategori Layanan'),
                         TextEntry::make('data_pemohon.jenis_permohonan')->label('Jenis Permohonan'),
                         TextEntry::make('status')
-                            ->badge()
-                            ->color(fn(string $state): string => match ($state) {
-                                'baru', 'dibatalkan' => 'gray',
-                                'menunggu_verifikasi', 'proses_verifikasi' => 'info',
-                                'proses_entri', 'entri_data_selesai' => 'warning',
-                                'menunggu_persetujuan', 'proses_pengiriman' => 'primary',
-                                'disetujui', 'dokumen_diterbitkan', 'selesai' => 'success',
-                                'butuh_revisi', 'ditolak' => 'danger',
-                                default => 'secondary',
-                            })
-                            ->formatStateUsing(fn(string $state): string => Permohonan::STATUS_OPTIONS[$state] ?? $state),
+                            ->badge(),
                         TextEntry::make('catatan_petugas')->label('Catatan Petugas')->markdown()->columnSpanFull()->visible(fn($state) => !empty($state)),
                         TextEntry::make('created_at')->label('Tanggal Diajukan')->dateTime(),
                     ]),

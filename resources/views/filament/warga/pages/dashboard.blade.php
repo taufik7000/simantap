@@ -118,7 +118,9 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-3 flex-shrink-0 ml-4">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ match ($permohonan->status) {'selesai' => 'bg-green-100 text-green-800', 'ditolak' => 'bg-red-100 text-red-800', 'membutuhkan_revisi' => 'bg-amber-100 text-amber-800', 'diproses' => 'bg-blue-100 text-blue-800', default => 'bg-gray-100 text-gray-800'} }}">{{ \App\Models\Permohonan::STATUS_OPTIONS[$permohonan->status] ?? $permohonan->status }}</span>
+                                        <x-filament::badge :color="$permohonan->status->getColor()">
+                                        {{ $permohonan->status->getLabel() }}
+                                         </x-filament::badge>
                                     <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                 </div>
                             </a>

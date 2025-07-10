@@ -28,7 +28,7 @@
         $allLogs->push([
             'id' => 'log_' . $log->id,
             'created_at' => $log->created_at,
-            'action' => \App\Models\Permohonan::STATUS_OPTIONS[$log->status] ?? Str::title(str_replace('_', ' ', $log->status)),
+            'action' => $log->status->getLabel(),
             'description' => $log->catatan ?: 'Status permohonan diperbarui.',
             'user' => $log->user->name ?? 'Sistem',
             'icon' => $logIcon,

@@ -65,23 +65,12 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium animate-bounce {{
-                                    match ($permohonan->status) {
-                                        'selesai', 'disetujui' => 'bg-green-100 text-green-800',
-                                        'ditolak', 'butuh_perbaikan' => 'bg-red-100 text-red-800',
-                                        'diproses', 'sedang_ditinjau', 'verifikasi_berkas' => 'bg-blue-100 text-blue-800',
-                                        default => 'bg-gray-100 text-gray-800',
-                                    }
-                                }}">
-                                    <span class="w-1.5 h-1.5 rounded-full mr-1.5 animate-pulse {{
-                                        match ($permohonan->status) {
-                                            'selesai', 'disetujui' => 'bg-green-600',
-                                            'ditolak', 'butuh_perbaikan' => 'bg-red-600',
-                                            'diproses', 'sedang_ditinjau', 'verifikasi_berkas' => 'bg-blue-600',
-                                            default => 'bg-gray-600',
-                                        }
-                                    }}"></span>
-                                    {{ \App\Models\Permohonan::STATUS_OPTIONS[$permohonan->status] ?? Str::title(str_replace('_', ' ', $permohonan->status)) }}
+                                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium animate-bounce 
+                                 bg-{{ $permohonan->status->getColor() }}-100 text-{{ $permohonan->status->getColor() }}-800">
+                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 animate-pulse 
+                                bg-{{ $permohonan->status->getColor() }}-600">
+                                </span>
+                                {{ $permohonan->status->getLabel() }}
                                 </div>
                             </div>
                         </div>
@@ -189,7 +178,7 @@
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center justify-between">
                                                     <p class="text-sm font-medium text-gray-900">
-                                                        {{ \App\Models\Permohonan::STATUS_OPTIONS[$log->status] ?? Str::title(str_replace('_', ' ', $log->status)) }}
+                                                        {{ $log->status->getLabel() }}
                                                         @if($loop->first)
                                                             <span class="animate-bounce bg-primary-100 text-primary-800 text-xs font-medium px-2 py-0.5 rounded-full ml-2 inline-flex items-center">
                                                                 <span class="w-1.5 h-1.5 bg-primary-500 rounded-full mr-1 animate-pulse"></span>

@@ -62,33 +62,8 @@ class ViewPermohonan extends ViewRecord
 
                                                 TextEntry::make('status')
                                                     ->label('Status')
-                                                    ->badge()
-                                                    ->color(fn (string $state): string => match ($state) {
-                                                        'baru' => 'gray',
-                                                        'sedang_ditinjau' => 'warning',
-                                                        'verifikasi_berkas' => 'info',
-                                                        'diproses' => 'primary',
-                                                        'menunggu_entri_data' => 'primary',
-                                                        'membutuhkan_revisi' => 'danger',
-                                                        'butuh_perbaikan' => 'warning',
-                                                        'disetujui' => 'success',
-                                                        'ditolak' => 'danger',
-                                                        'selesai' => 'success',
-                                                        default => 'gray',
-                                                    })
-                                                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                                                        'baru' => 'Baru Diajukan',
-                                                        'sedang_ditinjau' => 'Sedang Ditinjau',
-                                                        'verifikasi_berkas' => 'Verifikasi Berkas',
-                                                        'diproses' => 'Sedang Diproses',
-                                                        'meunggu_entri_data' => 'Proses Entri Data',
-                                                        'membutuhkan_revisi' => 'Membutuhkan Revisi',
-                                                        'butuh_perbaikan' => 'Butuh Perbaikan',
-                                                        'disetujui' => 'Disetujui',
-                                                        'ditolak' => 'Ditolak',
-                                                        'selesai' => 'Selesai',
-                                                        default => $state,
-                                                    }),
+                                                    ->badge(),
+                                               
                                             ]),
 
                                         InfolistGrid::make(4)
