@@ -262,4 +262,36 @@ public function download(Request $request): StreamedResponse|Response
 
         return Storage::disk('private')->download($formulirMaster->file_path);
     }
+
+    /**
+ * Download dokumen profil warga dengan aman.
+ */
+public function downloadProfileDocument(Request $request): StreamedResponse|Response
+{
+    $userId = $request->query('user_id');
+    $field = $request->query('field');
+    $validFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
+
+    if (!$userId || !$field || !in_array($field, $validFields)) {
+        abort(404, 'Permintaan tidak valid.');
+    }
+
+    $owner = User::findOrFail($userId);
+    $filePath = $owner->{$field};
+
+    if (!$filePath) {
+        abort(404, 'File tidak ditemukan untuk pengguna ini.');
+    }
+
+    // Hanya admin/petugas yang bisa mengunduh
+    if (!Auth::user()->hasAnyRole(['petugas', 'admin', 'kadis'])) {
+        abort(403, 'Anda tidak memiliki hak akses.');
+    }
+
+    if (!Storage::disk('private')->exists($filePath)) {
+        abort(404, 'File tidak ditemukan di server.');
+    }
+
+    return Storage::disk('private')->download($filePath);
+}
 }

@@ -9,6 +9,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Forms\Form;
 
 class ViewUser extends ViewRecord
@@ -55,12 +56,33 @@ class ViewUser extends ViewRecord
                     ])->columns(2),
 
                 Section::make('Dokumen Terunggah')
-                    ->schema([
-                        FileUpload::make('foto_ktp')->label('Foto KTP')->image(),
-                        FileUpload::make('foto_kk')->label('Foto Kartu Keluarga')->image(),
-                        FileUpload::make('foto_tanda_tangan')->label('Foto Tanda Tangan')->image(),
-                        FileUpload::make('foto_selfie_ktp')->label('Foto Selfie dengan KTP')->image(),
-                    ])->columns(2),
+                    ->schema(function (Model $record): array {
+                        $fields = [];
+                        $documentFields = [
+                            'foto_ktp' => 'Foto KTP',
+                            'foto_kk' => 'Foto Kartu Keluarga',
+                            'foto_tanda_tangan' => 'Foto Tanda Tangan',
+                            'foto_selfie_ktp' => 'Foto Selfie dengan KTP',
+                        ];
+
+                        foreach ($documentFields as $field => $label) {
+                            $filePath = $record->{$field};
+                            $entry = TextEntry::make($field)->label($label);
+
+                            if ($filePath) {
+                                $entry->state('Unduh Dokumen')
+                                    ->color('primary')
+                                    ->url(route('secure.download.profile', ['user_id' => $record->id, 'field' => $field]), true)
+                                    ->icon('heroicon-m-arrow-down-tray');
+                            } else {
+                                $entry->state('Belum diunggah')
+                                    ->color('danger')
+                                    ->icon('heroicon-o-x-circle');
+                            }
+                            $fields[] = $entry;
+                        }
+                        return $fields;
+                    })->columns(2),
             ]),
         ])->disabled();
     }

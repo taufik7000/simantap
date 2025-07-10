@@ -29,7 +29,7 @@
                     
                     <!-- Title -->
                     <h1 class="text-4xl font-bold mb-4">SIMANTAP</h1>
-                    <p class="text-xl mb-8 text-primary-100">Simalungun Administrasi Terpadu</p>
+                    <p class="text-xl mb-8 text-primary-100">Sistem Administrasi Terpadu</p>
                     
                     <!-- Description -->
                     <div class="space-y-4">
@@ -74,7 +74,7 @@
                         </svg>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900">SIMANTAP</h1>
-                    <p class="text-sm text-gray-600">Simalungun Administrasi Terpadu</p>
+                    <p class="text-sm text-gray-600">Sistem Administrasi Terpadu</p>
                 </div>
 
                 <!-- Reset Password Card -->

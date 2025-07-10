@@ -32,6 +32,8 @@ class Permohonan extends Model
         'assigned_to', 
         'assigned_at', 
         'assigned_by',
+        'dokumen_diterbitkan_at',
+        'dokumen_digital_path'
     ];
 
     /**
@@ -44,6 +46,7 @@ class Permohonan extends Model
         'berkas_pemohon' => 'array',
         'status_updated_at' => 'datetime',
         'assigned_at' => 'datetime',
+        'dokumen_diterbitkan_at' => 'datetime',
     ];
 
     /**
@@ -55,6 +58,7 @@ class Permohonan extends Model
     public const STATUS_OPTIONS = [
         // --- Tahap Awal Pengajuan ---
         'baru'                  => 'Baru Diajukan',
+        'sedang_ditinjau'       => 'Dalam Peninjauan',
         
         // --- Tahap Verifikasi oleh Petugas ---
         'verifikasi_berkas'     => 'Proses Verifikasi Berkas',
@@ -369,7 +373,7 @@ class Permohonan extends Model
 
     public static function getWorkloadDistribution(): array
     {
-        $petugasList = User::role(['petugas', 'admin'])->get();
+        $petugasList = User::role(['petugas',])->get();
         
         return $petugasList->map(function ($petugas) {
             return [
@@ -385,7 +389,7 @@ class Permohonan extends Model
             return false;
         }
 
-        $petugasList = User::role(['petugas', 'admin'])->get();
+        $petugasList = User::role(['petugas'])->get();
         if ($petugasList->isEmpty()) {
             return false;
         }

@@ -45,19 +45,6 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->label('Lihat Data'),
-                Action::make('verify')
-                    ->label('Verifikasi Akun')
-                    ->icon('heroicon-s-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->action(function (User $record) {
-                        $record->update(['verified_at' => now()]);
-                        Notification::make()
-                            ->title('Pengguna berhasil diverifikasi')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn (User $record): bool => is_null($record->verified_at)),
             ])
             ->bulkActions([]);
     }

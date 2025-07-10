@@ -4,7 +4,7 @@
             <div>
                 <h3 class="text-lg font-semibold gradient-text">SIMANTAP</h3>
                 <p class="mt-2 text-sm text-gray-400">
-                    Layanan Administrasi Digital Terpadu Kabupaten Simalungun.
+                    Layanan Administrasi Digital Terpadu Kabupaten Simantap.
                 </p>
             </div>
             <div>
@@ -26,12 +26,12 @@
             <div>
                 <h4 class="font-semibold text-gray-200">Kontak</h4>
                 <p class="mt-4 text-sm text-gray-400">
-                    Dinas Kependudukan dan Pencatatan Sipil Kabupaten Simalungun
+                    Dinas Kependudukan dan Pencatatan Sipil Kabupaten Simantap
                 </p>
             </div>
         </div>
         <div class="mt-8 pt-8 border-t border-slate-700 text-center text-sm text-gray-500">
-            <p>&copy; {{ date('Y') }} SIMANTAP. Didukung oleh Pemerintah Kabupaten Simalungun.</p>
+            <p>&copy; {{ date('Y') }} SIMANTAP. Didukung oleh Pemerintah Kabupaten Simantap</p>
         </div>
     </div>
 </footer>

@@ -14,7 +14,8 @@ class PersetujuanResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-check-badge';
     protected static ?string $navigationLabel = 'Menunggu Persetujuan';
     protected static ?string $navigationGroup = 'Manajemen Permohonan';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $modelLabel = 'Persetujuan Permohonan';
     protected static ?string $pluralModelLabel = 'Persetujuan Permohonan';
 

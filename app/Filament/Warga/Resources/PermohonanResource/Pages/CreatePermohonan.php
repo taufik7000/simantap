@@ -7,6 +7,7 @@ use App\Models\Layanan;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Actions\Action;
+use App\Filament\Warga\Pages\Profile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
 
@@ -19,6 +20,21 @@ class CreatePermohonan extends CreateRecord
      */
     public function mount(): void
     {
+
+        if (!auth()->user()->isProfileComplete()) {
+            // Beri notifikasi ke pengguna
+            Notification::make()
+                ->title('Profil Belum Lengkap')
+                ->body('Anda harus melengkapi data profil Anda terlebih dahulu sebelum dapat mengajukan permohonan.')
+                ->warning()
+                ->persistent() // Membuat notifikasi tetap muncul hingga ditutup
+                ->send();
+
+            // Alihkan pengguna ke halaman profil
+            $this->redirect(Profile::getUrl());
+            return; // Hentikan eksekusi lebih lanjut agar form tidak dimuat
+        }
+
         // Ambil ID layanan dari URL
         $layananId = request()->query('layanan_id');
         abort_if(!$layananId, 404, 'Layanan tidak ditemukan.');

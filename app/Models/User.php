@@ -32,62 +32,42 @@ class User extends Authenticatable implements FilamentUser
         'last_login_at' => 'datetime',
         'tanggal_lahir' => 'date',
     ];
-
-    /**
-     * Metode terpusat untuk memeriksa kelengkapan profil.
-     * Mengembalikan array berisi status dan daftar field yang kosong.
-     * @return array{status: string, missing: array}
-     */
-    public function getProfileCompletenessStatus(): array
+/**
+ * Memeriksa apakah data profil wajib sudah lengkap.
+ * @return bool
+ */
+    public function isProfileComplete(): bool
     {
-        if ($this->verified_at) {
-            return ['status' => 'Terverifikasi', 'missing' => []];
-        }
-
         $requiredFields = [
-            'nik' => 'NIK',
-            'nomor_kk' => 'Nomor Kartu Keluarga',
-            'jenis_kelamin' => 'Jenis Kelamin',
-            'agama' => 'Agama',
-            'nomor_whatsapp' => 'Nomor Whatsapp',
-            
-            // Data Kelahiran
-            'tempat_lahir' => 'Tempat Lahir',
-            'tanggal_lahir' => 'Tanggal Lahir',
-            'gol_darah' => 'Golongan Darah',
+            'nik',
+            'nomor_kk',
+            'jenis_kelamin',
+            'agama',
+            'tempat_lahir',
+            'tanggal_lahir',
+            'gol_darah',
+            'alamat',
+            'rt_rw',
+            'desa_kelurahan',
+            'kecamatan',
+            'kabupaten',
+            'status_keluarga',
+            'status_perkawinan',
+            'pekerjaan',
+            'pendidikan',
+            'foto_ktp',
+            'foto_kk', 
+            'foto_tanda_tangan', 
+            'foto_selfie_ktp',
 
-            // Alamat
-            'alamat' => 'Alamat Lengkap',
-            'rt_rw' => 'RT/RW',
-            'desa_kelurahan' => 'Desa/Kelurahan',
-            'kecamatan' => 'Kecamatan',
-            'kabupaten' => 'Kabupaten',
-            
-            // Informasi Tambahan
-            'status_keluarga' => 'Status dalam Keluarga',
-            'status_perkawinan' => 'Status Perkawinan',
-            'pekerjaan' => 'Pekerjaan',
-            'pendidikan' => 'Pendidikan Terakhir',
-            
-            // Dokumen
-            'foto_ktp' => 'Foto KTP',
-            'foto_kk' => 'Foto Kartu Keluarga',
-            'foto_tanda_tangan' => 'Foto Tanda Tangan',
-            'foto_selfie_ktp' => 'Foto Selfie dengan KTP',
         ];
 
-        $missing = [];
-        foreach ($requiredFields as $field => $label) {
+        foreach ($requiredFields as $field) {
             if (empty($this->{$field})) {
-                $missing[] = $label;
+                return false; // Jika satu saja kosong, profil belum lengkap
             }
         }
-
-        if (empty($missing)) {
-            return ['status' => 'Data Lengkap', 'missing' => []];
-        }
-
-        return ['status' => 'Belum Lengkap', 'missing' => $missing];
+        return true; // Semua terisi
     }
     
     public function canAccessPanel(Panel $panel): bool
@@ -361,32 +341,6 @@ class User extends Authenticatable implements FilamentUser
         return $query->where('status_keluarga', 'Kepala Keluarga');
     }
 
-    /**
-     * Mendapatkan rekomendasi layanan berdasarkan profil user
-     */
-    public function getRecommendedServicesAttribute(): array
-    {
-        $recommendations = [];
-        
-        // Jika belum ada KTP/NIK
-        if (empty($this->nik)) {
-            $recommendations[] = 'Pengurusan KTP';
-        }
-        
-        // Jika kepala keluarga dan belum ada KK
-        if ($this->isKepalaKeluarga() && empty($this->nomor_kk)) {
-            $recommendations[] = 'Pengurusan Kartu Keluarga';
-        }
-        
-        // Jika sudah menikah tapi status perkawinan belum update
-        if ($this->status_perkawinan === 'Kawin' && !$this->permohonans()->whereHas('layanan', function($q) {
-            $q->where('name', 'like', '%akta%nikah%');
-        })->exists()) {
-            $recommendations[] = 'Pengurusan Akta Nikah';
-        }
-        
-        return $recommendations;
-    }
 
     /**
      * Mendapatkan skor kepuasan berdasarkan riwayat layanan

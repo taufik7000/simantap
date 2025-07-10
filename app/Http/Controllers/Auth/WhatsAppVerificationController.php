@@ -45,6 +45,7 @@ class WhatsAppVerificationController extends Controller
 
         $user->forceFill([
             'whatsapp_verified_at' => now(),
+            'verified_at' => now(),
             'whatsapp_verification_code' => null,
             'whatsapp_code_expires_at' => null,
         ])->save();

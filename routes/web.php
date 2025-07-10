@@ -62,6 +62,11 @@ Route::get('/download-formulir-master/{formulirMaster}', [BerkasController::clas
     ->middleware('auth') // Hanya untuk pengguna yang sudah login
     ->name('formulir-master.download');
 
+// Profile Warga Berkas
+Route::get('/download-profile-document', [BerkasController::class, 'downloadProfileDocument'])
+    ->middleware('auth') 
+    ->name('secure.download.profile');
+
 // Berkas Revisi
 Route::middleware(['auth'])->group(function () {
     // Route download berkas revisi

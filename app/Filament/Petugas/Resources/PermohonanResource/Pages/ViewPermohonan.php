@@ -343,10 +343,11 @@ class ViewPermohonan extends ViewRecord
                 ->color('success')
                 ->action(function (): void {
                     try {
+                        $petugasName = Auth::user()->name; // Ambil nama petugas yang login
                         $this->record->update([
                             'assigned_to' => Auth::id(),
-                            'status' => 'sedang_ditinjau',
-                            'catatan_petugas' => 'Permohonan telah ditugaskan dan sedang dalam peninjauan.',
+                            'status' => 'verifikasi_berkas',
+                            'catatan_petugas' => "Permohonan saat ini diproses oleh Petugas ({$petugasName}).",
                         ]);
 
                         Notification::make()

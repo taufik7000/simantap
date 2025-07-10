@@ -25,6 +25,11 @@ class PenerbitanResource extends Resource
             ->where('status', 'disetujui');
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getEloquentQuery()->count();
+    }
+
     // Kita tidak ingin ada tombol "Create" di halaman ini
     public static function canCreate(): bool
     {

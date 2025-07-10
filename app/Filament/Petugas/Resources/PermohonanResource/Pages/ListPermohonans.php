@@ -19,33 +19,7 @@ class ListPermohonans extends ListRecords
     {
         return [
             // Aksi untuk menugaskan semua permohonan yang belum ditugaskan secara otomatis
-            Actions\Action::make('auto_assign_all')
-                ->label('Auto-Assign Semua')
-                ->icon('heroicon-o-cpu-chip')
-                ->color('warning')
-                ->action(function () {
-                    $unassignedPermohonans = Permohonan::whereNull('assigned_to')
-                        ->whereNotIn('status', ['selesai', 'ditolak'])
-                        ->get();
-                    
-                    $successCount = 0;
-                    foreach ($unassignedPermohonans as $permohonan) {
-                        if ($permohonan->autoAssign()) {
-                            $successCount++;
-                        }
-                    }
 
-                    \Filament\Notifications\Notification::make()
-                        ->title("Auto-Assignment Selesai")
-                        ->body("Berhasil menugaskan {$successCount} dari {$unassignedPermohonans->count()} permohonan.")
-                        ->success()
-                        ->send();
-                })
-                ->visible(fn () => Auth::user()->hasAnyRole(['admin', 'kadis']))
-                ->requiresConfirmation()
-                ->modalHeading('Auto-Assign Semua Permohonan')
-                ->modalDescription('Sistem akan menugaskan semua permohonan yang belum ditugaskan ke petugas dengan workload paling ringan. Apakah Anda yakin?')
-                ->modalSubmitActionLabel('Ya, Lanjutkan'),
 
             // Aksi untuk melihat statistik beban kerja petugas
             Actions\Action::make('workload_stats')
@@ -85,20 +59,7 @@ class ListPermohonans extends ListRecords
         ->badgeColor('danger');
     
     // Tab overdue assignment - hanya untuk admin/kadis
-    if ($user->hasAnyRole(['admin', 'kadis'])) {
-        $overdueCount = $this->getModel()::whereNotNull('assigned_at')
-            ->where('assigned_at', '<', now()->subHours(72))
-            ->whereNotIn('status', ['selesai', 'ditolak'])->count();
-        if ($overdueCount > 0) {
-            $tabs['overdue'] = Tab::make('Assignment Overdue')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('assigned_at')
-                    ->where('assigned_at', '<', now()->subHours(72))
-                    ->whereNotIn('status', ['selesai', 'ditolak']))
-                ->badge($overdueCount)
-                ->badgeColor('danger')
-                ->icon('heroicon-o-exclamation-triangle');
-        }
-    }
+
     
     return $tabs;
     }

@@ -173,6 +173,8 @@ class PermohonanResource extends Resource
                             if (!$r->isAssigned() && $r->autoAssign())
                                 $c++; }\Filament\Notifications\Notification::make()->title("Berhasil auto-assign {$c} permohonan")->body('Permohonan telah ditugaskan berdasarkan workload petugas')->success()->send(); })->visible(fn() => Auth::user()->hasRole(['admin', 'kadis']))->requiresConfirmation()->modalDescription('Sistem akan secara otomatis menugaskan permohonan ke petugas dengan workload paling ringan.')->deselectRecordsAfterCompletion(),
                 ]),
+
+                
             ])
             ->defaultSort('created_at', 'desc');
     }

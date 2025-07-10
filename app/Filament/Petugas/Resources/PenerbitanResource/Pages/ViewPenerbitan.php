@@ -21,7 +21,14 @@ class ViewPenerbitan extends ViewRecord
                 ->requiresConfirmation()
                 ->modalDescription('Pastikan dokumen sudah dicetak atau siap dikirim secara digital.')
                 ->action(function () {
-                    $this->record->update(['status' => 'dokumen_diterbitkan']);
+                    // ===== INI BAGIAN YANG DIPERBARUI =====
+                    $this->record->update([
+                        'status' => 'dokumen_diterbitkan',
+                        'dokumen_diterbitkan_at' => now(), // <-- Mengisi timestamp
+                        'catatan_petugas' => 'Dokumen telah diterbitkan dan siap untuk pengiriman',
+                    ]);
+                    // =====================================
+        
                     Notification::make()->title('Dokumen Telah Diterbitkan')->success()->send();
                     $this->redirect($this->getResource()::getUrl('index'));
                 }),

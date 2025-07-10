@@ -17,6 +17,7 @@ use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
 
 class Profile extends Page implements HasForms
 {
@@ -90,10 +91,18 @@ class Profile extends Page implements HasForms
 
                                 Section::make('Dokumen Pendukung')
                                     ->schema([
-                                        FileUpload::make('foto_ktp')->label('Foto KTP')->directory('dokumen_warga')->visibility('public')->previewable(false),
-                                        FileUpload::make('foto_kk')->label('Foto Kartu Keluarga')->directory('dokumen_warga')->visibility('public')->previewable(false),
-                                        FileUpload::make('foto_tanda_tangan')->label('Foto Tanda Tangan')->directory('dokumen_warga')->visibility('public')->previewable(false),
-                                        FileUpload::make('foto_selfie_ktp')->label('Foto Selfie dengan KTP')->directory('dokumen_warga')->visibility('public')->previewable(false),
+                                        FileUpload::make('foto_ktp')->label('Foto KTP')
+                                            ->directory('dokumen_warga')
+                                            ->disk('private'),
+                                        FileUpload::make('foto_kk')->label('Foto Kartu Keluarga')
+                                            ->directory('dokumen_warga')
+                                            ->disk('private'), 
+                                        FileUpload::make('foto_tanda_tangan')->label('Foto Tanda Tangan')
+                                            ->directory('dokumen_warga')
+                                            ->disk('private'), 
+                                        FileUpload::make('foto_selfie_ktp')->label('Foto Selfie dengan KTP')
+                                            ->directory('dokumen_warga')
+                                            ->disk('private'),
                                     ])->columns(2),
                             ]),
 
@@ -118,61 +127,61 @@ class Profile extends Page implements HasForms
             ->statePath('data');
     }
 
-    public function updateProfile(): void
+      public function updateProfile(): void
     {
         $user = $this->getFormModel();
         $data = $this->form->getState();
 
-        // Siapkan data non-file dan NIK untuk diupdate
-        $updateData = [
-            'name' => $data['name'], 'email' => $data['email'], 'nomor_kk' => $data['nomor_kk'],
-            'nomor_whatsapp' => $data['nomor_whatsapp'], 'alamat' => $data['alamat'],
-            'jenis_kelamin' => $data['jenis_kelamin'], 'agama' => $data['agama'],
-            'tempat_lahir' => $data['tempat_lahir'], 'tanggal_lahir' => $data['tanggal_lahir'], 'gol_darah' => $data['gol_darah'],
-            'rt_rw' => $data['rt_rw'], 'desa_kelurahan' => $data['desa_kelurahan'],
-            'kecamatan' => $data['kecamatan'], 'kabupaten' => $data['kabupaten'],
-            'status_keluarga' => $data['status_keluarga'], 'status_perkawinan' => $data['status_perkawinan'],
-            'pekerjaan' => $data['pekerjaan'], 'pendidikan' => $data['pendidikan'],
-        ];
-
-        if (!$user->verified_at) {
-            $updateData['nik'] = $data['nik'];
+        // Pisahkan data file dari data non-file
+        $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
+        $nonFileUpdateData = Arr::except($data, $fileFields);
+        
+        // Logika untuk update password - hanya update jika ada input password baru
+        if (!empty($nonFileUpdateData['password'])) {
+            $nonFileUpdateData['password'] = Hash::make($nonFileUpdateData['password']);
+        } else {
+            // Hapus password dari data update jika kosong
+            unset($nonFileUpdateData['password']);
+            unset($nonFileUpdateData['password_confirmation']);
         }
 
-        // Logika file upload tetap sama
-        $fileFields = ['foto_ktp', 'foto_kk', 'foto_tanda_tangan', 'foto_selfie_ktp'];
+        // Update data non-file terlebih dahulu
+        $user->update($nonFileUpdateData);
+
+        // ===============================================
+        // AWAL BLOK LOGIKA FILE UPLOAD YANG DIPERBAIKI
+        // ===============================================
         foreach ($fileFields as $field) {
-            if (isset($data[$field]) && is_array($data[$field])) {
-                if (empty($data[$field])) {
-                    if ($user->{$field}) { Storage::disk('public')->delete($user->{$field}); }
-                    $updateData[$field] = null;
-                } else {
-                    $newPath = head($data[$field]);
-                    if ($user->{$field} && $user->{$field} !== $newPath) { Storage::disk('public')->delete($user->{$field}); }
-                    $updateData[$field] = $newPath;
+            // Cek apakah ada data baru untuk field file ini
+            if (isset($data[$field])) {
+                $newPath = $data[$field];
+                $oldPath = $user->getOriginal($field);
+
+                // Jika path baru berbeda dengan yang lama
+                if ($newPath !== $oldPath) {
+                    // Hapus file lama jika ada
+                    if ($oldPath) {
+                        Storage::disk('public')->delete($oldPath);
+                    }
+                    // Simpan path baru (bisa berupa path string atau null jika file dihapus)
+                    $user->{$field} = $newPath;
                 }
             }
         }
-        
-        // Logika untuk password - hanya update jika ada input password
-        if (!empty($data['password'])) {
-            $updateData['password'] = Hash::make($data['password']);
-        }
-
-        $user->update($updateData);
+        // Simpan perubahan file ke database
+        $user->save();
+        // ===============================================
+        // AKHIR BLOK LOGIKA FILE UPLOAD
+        // ===============================================
 
         Notification::make()->title('Profil berhasil diperbarui')->success()->send();
-
-        // Reset password fields setelah update berhasil
-        $this->data['password'] = '';
-        $this->data['password_confirmation'] = '';
-        
-        // Refresh form state
-        $this->form->fill($this->data);
 
         // Jika password diubah, lakukan redirect agar lebih aman
         if (!empty($data['password'])) {
             $this->redirect(static::getUrl());
+        } else {
+            // Refresh form state untuk menampilkan data terbaru
+            $this->form->fill($user->fresh()->toArray());
         }
     }
 }

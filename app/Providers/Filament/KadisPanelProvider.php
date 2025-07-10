@@ -18,7 +18,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationGroup;
-use App\Filament\Petugas\Resources\PermohonanResource;
 use App\Filament\Petugas\Resources\KartuKeluargaResource;
 use App\Filament\Petugas\Resources\UserResource;
 use Illuminate\Support\Facades\Vite;
@@ -54,7 +53,6 @@ class KadisPanelProvider extends PanelProvider
                     ->collapsible(false),
             ])
             ->resources([
-                PermohonanResource::class,
                 KartuKeluargaResource::class,
                 UserResource::class,
             ])
