@@ -33,12 +33,15 @@ class ViewVerifikasi extends ViewRecord
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update([
+                        'status' => 'diproses',
+                        'catatan_petugas' => 'Berkas telah diverifikasi dan permohonan sedang dalam proses pengerjaan.',
                         'status' => 'menunggu_entri_data',
                         'catatan_petugas' => 'Berkas telah diverifikasi. Permohonan kini masuk antrean untuk entri data.',
                     ]);
                     Notification::make()->title('Verifikasi Berhasil')->success()->send();
                     $this->redirect($this->getResource()::getUrl('index'));
-                }),
+                })
+                ->visible(fn ($record) => $record->status === StatusPermohonan::VERIFIKASI_BERKAS),
 
             Action::make('request_initial_revision')
                 ->label('Butuh Perbaikan')
@@ -49,7 +52,10 @@ class ViewVerifikasi extends ViewRecord
                     Notification::make()->title('Permohonan dikembalikan ke warga')->warning()->send();
                     $this->redirect($this->getResource()::getUrl('index'));
                 })
-                ->visible(StatusPermohonan::class === 'verifikasi_berkas'),
+                ->visible(fn($record) => in_array($record->status, [
+                    StatusPermohonan::VERIFIKASI_BERKAS,
+                    StatusPermohonan::DIPERBAIKI_WARGA
+                ])),
         ];
 
         $revisionReviewActions = [
